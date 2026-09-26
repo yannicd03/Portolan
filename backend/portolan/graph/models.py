@@ -42,6 +42,8 @@ class WorkNode(GraphModel):
     work_type: str | None = None
     source_tier: str | None = None
     cited_by_count: int | None = None
+    keywords: list[str] = Field(default_factory=list)
+    keyword_scores: list[float] = Field(default_factory=list)
     document_sha256: str | None = None
     document_source_url: str | None = None
 

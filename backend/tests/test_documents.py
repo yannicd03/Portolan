@@ -82,7 +82,12 @@ def test_store_layout_round_trip_and_idempotency(tmp_path: Path) -> None:
     second = store.put_pdf(data, source_url="https://example.org/b.pdf", source="other")
     assert second == first
     directory = tmp_path / first.sha256[:2] / first.sha256
-    assert {path.name for path in directory.iterdir()} == {"paper.pdf", "paper.txt", "meta.json"}
+    assert {path.name for path in directory.iterdir()} == {
+        "paper.pdf",
+        "paper.txt",
+        "outline.json",
+        "meta.json",
+    }
     assert first.pdf_path == directory / "paper.pdf"
     assert first.text_path == directory / "paper.txt"
     assert first.pages == 1
@@ -96,6 +101,24 @@ def test_store_layout_round_trip_and_idempotency(tmp_path: Path) -> None:
     assert metadata["text_path"] == f"{first.sha256[:2]}/{first.sha256}/paper.txt"
     assert metadata["text_extractor"].startswith("pypdf ")
     assert not any(path.name.endswith(".tmp") for path in directory.iterdir())
+
+
+def test_store_outline_and_backfill(tmp_path: Path) -> None:
+    store = DocumentStore(tmp_path)
+    record = store.put_pdf(
+        make_pdf("Introduction\nA stored paper"),
+        source_url="https://example.org/outline.pdf",
+        source="test",
+    )
+    outline_path = store.outline_path(record.sha256)
+    assert outline_path.is_file()
+    assert store.get_outline(record.sha256) is not None
+
+    outline_path.unlink()
+    assert store.backfill_outlines() == 1
+    assert outline_path.is_file()
+    assert store.backfill_outlines() == 0
+    assert store.backfill_outlines(rebuild=True) == 1
 
 
 def test_store_empty_and_failed_extraction(tmp_path: Path) -> None:

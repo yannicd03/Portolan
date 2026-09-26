@@ -12,6 +12,7 @@
   "dependencies": {
     "graphology": "^0.26.0",
     "graphology-layout-forceatlas2": "^0.10.1",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "sigma": "^3.0.3"

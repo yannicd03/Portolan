@@ -76,6 +76,32 @@ def test_identity_resolution_and_nulls(graph: InMemoryResearchGraph | Neo4jResea
     assert graph.upsert_author(AuthorNode(name="Ada", openalex_id="A1")).id == author.id
 
 
+def test_work_keywords_and_project_projection(
+    graph: InMemoryResearchGraph | Neo4jResearchGraph,
+) -> None:
+    project = graph.create_project("Keywords")
+    first = graph.upsert_work(
+        WorkNode(title="First", keywords=["graph", "network"], keyword_scores=[0.9, 0.4])
+    )
+    second = graph.upsert_work(WorkNode(title="Second", keywords=["search"], keyword_scores=[0.8]))
+    graph.include_work(Inclusion(project_id=project.id, work_id=second.id, discovered_via="seed"))
+    graph.include_work(Inclusion(project_id=project.id, work_id=first.id, discovered_via="seed"))
+
+    assert graph.get_work(first.id).keywords == ["graph", "network"]
+    assert graph.get_work(first.id).keyword_scores == [0.9, 0.4]
+
+    replaced = graph.upsert_work(
+        WorkNode(title="First replaced", id=first.id, keywords=["updated"], keyword_scores=[0.7])
+    )
+    assert replaced.keywords == ["updated"]
+    assert replaced.keyword_scores == [0.7]
+
+    updated = graph.upsert_work(WorkNode(title="First revised", doi=None, id=first.id))
+    assert updated.keywords == ["updated"]
+    assert updated.keyword_scores == [0.7]
+    assert [work.id for work in graph.project_works(project.id)] == sorted([first.id, second.id])
+
+
 def test_inclusion_depth_and_project_isolation(
     graph: InMemoryResearchGraph | Neo4jResearchGraph,
 ) -> None:

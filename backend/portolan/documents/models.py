@@ -15,6 +15,22 @@ class _DocumentModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class Section(_DocumentModel):
+    """One navigable section in a stored paper outline."""
+
+    title: str
+    level: int
+    page: int
+    char_offset: int | None = None
+
+
+class Outline(_DocumentModel):
+    """A paper outline and the source used to construct it."""
+
+    sections: list[Section]
+    source: Literal["pdf_outline", "headings", "none"]
+
+
 class PdfCandidate(_DocumentModel):
     """A possible open-access PDF URL returned by a metadata source."""
 

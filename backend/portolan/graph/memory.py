@@ -171,12 +171,20 @@ class InMemoryResearchGraph:
         else:
             data = _model_data(existing)
             for field, value in _model_data(work).items():
-                if field != "id" and value is not None:
+                if (
+                    field != "id"
+                    and value is not None
+                    and (field not in {"keywords", "keyword_scores"} or value)
+                ):
                     data[field] = value
             data["id"] = work_id
             stored = WorkNode.model_validate(data)
         self._works[work_id] = stored
         return _model_copy(stored)
+
+    def project_works(self, project_id: str) -> list[WorkNode]:
+        work_ids = sorted(self._included_work_ids(project_id))
+        return [_model_copy(self._works[work_id]) for work_id in work_ids]
 
     def get_work(self, id: str) -> WorkNode | None:
         work = self._works.get(id)

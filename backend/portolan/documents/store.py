@@ -15,7 +15,8 @@ from typing import Any
 
 import pypdf
 
-from .models import DocumentRecord
+from .models import DocumentRecord, Outline
+from .outline import build_outline
 from .text import extract_text
 
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
@@ -103,6 +104,11 @@ class DocumentStore:
 
         return self._document_dir(sha256) / "paper.txt"
 
+    def outline_path(self, sha256: str) -> Path:
+        """Return the canonical outline path for a validated content hash."""
+
+        return self._document_dir(sha256) / "outline.json"
+
     def _meta_path(self, sha256: str) -> Path:
         return self._document_dir(sha256) / "meta.json"
 
@@ -124,6 +130,10 @@ class DocumentStore:
         sha256 = hashlib.sha256(data).hexdigest()
         existing = self.get(sha256)
         if existing is not None:
+            # Documents written by an older version may not have the outline sidecar.
+            # Treat a repeated put as an opportunity to fill that sidecar lazily.
+            if not self.outline_path(sha256).is_file():
+                self.get_outline(sha256)
             return existing
 
         document_dir = self._document_dir(sha256)
@@ -152,6 +162,10 @@ class DocumentStore:
             assert extracted_text is not None
             _atomic_write(text_path, extracted_text.encode("utf-8"))
 
+        outline = self._build_outline(data, extracted_text)
+        outline_path = document_dir / "outline.json"
+        _atomic_write(outline_path, self._outline_bytes(outline))
+
         retrieved_at = datetime.now(UTC)
         record = DocumentRecord(
             sha256=sha256,
@@ -173,6 +187,67 @@ class DocumentStore:
             json.dumps(metadata, ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8"),
         )
         return record
+
+    @staticmethod
+    def _outline_bytes(outline: Outline) -> bytes:
+        """Serialize an outline for its atomic JSON sidecar."""
+
+        return outline.model_dump_json(indent=2).encode("utf-8")
+
+    @staticmethod
+    def _build_outline(pdf: Path | bytes, text: str | None) -> Outline:
+        """Build an outline while keeping storage resilient to unreadable PDFs."""
+
+        try:
+            return build_outline(pdf, text)
+        except Exception:
+            # Retaining a malformed PDF is still useful for later reprocessing.  In
+            # that case the sidecar records that no outline could be recovered.
+            return Outline(sections=[], source="none")
+
+    def _outline_for_record(self, record: DocumentRecord) -> Outline:
+        """Build an outline from a stored PDF and its optional extracted text."""
+
+        text: str | None = None
+        if record.text_path is not None:
+            try:
+                text = record.text_path.read_text(encoding="utf-8")
+            except (OSError, UnicodeError):
+                text = None
+        return self._build_outline(record.pdf_path, text)
+
+    def get_outline(self, sha256: str) -> Outline | None:
+        """Load an outline, building and persisting it when the sidecar is absent."""
+
+        sha256 = _validate_sha256(sha256)
+        record = self.get(sha256)
+        if record is None:
+            return None
+
+        outline_path = self.outline_path(sha256)
+        if outline_path.is_file():
+            try:
+                payload = json.loads(outline_path.read_text(encoding="utf-8"))
+                return Outline.model_validate(payload)
+            except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError):
+                # A partial or old sidecar is repaired below using the source files.
+                pass
+
+        outline = self._outline_for_record(record)
+        _atomic_write(outline_path, self._outline_bytes(outline))
+        return outline
+
+    def backfill_outlines(self, *, rebuild: bool = False) -> int:
+        """Build outlines for stored documents that lack one, or for all with ``rebuild``."""
+
+        written = 0
+        for record in self.iter_documents():
+            outline_path = self.outline_path(record.sha256)
+            if outline_path.is_file() and not rebuild:
+                continue
+            _atomic_write(outline_path, self._outline_bytes(self._outline_for_record(record)))
+            written += 1
+        return written
 
     def _metadata_for(self, record: DocumentRecord) -> dict[str, Any]:
         """Serialize a record while keeping filesystem paths relative to the store."""

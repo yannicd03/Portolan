@@ -47,6 +47,8 @@ _WORK_FIELDS: tuple[str, ...] = (
     "work_type",
     "source_tier",
     "cited_by_count",
+    "keywords",
+    "keyword_scores",
     "document_sha256",
     "document_source_url",
 )
@@ -334,6 +336,9 @@ class Neo4jResearchGraph(ResearchGraph):
         values["doi"] = values.get("doi").lower() if values.get("doi") else None
         existing_id = self._resolve_work_id(values)
         stored_id = existing_id or values.get("id") or mint_work_id(work)
+        for field in ("keywords", "keyword_scores"):
+            if not values.get(field):
+                values.pop(field, None)
         props = _clean_props(values, omit=("id",))
         records = self._run(
             "MERGE (w:Work {id: $id}) SET w += $props RETURN w{.*} AS work",
@@ -343,6 +348,14 @@ class Neo4jResearchGraph(ResearchGraph):
         if not records:
             return work.model_copy(update={"id": stored_id})
         return _work_model(_record_value(records[0], "work"))
+
+    def project_works(self, project_id: str) -> list[WorkNode]:
+        records = self._run(
+            "MATCH (p:Project {id: $project_id})-[:INCLUDES]->(w:Work) "
+            "RETURN w{.*} AS work, w.id AS work_id ORDER BY work_id",
+            project_id=project_id,
+        )
+        return [_work_model(_record_value(record, "work")) for record in records]
 
     def get_work(self, work_id: str) -> WorkNode | None:
         records = self._run("MATCH (w:Work {id: $id}) RETURN w{.*} AS work", id=work_id)
