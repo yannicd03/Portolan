@@ -1,0 +1,31 @@
+{
+  "status": "ok",
+  "message-type": "work",
+  "message-version": "1.0.0",
+  "message": {
+    "DOI": "10.1038/s41598-023-33607-z",
+    "URL": "https://doi.org/10.1038/s41598-023-33607-z",
+    "title": ["SciQA: a Scientific Question Answering Benchmark for Scholarly Knowledge"],
+    "subtitle": [],
+    "author": [
+      {"given": "Ada", "family": "Fixture", "sequence": "first", "affiliation": [{"name": "Fixture University"}]},
+      {"given": "Max", "family": "Example", "sequence": "additional", "affiliation": []}
+    ],
+    "published": {"date-parts": [[2023, 5, 12]]},
+    "published-print": {"date-parts": [[2023, 5, 12]]},
+    "container-title": ["Scientific Reports"],
+    "publisher": "Nature Portfolio",
+    "type": "journal-article",
+    "subtype": "original-research",
+    "volume": "13",
+    "issue": "1",
+    "page": "1-12",
+    "abstract": "<jats:p>We introduce SciQA, a benchmark for scientific question answering over scholarly knowledge.</jats:p>",
+    "link": [
+      {"URL": "https://rdcu.be/fixture-sciqa.pdf", "content-type": "application/pdf", "int": "application/pdf", "media": "screen"}
+    ],
+    "subject": ["Computer Science", "Information Science & Library Science"],
+    "reference-count": 1,
+    "is-referenced-by-count": 42
+  }
+}

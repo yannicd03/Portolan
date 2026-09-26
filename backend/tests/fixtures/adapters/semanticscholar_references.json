@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "citedPaper": {
+        "paperId": "s2-bert-001",
+        "externalIds": {"ArXiv": "1810.04805", "DOI": "10.48550/arXiv.1810.04805"},
+        "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+        "abstract": "We introduce BERT, a bidirectional Transformer representation model.",
+        "venue": "NAACL",
+        "year": 2018,
+        "publicationTypes": ["Conference"],
+        "openAccessPdf": {"url": "https://arxiv.org/pdf/1810.04805", "status": "GREEN"},
+        "tldr": {"model": "tldr@v2.0.0", "text": "Pre-trains deep bidirectional representations from unlabeled text."}
+      },
+      "intents": ["background"],
+      "isInfluential": false,
+      "contexts": ["This reference is included as a fixture for a citation edge."]
+    }
+  ],
+  "offset": 0,
+  "next": null
+}

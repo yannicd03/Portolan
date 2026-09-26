@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:arxiv="http://arxiv.org/schemas/atom">
+  <id>http://arxiv.org/api/query?search_query=ti:%22Attention%20Is%20All%20You%20Need%22</id>
+  <title>ArXiv Query: search_query=ti:&quot;Attention Is All You Need&quot;</title>
+  <updated>2026-09-20T00:00:00-04:00</updated>
+  <opensearch:totalResults xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">2</opensearch:totalResults>
+  <entry>
+    <id>http://arxiv.org/abs/1706.03762v7</id>
+    <updated>2023-05-12T12:48:17Z</updated>
+    <published>2017-06-12T17:57:34Z</published>
+    <title>Attention Is All You Need</title>
+    <summary>We propose the Transformer, a simple network architecture based solely on attention mechanisms.</summary>
+    <author><name>Ashish Vaswani</name></author>
+    <link title="pdf" rel="related" type="application/pdf" href="http://arxiv.org/pdf/1706.03762" />
+    <link rel="alternate" type="text/html" href="http://arxiv.org/abs/1706.03762v7" />
+    <arxiv:doi>10.48550/arXiv.1706.03762</arxiv:doi>
+    <arxiv:journal_ref>Advances in Neural Information Processing Systems 30 (2017)</arxiv:journal_ref>
+    <arxiv:primary_category term="cs.CL" />
+    <category term="cs.CL" />
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2301.00001v1</id>
+    <updated>2023-01-01T00:00:00Z</updated>
+    <published>2023-01-01T00:00:00Z</published>
+    <title>Attention Is All You Need for a New Benchmark</title>
+    <summary>A deliberately similar but distinct title used to exercise filtering.</summary>
+    <author><name>Fixture Author</name></author>
+    <link title="pdf" rel="related" type="application/pdf" href="http://arxiv.org/pdf/2301.00001" />
+    <link rel="alternate" type="text/html" href="http://arxiv.org/abs/2301.00001v1" />
+    <arxiv:primary_category term="cs.IR" />
+    <category term="cs.IR" />
+  </entry>
+</feed>

@@ -1,0 +1,557 @@
+@prefix ptl:     <https://w3id.org/portolan/ontology#> .
+@prefix cito:    <http://purl.org/spar/cito/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix fabio:   <http://purl.org/spar/fabio/> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+# Shape 1 — bibliographic Work minimum
+#################################################################
+
+ptl:WorkShape a sh:NodeShape ;
+    rdfs:label "Work shape"@en ;
+    rdfs:comment "Every Work has its minimum bibliographic metadata and at least one identifier or URL."@en ;
+    sh:targetClass ptl:Work ;
+    sh:message "A Work must have exactly one title, issued value, source tier, and at least one identifier or URL."@en ;
+    sh:property [
+        sh:path dcterms:title ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "The Work must have exactly one title."@en
+    ] ;
+    sh:property [
+        sh:path dcterms:issued ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:or (
+            [ sh:datatype xsd:date ]
+            [ sh:datatype xsd:gYear ]
+        ) ;
+        sh:message "The Work must have exactly one issued date or year typed as xsd:date or xsd:gYear."@en
+    ] ;
+    sh:property [
+        sh:path ptl:sourceTier ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "The Work must have exactly one source tier."@en
+    ] ;
+    sh:or (
+        [ sh:path ptl:doi ; sh:minCount 1 ]
+        [ sh:path ptl:arxivId ; sh:minCount 1 ]
+        [ sh:path ptl:openAlexId ; sh:minCount 1 ]
+        [ sh:path ptl:s2Id ; sh:minCount 1 ]
+        [ sh:path ptl:url ; sh:minCount 1 ]
+    ) .
+
+#################################################################
+# Shape 2 — allowlisted blog publishers
+#################################################################
+
+ptl:BlogPostPublisherShape a sh:NodeShape ;
+    rdfs:label "Blog-post publisher shape"@en ;
+    rdfs:comment "A Work typed as blogPost must be published by an Organization carrying an ptl:allowlistedDomain assertion. The pipeline loads sources/official_blogs.yaml into the graph as those Organization assertions."@en ;
+    sh:targetClass ptl:Work ;
+    sh:message "A blogPost Work must have a publisher Organization whose domain is on the official-blog allowlist."@en ;
+    sh:sparql [
+        sh:message "The blogPost Work must be published by an Organization with ptl:allowlistedDomain loaded from sources/official_blogs.yaml."@en ;
+        sh:select """
+            PREFIX ptl: <https://w3id.org/portolan/ontology#>
+            SELECT $this
+            WHERE {
+                $this ptl:workType "blogPost" .
+                FILTER NOT EXISTS {
+                    $this ptl:publishedBy ?publisher .
+                    ?publisher a ptl:Organization ;
+                               ptl:allowlistedDomain ?domain .
+                }
+            }
+        """
+    ] .
+
+#################################################################
+# Shape 3 — statement evidence belongs to the owning Work
+#################################################################
+
+ptl:StatementEvidenceShape a sh:NodeShape ;
+    rdfs:label "Statement evidence shape"@en ;
+    rdfs:comment "Every Contribution, Result, Claim, Limitation, and FutureWork statement has evidence from its own Work."@en ;
+    sh:targetClass ptl:Contribution ;
+    sh:targetClass ptl:Result ;
+    sh:targetClass ptl:Claim ;
+    sh:targetClass ptl:Limitation ;
+    sh:targetClass ptl:FutureWork ;
+    sh:message "A statement must have at least one Evidence node whose fromWork equals the statement's ofWork."@en ;
+    sh:property [
+        sh:path ptl:ofWork ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class ptl:Work ;
+        sh:message "The statement must name exactly one owning Work."@en
+    ] ;
+    sh:property [
+        sh:path ptl:hasEvidence ;
+        sh:minCount 1 ;
+        sh:class ptl:Evidence ;
+        sh:message "The statement must link to at least one Evidence node."@en
+    ] ;
+    sh:sparql [
+        sh:message "The statement has no Evidence node whose ptl:fromWork equals its owning ptl:ofWork."@en ;
+        sh:select """
+            PREFIX ptl: <https://w3id.org/portolan/ontology#>
+            SELECT $this
+            WHERE {
+                $this ptl:ofWork ?owningWork .
+                FILTER NOT EXISTS {
+                    $this ptl:hasEvidence ?evidence .
+                    ?evidence a ptl:Evidence ;
+                              ptl:fromWork ?evidenceWork .
+                    FILTER (?evidenceWork = ?owningWork)
+                }
+            }
+        """
+    ] .
+
+#################################################################
+# Shape 4 — complete Result measurements
+#################################################################
+
+ptl:ResultShape a sh:NodeShape ;
+    rdfs:label "Result shape"@en ;
+    rdfs:comment "Every Result identifies its method, dataset, metric, and decimal value."@en ;
+    sh:targetClass ptl:Result ;
+    sh:message "A Result must have exactly one method, dataset, metric, and decimal value."@en ;
+    sh:property [
+        sh:path ptl:ofMethod ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class ptl:Method ;
+        sh:message "The Result must have exactly one method."@en
+    ] ;
+    sh:property [
+        sh:path ptl:onDataset ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class ptl:Dataset ;
+        sh:message "The Result must have exactly one dataset."@en
+    ] ;
+    sh:property [
+        sh:path ptl:withMetric ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class ptl:Metric ;
+        sh:message "The Result must have exactly one metric."@en
+    ] ;
+    sh:property [
+        sh:path ptl:value ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:message "The Result must have exactly one decimal value."@en
+    ] .
+
+#################################################################
+# Shape 5 — review Inclusion cardinality and exclusion reason
+#################################################################
+
+ptl:InclusionShape a sh:NodeShape ;
+    rdfs:label "Inclusion shape"@en ;
+    rdfs:comment "Every Inclusion belongs to one Review and one Work, has one decision, and explains exclusions."@en ;
+    sh:targetClass ptl:Inclusion ;
+    sh:message "An Inclusion must have exactly one Work, one Review, one decision, and a reason when excluded."@en ;
+    sh:property [
+        sh:path ptl:ofWork ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class ptl:Work ;
+        sh:message "The Inclusion must link to exactly one Work."@en
+    ] ;
+    sh:property [
+        sh:path ptl:ofReview ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class ptl:Review ;
+        sh:message "The Inclusion must link to exactly one Review."@en
+    ] ;
+    sh:property [
+        sh:path ptl:decision ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "The Inclusion must have exactly one decision."@en
+    ] ;
+    sh:property [
+        sh:path ptl:frontierScore ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:message "The frontier score must be at most one decimal value."@en
+    ] ;
+    sh:property [
+        sh:path ptl:frontierComponentVelocity ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:message "The frontier velocity component must be one decimal in [0,1]."@en
+    ] ;
+    sh:property [
+        sh:path ptl:frontierComponentMainPathLeaf ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:message "The frontier main-path-leaf component must be one decimal in [0,1]."@en
+    ] ;
+    sh:property [
+        sh:path ptl:frontierComponentClusterGrowth ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:message "The frontier cluster-growth component must be one decimal in [0,1]."@en
+    ] ;
+    sh:property [
+        sh:path ptl:frontierComponentConceptNovelty ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:message "The frontier concept-novelty component must be one decimal in [0,1]."@en
+    ] ;
+    sh:property [
+        sh:path ptl:frontierComponentSotaClaim ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:message "The frontier SOTA-claim component must be one decimal in [0,1]."@en
+    ] ;
+    sh:property [
+        sh:path ptl:frontierComponentNotPeerReviewed ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:message "The frontier not-peer-reviewed component must be one decimal in [0,1]."@en
+    ] ;
+    sh:sparql [
+        sh:message "An Inclusion with a frontier score must provide all six frontier components."@en ;
+        sh:select """
+            PREFIX ptl: <https://w3id.org/portolan/ontology#>
+            SELECT $this
+            WHERE {
+                $this ptl:frontierScore ?score .
+                FILTER (
+                    NOT EXISTS { $this ptl:frontierComponentVelocity ?velocity . }
+                    || NOT EXISTS { $this ptl:frontierComponentMainPathLeaf ?mainPathLeaf . }
+                    || NOT EXISTS { $this ptl:frontierComponentClusterGrowth ?clusterGrowth . }
+                    || NOT EXISTS { $this ptl:frontierComponentConceptNovelty ?conceptNovelty . }
+                    || NOT EXISTS { $this ptl:frontierComponentSotaClaim ?sotaClaim . }
+                    || NOT EXISTS { $this ptl:frontierComponentNotPeerReviewed ?notPeerReviewed . }
+                )
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "An excluded Inclusion must have a reason."@en ;
+        sh:select """
+            PREFIX ptl: <https://w3id.org/portolan/ontology#>
+            SELECT $this
+            WHERE {
+                $this ptl:decision "excluded" .
+                FILTER NOT EXISTS { $this ptl:reason ?reason . }
+            }
+        """
+    ] .
+
+#################################################################
+# Shape 6 — complete GapHypothesis records
+#################################################################
+
+ptl:GapHypothesisShape a sh:NodeShape ;
+    rdfs:label "Gap hypothesis shape"@en ;
+    rdfs:comment "Every GapHypothesis has its type, statement, support or concept, bounded confidence, and user status."@en ;
+    sh:targetClass ptl:GapHypothesis ;
+    sh:message "A GapHypothesis must have one type, statement, support or about value, confidence in [0,1], and one user status."@en ;
+    sh:property [
+        sh:path ptl:gapType ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "The GapHypothesis must have exactly one gap type."@en
+    ] ;
+    sh:property [
+        sh:path ptl:statement ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "The GapHypothesis must have exactly one statement."@en
+    ] ;
+    sh:or (
+        [ sh:path ptl:supportedBy ; sh:minCount 1 ]
+        [ sh:path ptl:about ; sh:minCount 1 ]
+    ) ;
+    sh:property [
+        sh:path ptl:supportedBy ;
+        sh:or (
+            [ sh:class ptl:Limitation ]
+            [ sh:class ptl:FutureWork ]
+            [ sh:class ptl:Claim ]
+            [ sh:class ptl:Result ]
+            [ sh:class ptl:Work ]
+        ) ;
+        sh:message "Each GapHypothesis supportedBy value must be a Limitation, FutureWork, Claim, Result, or Work."@en
+    ] ;
+    sh:property [
+        sh:path ptl:confidence ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:message "The GapHypothesis confidence must be exactly one decimal in [0,1]."@en
+    ] ;
+    sh:property [
+        sh:path ptl:userStatus ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "The GapHypothesis must have exactly one user status."@en
+    ] .
+
+#################################################################
+# Shape 7 — all closed enumerations
+#################################################################
+
+ptl:EnumerationShape a sh:NodeShape ;
+    rdfs:label "Enumeration shape"@en ;
+    rdfs:comment "Every closed enumeration in the ontology contract is restricted to its declared vocabulary."@en ;
+    # The class target keeps the contract shapes discoverable as
+    # targetClass shapes; targetSubjectsOf below applies the constraints to
+    # every subject that actually uses an enumerated property.
+    sh:targetClass ptl:Work ;
+    sh:targetSubjectsOf ptl:workType ;
+    sh:targetSubjectsOf ptl:sourceTier ;
+    sh:targetSubjectsOf ptl:orgKind ;
+    sh:targetSubjectsOf ptl:venueKind ;
+    sh:targetSubjectsOf ptl:seedKind ;
+    sh:targetSubjectsOf ptl:allowedTier ;
+    sh:targetSubjectsOf ptl:decision ;
+    sh:targetSubjectsOf ptl:stage ;
+    sh:targetSubjectsOf ptl:discoveredVia ;
+    sh:targetSubjectsOf ptl:role ;
+    sh:targetSubjectsOf ptl:gapType ;
+    sh:targetSubjectsOf ptl:verificationOutcome ;
+    sh:targetSubjectsOf ptl:userStatus ;
+    sh:targetSubjectsOf ptl:contributionKind ;
+    sh:targetSubjectsOf ptl:fromSourceKind ;
+    sh:targetSubjectsOf ptl:citationFunction ;
+    sh:targetSubjectsOf ptl:metricDirection ;
+    sh:message "An enumerated property must use one of the vocabulary values defined by the ontology contract."@en ;
+    sh:property [
+        sh:path ptl:workType ;
+        sh:in ( "journalArticle" "conferencePaper" "preprint" "technicalReport" "blogPost" "thesis" "bookChapter" ) ;
+        sh:message "workType must be one of journalArticle, conferencePaper, preprint, technicalReport, blogPost, thesis, or bookChapter."@en
+    ] ;
+    sh:property [
+        sh:path ptl:sourceTier ;
+        sh:in ( "peerReviewed" "preprint" "officialBlog" ) ;
+        sh:message "sourceTier must be peerReviewed, preprint, or officialBlog."@en
+    ] ;
+    sh:property [
+        sh:path ptl:orgKind ;
+        sh:in ( "academic" "industry" "nonprofit" "government" ) ;
+        sh:message "orgKind must be academic, industry, nonprofit, or government."@en
+    ] ;
+    sh:property [
+        sh:path ptl:venueKind ;
+        sh:in ( "journal" "conference" "workshop" "repository" "blog" ) ;
+        sh:message "venueKind must be journal, conference, workshop, repository, or blog."@en
+    ] ;
+    sh:property [
+        sh:path ptl:seedKind ;
+        sh:in ( "paper" "topic" "prompt" ) ;
+        sh:message "seedKind must be paper, topic, or prompt."@en
+    ] ;
+    sh:property [
+        sh:path ptl:allowedTier ;
+        sh:in ( "peerReviewed" "preprint" "officialBlog" ) ;
+        sh:message "allowedTier must use a sourceTier value: peerReviewed, preprint, or officialBlog."@en
+    ] ;
+    sh:property [
+        sh:path ptl:decision ;
+        sh:in ( "included" "excluded" ) ;
+        sh:message "decision must be included or excluded."@en
+    ] ;
+    sh:property [
+        sh:path ptl:stage ;
+        sh:in ( "search" "screening" "fulltext" ) ;
+        sh:message "stage must be search, screening, or fulltext."@en
+    ] ;
+    sh:property [
+        sh:path ptl:discoveredVia ;
+        sh:in ( "seed" "search" "backward" "forward" "cocitation" "coupling" "semantic" "orkg" ) ;
+        sh:message "discoveredVia must be seed, search, backward, forward, cocitation, coupling, semantic, or orkg."@en
+    ] ;
+    sh:property [
+        sh:path ptl:role ;
+        sh:in ( "foundational" "backbone" "bridge" "survey" "rising" ) ;
+        sh:message "role must be foundational, backbone, bridge, survey, or rising."@en
+    ] ;
+    sh:property [
+        sh:path ptl:gapType ;
+        sh:in ( "matrixVoid" "statedUnaddressed" "contradiction" "evaluationGap" "bridgingGap" "stagnation" ) ;
+        sh:message "gapType must be matrixVoid, statedUnaddressed, contradiction, evaluationGap, bridgingGap, or stagnation."@en
+    ] ;
+    sh:property [
+        sh:path ptl:verificationOutcome ;
+        sh:in ( "notChecked" "noCounterEvidence" "partiallyAddressed" "refuted" ) ;
+        sh:message "verificationOutcome must be notChecked, noCounterEvidence, partiallyAddressed, or refuted."@en
+    ] ;
+    sh:property [
+        sh:path ptl:userStatus ;
+        sh:in ( "proposed" "accepted" "rejected" ) ;
+        sh:message "userStatus must be proposed, accepted, or rejected."@en
+    ] ;
+    sh:property [
+        sh:path ptl:contributionKind ;
+        sh:in ( "method" "dataset" "benchmark" "analysis" "theory" "system" "survey" "position" ) ;
+        sh:message "contributionKind must be method, dataset, benchmark, analysis, theory, system, survey, or position."@en
+    ] ;
+    sh:property [
+        sh:path ptl:fromSourceKind ;
+        sh:in ( "abstract" "fullText" "blogHtml" ) ;
+        sh:message "fromSourceKind must be abstract, fullText, or blogHtml."@en
+    ] ;
+    sh:property [
+        sh:path ptl:citationFunction ;
+        sh:in (
+            cito:obtainsBackgroundFrom
+            cito:usesMethodIn
+            cito:usesDataFrom
+            cito:extends
+            cito:critiques
+            cito:disputes
+            cito:supports
+            cito:reviews
+        ) ;
+        sh:message "citationFunction must be one of the eight allowed CiTO citation-function IRIs."@en
+    ] ;
+    sh:property [
+        sh:path ptl:metricDirection ;
+        sh:in ( "higherIsBetter" "lowerIsBetter" ) ;
+        sh:message "metricDirection must be higherIsBetter or lowerIsBetter."@en
+    ] ;
+    sh:sparql [
+        sh:message "A Venue may have a FaBiO alignment only to fabio:Journal when its venueKind is journal."@en ;
+        sh:select """
+            PREFIX ptl: <https://w3id.org/portolan/ontology#>
+            PREFIX fabio: <http://purl.org/spar/fabio/>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this
+            WHERE {
+                $this ptl:venueKind ?kind ;
+                      skos:closeMatch ?alignment .
+                FILTER (STRSTARTS(STR(?alignment), "http://purl.org/spar/fabio/"))
+                FILTER (?kind != "journal" || ?alignment != fabio:Journal)
+            }
+        """
+    ] .
+
+#################################################################
+# Shape 8 — Metric optimization direction
+#################################################################
+
+ptl:MetricShape a sh:NodeShape ;
+    rdfs:label "Metric shape"@en ;
+    rdfs:comment "Every Metric declares whether higher or lower values are better."@en ;
+    sh:targetClass ptl:Metric ;
+    sh:message "Every Metric must have exactly one metricDirection from the closed vocabulary."@en ;
+    sh:property [
+        sh:path ptl:metricDirection ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:in ( "higherIsBetter" "lowerIsBetter" ) ;
+        sh:message "The Metric must have exactly one metricDirection: higherIsBetter or lowerIsBetter."@en
+    ] .
+
+#################################################################
+# Shape 9 — review-scoped ClusterPair measures
+#################################################################
+
+ptl:ClusterPairShape a sh:NodeShape ;
+    rdfs:label "Cluster-pair shape"@en ;
+    rdfs:comment "Every ClusterPair has one review, two ordered cluster endpoints, and its two measures; duplicate unordered pairs are rejected."@en ;
+    sh:targetClass ptl:ClusterPair ;
+    sh:message "A ClusterPair must have exactly one review, clusterA, clusterB, semantic similarity, and cross-citation count."@en ;
+    sh:property [
+        sh:path ptl:ofReview ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class ptl:Review ;
+        sh:message "The ClusterPair must link to exactly one Review."@en
+    ] ;
+    sh:property [
+        sh:path ptl:clusterA ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:class ptl:Cluster ;
+        sh:message "The ClusterPair must have exactly one IRI-valued clusterA of class Cluster."@en
+    ] ;
+    sh:property [
+        sh:path ptl:clusterB ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:class ptl:Cluster ;
+        sh:message "The ClusterPair must have exactly one IRI-valued clusterB of class Cluster."@en
+    ] ;
+    sh:property [
+        sh:path ptl:semanticSimilarity ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:message "The ClusterPair semantic similarity must be exactly one decimal in [0,1]."@en
+    ] ;
+    sh:property [
+        sh:path ptl:crossCitationCount ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:message "The ClusterPair cross-citation count must be exactly one non-negative integer."@en
+    ] ;
+    sh:sparql [
+        sh:message "clusterA must be lexicographically smaller than clusterB so each unordered pair is written once."@en ;
+        sh:select """
+            PREFIX ptl: <https://w3id.org/portolan/ontology#>
+            SELECT $this
+            WHERE {
+                $this ptl:clusterA ?clusterA ;
+                      ptl:clusterB ?clusterB .
+                FILTER (STR(?clusterA) >= STR(?clusterB))
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "A review must not contain the same ordered ClusterPair more than once."@en ;
+        sh:select """
+            PREFIX ptl: <https://w3id.org/portolan/ontology#>
+            SELECT $this
+            WHERE {
+                $this ptl:ofReview ?review ;
+                      ptl:clusterA ?clusterA ;
+                      ptl:clusterB ?clusterB .
+                ?other a ptl:ClusterPair ;
+                       ptl:ofReview ?review ;
+                       ptl:clusterA ?clusterA ;
+                       ptl:clusterB ?clusterB .
+                FILTER (?other != $this)
+            }
+        """
+    ] .

@@ -1,0 +1,49 @@
+# CQ11 — Which cluster pairs are semantically close but citation-disconnected?
+# PARAMS: ?review (IRI, review-scoped), ?similarityThreshold (decimal, minimum semantic similarity)
+# NOTE: v0.2 materializes one review-scoped ptl:ClusterPair per unordered pair.
+# Its semanticSimilarity and crossCitationCount values are the authoritative
+# measures; a zero cross-citation count is citation-disconnected.
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?pair ?clusterA ?clusterALabel ?clusterB ?clusterBLabel
+       ?semanticSimilarity ?crossCitationCount
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  # /PARAM-BLOCK
+
+  GRAPH ?reviewGraph {
+    {
+      SELECT ?similarityThreshold
+      WHERE {
+        # PARAM-BLOCK
+        VALUES ?similarityThreshold { 0.75 }
+        # /PARAM-BLOCK
+      }
+    }
+
+    # Keep the parameter subquery inside the named graph: Oxigraph otherwise
+    # fails to correlate the rewritten bindings with ?reviewGraph. The pair
+    # endpoint type and review joins remain explicit contract checks.
+
+    ?pair a ptl:ClusterPair ;
+      ptl:ofReview ?review ;
+      ptl:clusterA ?clusterA ;
+      ptl:clusterB ?clusterB ;
+      ptl:semanticSimilarity ?semanticSimilarity ;
+      ptl:crossCitationCount ?crossCitationCount .
+    ?clusterA a ptl:Cluster ;
+      ptl:ofReview ?review .
+    ?clusterB a ptl:Cluster ;
+      ptl:ofReview ?review .
+    FILTER (?crossCitationCount = 0)
+    FILTER (?semanticSimilarity >= ?similarityThreshold)
+    FILTER (STR(?clusterA) < STR(?clusterB))
+    OPTIONAL { ?clusterA rdfs:label ?clusterALabel }
+    OPTIONAL { ?clusterB rdfs:label ?clusterBLabel }
+  }
+}
+ORDER BY DESC(?semanticSimilarity) ?clusterA ?clusterB

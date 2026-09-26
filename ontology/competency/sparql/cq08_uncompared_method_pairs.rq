@@ -1,0 +1,73 @@
+# CQ08 — Which methods were never compared on a shared dataset?
+# PARAMS: ?review (IRI, review-scoped)
+# NOTE: the contract has no explicit method-comparison predicate; “compared” is
+# operationalized as both methods having a result on the same dataset in the
+# review corpus.
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+
+SELECT DISTINCT ?methodA ?methodB
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  # /PARAM-BLOCK
+
+  GRAPH ?reviewGraphA {
+    ?inclusionA a ptl:Inclusion ;
+      ptl:ofReview ?review ;
+      ptl:ofWork ?workA ;
+      ptl:decision "included" .
+  }
+  GRAPH ?contentGraphA {
+    ?resultA a ptl:Result ;
+      ptl:ofWork ?workA ;
+      ptl:ofMethod ?methodA ;
+      ptl:onDataset ?datasetA .
+    ?methodA a ptl:Method .
+    ?datasetA a ptl:Dataset .
+  }
+  GRAPH ?reviewGraphB {
+    ?inclusionB a ptl:Inclusion ;
+      ptl:ofReview ?review ;
+      ptl:ofWork ?workB ;
+      ptl:decision "included" .
+  }
+  GRAPH ?contentGraphB {
+    ?resultB a ptl:Result ;
+      ptl:ofWork ?workB ;
+      ptl:ofMethod ?methodB ;
+      ptl:onDataset ?datasetB .
+    ?methodB a ptl:Method .
+    ?datasetB a ptl:Dataset .
+  }
+  FILTER (STR(?methodA) < STR(?methodB))
+
+  # No included result pair in the corpus uses the same dataset for both methods.
+  FILTER NOT EXISTS {
+    GRAPH ?sharedReviewGraphA {
+      ?sharedInclusionA a ptl:Inclusion ;
+        ptl:ofReview ?review ;
+        ptl:ofWork ?sharedWorkA ;
+        ptl:decision "included" .
+    }
+    GRAPH ?sharedContentGraphA {
+      ?sharedResultA a ptl:Result ;
+        ptl:ofWork ?sharedWorkA ;
+        ptl:ofMethod ?methodA ;
+        ptl:onDataset ?sharedDataset .
+    }
+    GRAPH ?sharedReviewGraphB {
+      ?sharedInclusionB a ptl:Inclusion ;
+        ptl:ofReview ?review ;
+        ptl:ofWork ?sharedWorkB ;
+        ptl:decision "included" .
+    }
+    GRAPH ?sharedContentGraphB {
+      ?sharedResultB a ptl:Result ;
+        ptl:ofWork ?sharedWorkB ;
+        ptl:ofMethod ?methodB ;
+        ptl:onDataset ?sharedDataset .
+    }
+  }
+}
+ORDER BY ?methodA ?methodB

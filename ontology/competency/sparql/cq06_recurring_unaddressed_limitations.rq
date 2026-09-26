@@ -1,0 +1,70 @@
+# CQ06 — Which limitations are stated by ≥3 works and addressed by no later work in the corpus?
+# PARAMS: ?review (IRI, review-scoped), ?n (integer, minimum number of works)
+# NOTE: v0.2 negates explicit review-scoped ptl:addressesLimitation edges. The
+# edge is joined through ptl:about so repeated limitation statement nodes remain
+# groupable across works.
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?about ?limitationTexts ?statingWorkCount ?oldestStatementDate
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  VALUES ?n { 3 }
+  # /PARAM-BLOCK
+
+  {
+    SELECT ?review ?about
+           (GROUP_CONCAT(DISTINCT STR(?limitationText); separator=" | ") AS ?limitationTexts)
+           (COUNT(DISTINCT ?work) AS ?statingWorkCount)
+           (MIN(?issued) AS ?oldestStatementDate)
+           (MAX(?issued) AS ?latestStatementDate)
+    WHERE {
+      GRAPH ?reviewGraph {
+        ?inclusion a ptl:Inclusion ;
+          ptl:ofReview ?review ;
+          ptl:ofWork ?work ;
+          ptl:decision "included" .
+      }
+      GRAPH ?contentGraph {
+        ?limitation a ptl:Limitation ;
+          ptl:ofWork ?work ;
+          ptl:about ?about ;
+          ptl:limitationText ?limitationText .
+      }
+      GRAPH ptlg:biblio {
+        ?work a ptl:Work ;
+          dcterms:issued ?issued .
+      }
+    }
+    GROUP BY ?review ?about
+  }
+
+  FILTER (?statingWorkCount >= ?n)
+
+  # A later included work counts only when the review-scoped analysis edge points
+  # to a Limitation about the same concept.
+  FILTER NOT EXISTS {
+    GRAPH ?laterReviewGraph {
+      ?laterInclusion a ptl:Inclusion ;
+        ptl:ofReview ?review ;
+        ptl:ofWork ?laterWork ;
+        ptl:decision "included" .
+      ?laterContribution ptl:addressesLimitation ?addressedLimitation .
+    }
+    GRAPH ?laterContentGraph {
+      ?laterContribution a ptl:Contribution ;
+        ptl:ofWork ?laterWork .
+      ?addressedLimitation a ptl:Limitation ;
+        ptl:about ?about .
+    }
+    GRAPH ptlg:biblio {
+      ?laterWork a ptl:Work ;
+        dcterms:issued ?laterIssued .
+    }
+    FILTER (?laterIssued > ?latestStatementDate)
+  }
+}
+ORDER BY DESC(?statingWorkCount) ?about

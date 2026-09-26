@@ -1,0 +1,29 @@
+{
+  "total": 2,
+  "offset": 0,
+  "next": null,
+  "data": [
+    {
+      "paperId": "s2-transformer-001",
+      "externalIds": {"ArXiv": "1706.03762", "DOI": "10.48550/arXiv.1706.03762"},
+      "title": "Attention Is All You Need",
+      "abstract": "The Transformer is a simple network architecture based solely on attention mechanisms.",
+      "venue": "Advances in Neural Information Processing Systems",
+      "year": 2017,
+      "publicationTypes": ["Conference"],
+      "openAccessPdf": {"url": "https://arxiv.org/pdf/1706.03762", "status": "GREEN"},
+      "tldr": {"model": "tldr@v2.0.0", "text": "Introduces the Transformer."}
+    },
+    {
+      "paperId": "s2-transformer-near-001",
+      "externalIds": {"ArXiv": "2301.00001"},
+      "title": "Attention Is All You Need for a New Benchmark",
+      "abstract": "A distinct paper with a similar title.",
+      "venue": "Fixture Venue",
+      "year": 2023,
+      "publicationTypes": ["Conference"],
+      "openAccessPdf": null,
+      "tldr": null
+    }
+  ]
+}

@@ -1,0 +1,1029 @@
+@prefix ptl:     <https://w3id.org/portolan/ontology#> .
+@prefix ptlr:    <https://w3id.org/portolan/id/> .
+@prefix ptlg:    <https://w3id.org/portolan/graph/> .
+@prefix cito:    <http://purl.org/spar/cito/> .
+@prefix fabio:   <http://purl.org/spar/fabio/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+ptl: a owl:Ontology ;
+    rdfs:label "Agentic Research Graph ontology"@en ;
+    rdfs:comment "The RDF vocabulary for the Portolan M0 binding. Instance IRIs use ptlr:, and graph partitions use ptlg:; both namespaces are intentionally stable placeholders until the w3id path is registered."@en ;
+    owl:versionInfo "0.2" ;
+    dcterms:created "2026-09-22"^^xsd:date .
+
+# v0.2 amendments (2026-09-22; A1-A7): typed GapHypothesis support, named frontier
+# components, metric direction, limitation analysis, ClusterPair measures,
+# extraction-run IRIs, and string-valued review seeds are binding changes.
+
+#################################################################
+# Classes: bibliographic layer
+#################################################################
+
+ptl:Work a owl:Class ;
+    rdfs:label "Work"@en ;
+    rdfs:comment "A bibliographic work in the corpus, identified using the preferred DOI, arXiv, OpenAlex, Semantic Scholar, or URL scheme."@en ;
+    rdfs:subClassOf fabio:Work ;
+    rdfs:comment "Alignment: rdfs:subClassOf fabio:Work is genuine because every ptl:Work is a scholarly or citable work represented by the broader FaBiO work class."@en .
+
+ptl:Author a owl:Class ;
+    rdfs:label "Author"@en ;
+    rdfs:comment "A person credited with authorship of a Work."@en ;
+    rdfs:subClassOf foaf:Person ;
+    rdfs:comment "Alignment: rdfs:subClassOf foaf:Person is genuine because an ptl:Author is the narrower role of a person who authors a Work."@en .
+
+ptl:Authorship a owl:Class ;
+    rdfs:label "Authorship"@en ;
+    rdfs:comment "A reserved node for an ordered Work-to-Author authorship assertion. Authorship nodes are not otherwise modeled in v0.1 and are minted only if the spike shows author order is needed."@en .
+
+ptl:Organization a owl:Class ;
+    rdfs:label "Organization"@en ;
+    rdfs:comment "An organization associated with an author or publishing a Work."@en ;
+    rdfs:subClassOf foaf:Organization ;
+    rdfs:comment "Alignment: rdfs:subClassOf foaf:Organization is genuine because the local class adds corpus-specific organization kind and allowlist metadata to a FOAF organization."@en .
+
+ptl:Venue a owl:Class ;
+    rdfs:label "Venue"@en ;
+    rdfs:comment "A journal, conference, workshop, repository, or blog venue in which a Work appears."@en ;
+    rdfs:comment "Alignment is conditional: an ptl:Venue instance may use skos:closeMatch fabio:Journal only when ptl:venueKind is journal; conference series, workshops, repositories, and blogs receive no FaBiO alignment."@en .
+
+ptl:Citation a owl:Class ;
+    rdfs:label "Citation"@en ;
+    rdfs:comment "A reified citation assertion connecting a citing Work to a cited Work and optionally classifying its citation function."@en ;
+    rdfs:subClassOf cito:Citation ;
+    rdfs:comment "Alignment: rdfs:subClassOf cito:Citation is genuine because every reified ptl:Citation is a CiTO citation with additional explicit work links and citation metadata."@en .
+
+#################################################################
+# Classes: concept and content layers
+#################################################################
+
+ptl:Problem a owl:Class ;
+    rdfs:label "Problem"@en ;
+    rdfs:comment "A canonicalized research problem concept."@en ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:comment "Alignment: rdfs:subClassOf skos:Concept is genuine because Problem is a domain-specific concept scheme member."@en .
+
+ptl:Method a owl:Class ;
+    rdfs:label "Method"@en ;
+    rdfs:comment "A canonicalized research method concept."@en ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:comment "Alignment: rdfs:subClassOf skos:Concept is genuine because Method is a domain-specific concept scheme member."@en .
+
+ptl:Dataset a owl:Class ;
+    rdfs:label "Dataset"@en ;
+    rdfs:comment "A canonicalized dataset concept used or evaluated in the corpus."@en ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:comment "Alignment: rdfs:subClassOf skos:Concept is genuine because Dataset is a domain-specific concept scheme member."@en .
+
+ptl:Metric a owl:Class ;
+    rdfs:label "Metric"@en ;
+    rdfs:comment "A canonicalized evaluation metric concept."@en ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:comment "Alignment: rdfs:subClassOf skos:Concept is genuine because Metric is a domain-specific concept scheme member."@en .
+
+ptl:Contribution a owl:Class ;
+    rdfs:label "Contribution"@en ;
+    rdfs:comment "A work-scoped statement describing what a Work contributes, with at least one supporting Evidence item."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because a contribution is an extracted content entity that can carry provenance."@en .
+
+ptl:Result a owl:Class ;
+    rdfs:label "Result"@en ;
+    rdfs:comment "A work-scoped quantitative or qualitative evaluation result."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because a result is an extracted content entity that can carry provenance."@en .
+
+ptl:Claim a owl:Class ;
+    rdfs:label "Claim"@en ;
+    rdfs:comment "A work-scoped claim about one or more canonicalized concepts."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because a claim is an extracted content entity that can carry provenance."@en .
+
+ptl:Limitation a owl:Class ;
+    rdfs:label "Limitation"@en ;
+    rdfs:comment "A limitation stated by a Work about a method, dataset, or Work."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because a limitation is an extracted content entity that can carry provenance."@en .
+
+ptl:FutureWork a owl:Class ;
+    rdfs:label "Future work"@en ;
+    rdfs:comment "A future-work statement made by a Work about a canonicalized concept."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because future-work text is an extracted content entity that can carry provenance."@en .
+
+#################################################################
+# Classes: review and provenance layers
+#################################################################
+
+ptl:Review a owl:Class ;
+    rdfs:label "Review"@en ;
+    rdfs:comment "A review-scoped research exploration with a seed, protocol, budget, and analysis outputs."@en ;
+    skos:closeMatch prov:Activity ;
+    rdfs:comment "Alignment: skos:closeMatch is used for prov:Activity because a Review coordinates an activity but also acts as a durable review record containing its outputs."@en .
+
+ptl:ReviewProtocol a owl:Class ;
+    rdfs:label "Review protocol"@en ;
+    rdfs:comment "The scope, inclusion and exclusion criteria, year bounds, tier restrictions, and budgets governing a Review."@en ;
+    rdfs:subClassOf prov:Plan ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Plan is genuine because a review protocol specifies the plan followed by a review activity."@en .
+
+ptl:Inclusion a owl:Class ;
+    rdfs:label "Inclusion"@en ;
+    rdfs:comment "A review-scoped decision and analysis record for one Work."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because an inclusion record is a durable review analysis entity."@en .
+
+ptl:Cluster a owl:Class ;
+    rdfs:label "Cluster"@en ;
+    rdfs:comment "A review-scoped cluster of works or concepts at a particular hierarchy level."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because a cluster is a durable analysis entity with provenance."@en .
+
+ptl:ClusterPair a owl:Class ;
+    rdfs:label "Cluster pair"@en ;
+    rdfs:comment "A review-scoped, unordered pair of Clusters with semantic-similarity and cross-citation measures. Each pair is written once with clusterA lexicographically smaller than clusterB."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because a cluster pair is a durable review analysis entity."@en .
+
+ptl:GapHypothesis a owl:Class ;
+    rdfs:label "Gap hypothesis"@en ;
+    rdfs:comment "A review-scoped hypothesis about an under-addressed research gap and its verification status."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because a gap hypothesis is a durable analytical assertion with provenance."@en .
+
+ptl:Evidence a owl:Class ;
+    rdfs:label "Evidence"@en ;
+    rdfs:comment "A verbatim quote and locator from the Work that supports an extracted statement."@en ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "Alignment: rdfs:subClassOf prov:Entity is genuine because evidence is an extracted provenance-bearing entity."@en .
+
+#################################################################
+# Bibliographic properties
+#################################################################
+
+ptl:workType a owl:DatatypeProperty ;
+    rdfs:label "work type"@en ;
+    rdfs:comment "The flat bibliographic type of a Work; allowed values are journalArticle, conferencePaper, preprint, technicalReport, blogPost, thesis, and bookChapter."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+ptl:isSurvey a owl:DatatypeProperty ;
+    rdfs:label "is survey"@en ;
+    rdfs:comment "Whether the Work is a survey; this is a boolean and not a Work subclass."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:boolean .
+
+ptl:doi a owl:DatatypeProperty ;
+    rdfs:label "DOI"@en ;
+    rdfs:comment "The DOI identifier of a Work, when available."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+ptl:arxivId a owl:DatatypeProperty ;
+    rdfs:label "arXiv identifier"@en ;
+    rdfs:comment "The arXiv identifier of a Work, when available."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+ptl:openAlexId a owl:DatatypeProperty ;
+    rdfs:label "OpenAlex identifier"@en ;
+    rdfs:comment "The OpenAlex identifier of a Work, when available."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+ptl:s2Id a owl:DatatypeProperty ;
+    rdfs:label "Semantic Scholar identifier"@en ;
+    rdfs:comment "The Semantic Scholar identifier of a Work, when available."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+ptl:url a owl:DatatypeProperty ;
+    rdfs:label "URL"@en ;
+    rdfs:comment "A resolvable URL for a Work or its canonical landing page."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:anyURI .
+
+ptl:sourceTier a owl:DatatypeProperty ;
+    rdfs:label "source tier"@en ;
+    rdfs:comment "The closed source-tier classification of a Work."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+ptl:oaStatus a owl:DatatypeProperty ;
+    rdfs:label "open-access status"@en ;
+    rdfs:comment "The source-reported open-access status of a Work."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+ptl:fullTextAvailable a owl:DatatypeProperty ;
+    rdfs:label "full text available"@en ;
+    rdfs:comment "Whether full text for the Work was available to the extraction pipeline."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:boolean .
+
+ptl:globalCitationCount a owl:DatatypeProperty ;
+    rdfs:label "global citation count"@en ;
+    rdfs:comment "The citation count reported by a global source at the given as-of date."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:integer .
+
+ptl:asOf a owl:DatatypeProperty ;
+    rdfs:label "citation count as of"@en ;
+    rdfs:comment "The date at which globalCitationCount was observed."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:date .
+
+ptl:tldr a owl:DatatypeProperty ;
+    rdfs:label "TL;DR"@en ;
+    rdfs:comment "A short source- or pipeline-provided summary of a Work."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+ptl:sourceApi a owl:DatatypeProperty ;
+    rdfs:label "source API"@en ;
+    rdfs:comment "The API or source system from which bibliographic metadata was obtained."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+ptl:retrievedAt a owl:DatatypeProperty ;
+    rdfs:label "retrieved at"@en ;
+    rdfs:comment "The date and time at which source metadata was retrieved."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:dateTime .
+
+ptl:authoredBy a owl:ObjectProperty ;
+    rdfs:label "authored by"@en ;
+    rdfs:comment "Links a Work to an Author; author order is intentionally not encoded on this shortcut relation."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range ptl:Author ;
+    rdfs:subPropertyOf dcterms:creator ;
+    rdfs:comment "Alignment: rdfs:subPropertyOf dcterms:creator is genuine because authorship is the narrower, role-specific form of creating a Work."@en .
+
+ptl:authorPosition a owl:DatatypeProperty ;
+    rdfs:label "author position"@en ;
+    rdfs:comment "The integer author order on a separately minted authorship node if author order is needed; authorship nodes are not otherwise modeled in v0.1."@en ;
+    rdfs:domain ptl:Authorship ;
+    rdfs:range xsd:integer .
+
+ptl:affiliatedWith a owl:ObjectProperty ;
+    rdfs:label "affiliated with"@en ;
+    rdfs:comment "Links an Author to an Organization with which the author is affiliated."@en ;
+    rdfs:domain ptl:Author ;
+    rdfs:range ptl:Organization .
+
+ptl:publishedIn a owl:ObjectProperty ;
+    rdfs:label "published in"@en ;
+    rdfs:comment "Links a Work to its Venue."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range ptl:Venue ;
+    rdfs:subPropertyOf dcterms:isPartOf ;
+    rdfs:comment "Alignment: rdfs:subPropertyOf dcterms:isPartOf is a genuine directional specialization because a Work is part of the Venue in which it is published."@en .
+
+ptl:publishedBy a owl:ObjectProperty ;
+    rdfs:label "published by"@en ;
+    rdfs:comment "Links a Work to the Organization that publishes it."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range ptl:Organization ;
+    rdfs:subPropertyOf dcterms:publisher ;
+    rdfs:comment "Alignment: rdfs:subPropertyOf dcterms:publisher is genuine because the local relation specializes the standard publisher relation to Organizations."@en .
+
+ptl:hasVersion a owl:ObjectProperty ;
+    rdfs:label "has version"@en ;
+    rdfs:comment "Links a Work to another Work that is one of its versions."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range ptl:Work ;
+    rdfs:subPropertyOf dcterms:hasVersion ;
+    rdfs:comment "Alignment: rdfs:subPropertyOf dcterms:hasVersion is genuine because the local relation carries the same version relation with Work-specific typing."@en .
+
+ptl:isCanonicalVersion a owl:DatatypeProperty ;
+    rdfs:label "is canonical version"@en ;
+    rdfs:comment "Whether a Work is the canonical version selected for corpus analysis."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:boolean .
+
+ptl:orgKind a owl:DatatypeProperty ;
+    rdfs:label "organization kind"@en ;
+    rdfs:comment "The closed kind of an Organization: academic, industry, nonprofit, or government."@en ;
+    rdfs:domain ptl:Organization ;
+    rdfs:range xsd:string .
+
+ptl:venueKind a owl:DatatypeProperty ;
+    rdfs:label "venue kind"@en ;
+    rdfs:comment "The closed kind of a Venue: journal, conference, workshop, repository, or blog."@en ;
+    rdfs:domain ptl:Venue ;
+    rdfs:range xsd:string .
+
+ptl:allowlistedDomain a owl:DatatypeProperty ;
+    rdfs:label "allowlisted domain"@en ;
+    rdfs:comment "A domain asserted on an Organization when the pipeline's official-blog allowlist recognizes that publisher. The pipeline loads sources/official_blogs.yaml into the graph as these assertions."@en ;
+    rdfs:domain ptl:Organization ;
+    rdfs:range xsd:string .
+
+#################################################################
+# Citation properties
+#################################################################
+
+ptl:citingWork a owl:ObjectProperty ;
+    rdfs:label "citing Work"@en ;
+    rdfs:comment "The Work that makes a reified Citation."@en ;
+    rdfs:domain ptl:Citation ;
+    rdfs:range ptl:Work .
+
+ptl:citedWork a owl:ObjectProperty ;
+    rdfs:label "cited Work"@en ;
+    rdfs:comment "The Work cited by a reified Citation."@en ;
+    rdfs:domain ptl:Citation ;
+    rdfs:range ptl:Work .
+
+ptl:citationFunction a owl:ObjectProperty ;
+    rdfs:label "citation function"@en ;
+    rdfs:comment "The closed CiTO function assigned to a reified Citation."@en ;
+    rdfs:domain ptl:Citation ;
+    rdfs:range rdfs:Resource .
+
+ptl:isInfluential a owl:DatatypeProperty ;
+    rdfs:label "is influential"@en ;
+    rdfs:comment "Whether the citation is marked influential by the source or pipeline."@en ;
+    rdfs:domain ptl:Citation ;
+    rdfs:range xsd:boolean .
+
+ptl:citationContext a owl:DatatypeProperty ;
+    rdfs:label "citation context"@en ;
+    rdfs:comment "The contextual text surrounding a citation, when available."@en ;
+    rdfs:domain ptl:Citation ;
+    rdfs:range xsd:string .
+
+#################################################################
+# Concept and statement properties
+#################################################################
+
+ptl:extendsMethod a owl:ObjectProperty ;
+    rdfs:label "extends method"@en ;
+    rdfs:comment "Links a Method concept to the Method concept it extends; this is distinct from cito:extends."@en ;
+    rdfs:domain ptl:Method ;
+    rdfs:range ptl:Method .
+
+ptl:firstSeenIn a owl:ObjectProperty ;
+    rdfs:label "first seen in"@en ;
+    rdfs:comment "The Work in which the pipeline first observed a canonicalized concept."@en ;
+    rdfs:domain skos:Concept ;
+    rdfs:range ptl:Work .
+
+ptl:metricDirection a owl:DatatypeProperty ;
+    rdfs:label "metric direction"@en ;
+    rdfs:comment "The closed optimization direction of a Metric: higherIsBetter or lowerIsBetter; every Metric must declare exactly one direction."@en ;
+    rdfs:domain ptl:Metric ;
+    rdfs:range xsd:string .
+
+ptl:ofWork a owl:ObjectProperty ;
+    rdfs:label "of Work"@en ;
+    rdfs:comment "Links a work-scoped statement or evidence item to exactly one owning Work."@en ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range ptl:Work ;
+    rdfs:subPropertyOf dcterms:isPartOf ;
+    rdfs:comment "Alignment: rdfs:subPropertyOf dcterms:isPartOf is used as a directional approximation for statement ownership within a Work; the local property remains more specific."@en .
+
+ptl:addresses a owl:ObjectProperty ;
+    rdfs:label "addresses"@en ;
+    rdfs:comment "Links a Contribution to the Problem it addresses."@en ;
+    rdfs:domain ptl:Contribution ;
+    rdfs:range ptl:Problem .
+
+ptl:proposes a owl:ObjectProperty ;
+    rdfs:label "proposes"@en ;
+    rdfs:comment "Links a Contribution to a Method it proposes."@en ;
+    rdfs:domain ptl:Contribution ;
+    rdfs:range ptl:Method .
+
+ptl:uses a owl:ObjectProperty ;
+    rdfs:label "uses"@en ;
+    rdfs:comment "Links a Contribution to a Method it uses."@en ;
+    rdfs:domain ptl:Contribution ;
+    rdfs:range ptl:Method .
+
+ptl:evaluatesOn a owl:ObjectProperty ;
+    rdfs:label "evaluates on"@en ;
+    rdfs:comment "Links a Contribution to a Dataset on which it evaluates its method or system."@en ;
+    rdfs:domain ptl:Contribution ;
+    rdfs:range ptl:Dataset .
+
+ptl:reports a owl:ObjectProperty ;
+    rdfs:label "reports"@en ;
+    rdfs:comment "Links a Contribution to a Result that it reports."@en ;
+    rdfs:domain ptl:Contribution ;
+    rdfs:range ptl:Result .
+
+ptl:contributionKind a owl:DatatypeProperty ;
+    rdfs:label "contribution kind"@en ;
+    rdfs:comment "The closed kind of a Contribution: method, dataset, benchmark, analysis, theory, system, survey, or position."@en ;
+    rdfs:domain ptl:Contribution ;
+    rdfs:range xsd:string .
+
+ptl:ofMethod a owl:ObjectProperty ;
+    rdfs:label "of method"@en ;
+    rdfs:comment "The Method evaluated by a Result."@en ;
+    rdfs:domain ptl:Result ;
+    rdfs:range ptl:Method .
+
+ptl:onDataset a owl:ObjectProperty ;
+    rdfs:label "on dataset"@en ;
+    rdfs:comment "The Dataset on which a Result was measured."@en ;
+    rdfs:domain ptl:Result ;
+    rdfs:range ptl:Dataset .
+
+ptl:withMetric a owl:ObjectProperty ;
+    rdfs:label "with metric"@en ;
+    rdfs:comment "The Metric used to express a Result."@en ;
+    rdfs:domain ptl:Result ;
+    rdfs:range ptl:Metric .
+
+ptl:value a owl:DatatypeProperty ;
+    rdfs:label "value"@en ;
+    rdfs:comment "The decimal value of a Result."@en ;
+    rdfs:domain ptl:Result ;
+    rdfs:range xsd:decimal .
+
+ptl:unit a owl:DatatypeProperty ;
+    rdfs:label "unit"@en ;
+    rdfs:comment "The unit or scale associated with a Result value."@en ;
+    rdfs:domain ptl:Result ;
+    rdfs:range xsd:string .
+
+ptl:setting a owl:DatatypeProperty ;
+    rdfs:label "setting"@en ;
+    rdfs:comment "The experimental or evaluation setting for a Result."@en ;
+    rdfs:domain ptl:Result ;
+    rdfs:range xsd:string .
+
+ptl:claimsSOTA a owl:DatatypeProperty ;
+    rdfs:label "claims state of the art"@en ;
+    rdfs:comment "Whether the Work claims that the Result is state of the art."@en ;
+    rdfs:domain ptl:Result ;
+    rdfs:range xsd:boolean .
+
+ptl:claimText a owl:DatatypeProperty ;
+    rdfs:label "claim text"@en ;
+    rdfs:comment "The text of a Claim."@en ;
+    rdfs:domain ptl:Claim ;
+    rdfs:range xsd:string .
+
+ptl:about a owl:ObjectProperty ;
+    rdfs:label "about"@en ;
+    rdfs:comment "Links a Claim, Limitation, FutureWork statement, or GapHypothesis to a canonicalized concept."@en ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range skos:Concept ;
+    rdfs:subPropertyOf dcterms:subject ;
+    rdfs:comment "Alignment: rdfs:subPropertyOf dcterms:subject is genuine because the local relation identifies the concept that a statement is about."@en .
+
+ptl:supportsClaim a owl:ObjectProperty ;
+    rdfs:label "supports claim"@en ;
+    rdfs:comment "A derived relation from one Claim to another Claim that it supports."@en ;
+    rdfs:domain ptl:Claim ;
+    rdfs:range ptl:Claim .
+
+ptl:contradictsClaim a owl:ObjectProperty ;
+    rdfs:label "contradicts claim"@en ;
+    rdfs:comment "A derived relation from one Claim to another Claim that it contradicts."@en ;
+    rdfs:domain ptl:Claim ;
+    rdfs:range ptl:Claim .
+
+ptl:limitationText a owl:DatatypeProperty ;
+    rdfs:label "limitation text"@en ;
+    rdfs:comment "The text of a Limitation."@en ;
+    rdfs:domain ptl:Limitation ;
+    rdfs:range xsd:string .
+
+ptl:limitationOf a owl:ObjectProperty ;
+    rdfs:label "limitation of"@en ;
+    rdfs:comment "Links a Limitation to the Method, Dataset, or Work that it limits."@en ;
+    rdfs:domain ptl:Limitation ;
+    rdfs:range rdfs:Resource .
+
+ptl:futureWorkText a owl:DatatypeProperty ;
+    rdfs:label "future-work text"@en ;
+    rdfs:comment "The text of a FutureWork statement."@en ;
+    rdfs:domain ptl:FutureWork ;
+    rdfs:range xsd:string .
+
+ptl:hasEvidence a owl:ObjectProperty ;
+    rdfs:label "has evidence"@en ;
+    rdfs:comment "Links a Contribution, Result, Claim, Limitation, or FutureWork statement to its supporting Evidence node."@en ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range ptl:Evidence ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:comment "Alignment: rdfs:subPropertyOf prov:wasDerivedFrom is genuine because the extracted statement is derived from the cited Evidence item."@en .
+
+ptl:addressesLimitation a owl:ObjectProperty ;
+    rdfs:label "addresses limitation"@en ;
+    rdfs:comment "A review-scoped analysis relation from a Contribution to a Limitation it addresses; when derived from extracted content it carries ptl:hasEvidence."@en ;
+    rdfs:domain ptl:Contribution ;
+    rdfs:range ptl:Limitation .
+
+#################################################################
+# Review-layer properties
+#################################################################
+
+ptl:seedKind a owl:DatatypeProperty ;
+    rdfs:label "seed kind"@en ;
+    rdfs:comment "The closed kind of a Review seed: paper, topic, or prompt."@en ;
+    rdfs:domain ptl:Review ;
+    rdfs:range xsd:string .
+
+ptl:seedValue a owl:DatatypeProperty ;
+    rdfs:label "seed value"@en ;
+    rdfs:comment "The source identifier or text seed supplied to a Review as an xsd:string in every seed mode; a paper seed is resolved to an ptl:Work separately."@en ;
+    rdfs:domain ptl:Review ;
+    rdfs:range xsd:string .
+
+ptl:hasProtocol a owl:ObjectProperty ;
+    rdfs:label "has protocol"@en ;
+    rdfs:comment "Links a Review to exactly one ReviewProtocol."@en ;
+    rdfs:domain ptl:Review ;
+    rdfs:range ptl:ReviewProtocol .
+
+ptl:startedAt a owl:DatatypeProperty ;
+    rdfs:label "started at"@en ;
+    rdfs:comment "The date and time at which a Review started."@en ;
+    rdfs:domain ptl:Review ;
+    rdfs:range xsd:dateTime .
+
+ptl:endedAt a owl:DatatypeProperty ;
+    rdfs:label "ended at"@en ;
+    rdfs:comment "The date and time at which a Review ended."@en ;
+    rdfs:domain ptl:Review ;
+    rdfs:range xsd:dateTime .
+
+ptl:budgetWorks a owl:DatatypeProperty ;
+    rdfs:label "work budget"@en ;
+    rdfs:comment "The maximum number of Works budgeted for a Review."@en ;
+    rdfs:domain ptl:Review ;
+    rdfs:range xsd:integer .
+
+ptl:budgetUsd a owl:DatatypeProperty ;
+    rdfs:label "USD budget"@en ;
+    rdfs:comment "The monetary budget for a Review in US dollars."@en ;
+    rdfs:domain ptl:Review ;
+    rdfs:range xsd:decimal .
+
+ptl:spendUsd a owl:DatatypeProperty ;
+    rdfs:label "USD spend"@en ;
+    rdfs:comment "The monetary spend recorded for a Review in US dollars."@en ;
+    rdfs:domain ptl:Review ;
+    rdfs:range xsd:decimal .
+
+ptl:scopeStatement a owl:DatatypeProperty ;
+    rdfs:label "scope statement"@en ;
+    rdfs:comment "The natural-language scope statement in a ReviewProtocol."@en ;
+    rdfs:domain ptl:ReviewProtocol ;
+    rdfs:range xsd:string .
+
+ptl:inclusionCriterion a owl:DatatypeProperty ;
+    rdfs:label "inclusion criterion"@en ;
+    rdfs:comment "A criterion that a Work must satisfy to be included in a Review; repeatable."@en ;
+    rdfs:domain ptl:ReviewProtocol ;
+    rdfs:range xsd:string .
+
+ptl:exclusionCriterion a owl:DatatypeProperty ;
+    rdfs:label "exclusion criterion"@en ;
+    rdfs:comment "A criterion that excludes a Work from a Review; repeatable."@en ;
+    rdfs:domain ptl:ReviewProtocol ;
+    rdfs:range xsd:string .
+
+ptl:fromYear a owl:DatatypeProperty ;
+    rdfs:label "from year"@en ;
+    rdfs:comment "The inclusive lower year bound in a ReviewProtocol."@en ;
+    rdfs:domain ptl:ReviewProtocol ;
+    rdfs:range xsd:gYear .
+
+ptl:toYear a owl:DatatypeProperty ;
+    rdfs:label "to year"@en ;
+    rdfs:comment "The inclusive upper year bound in a ReviewProtocol."@en ;
+    rdfs:domain ptl:ReviewProtocol ;
+    rdfs:range xsd:gYear .
+
+ptl:allowedTier a owl:DatatypeProperty ;
+    rdfs:label "allowed source tier"@en ;
+    rdfs:comment "A source-tier value permitted by a ReviewProtocol; values use the sourceTier vocabulary."@en ;
+    rdfs:domain ptl:ReviewProtocol ;
+    rdfs:range xsd:string .
+
+ptl:maxWorks a owl:DatatypeProperty ;
+    rdfs:label "maximum works"@en ;
+    rdfs:comment "The maximum number of Works allowed by a ReviewProtocol."@en ;
+    rdfs:domain ptl:ReviewProtocol ;
+    rdfs:range xsd:integer .
+
+ptl:maxSnowballDepth a owl:DatatypeProperty ;
+    rdfs:label "maximum snowball depth"@en ;
+    rdfs:comment "The maximum backward or forward citation snowball depth allowed by a ReviewProtocol."@en ;
+    rdfs:domain ptl:ReviewProtocol ;
+    rdfs:range xsd:integer .
+
+ptl:ofReview a owl:ObjectProperty ;
+    rdfs:label "of review"@en ;
+    rdfs:comment "Links a review-scoped analysis node to its owning Review."@en ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range ptl:Review .
+
+ptl:decision a owl:DatatypeProperty ;
+    rdfs:label "review decision"@en ;
+    rdfs:comment "The closed inclusion decision: included or excluded."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:string .
+
+ptl:stage a owl:DatatypeProperty ;
+    rdfs:label "review stage"@en ;
+    rdfs:comment "The closed screening stage at which an Inclusion decision was made: search, screening, or fulltext."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:string .
+
+ptl:reason a owl:DatatypeProperty ;
+    rdfs:label "decision reason"@en ;
+    rdfs:comment "The reason recorded for an Inclusion decision, required when the decision is excluded."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:string .
+
+ptl:discoveredVia a owl:DatatypeProperty ;
+    rdfs:label "discovered via"@en ;
+    rdfs:comment "The closed discovery route for an Inclusion."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:string .
+
+ptl:relevance a owl:DatatypeProperty ;
+    rdfs:label "relevance"@en ;
+    rdfs:comment "A review relevance score in the closed numeric interval [0,1]."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:pageRank a owl:DatatypeProperty ;
+    rdfs:label "PageRank"@en ;
+    rdfs:comment "The review-scoped PageRank score of the included Work."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:betweenness a owl:DatatypeProperty ;
+    rdfs:label "betweenness"@en ;
+    rdfs:comment "The review-scoped betweenness score of the included Work."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:onMainPath a owl:DatatypeProperty ;
+    rdfs:label "on main path"@en ;
+    rdfs:comment "Whether the included Work is on the precomputed review-scoped main citation path."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:boolean .
+
+ptl:citationVelocity a owl:DatatypeProperty ;
+    rdfs:label "citation velocity"@en ;
+    rdfs:comment "The review-scoped citation-velocity score of an included Work."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:frontierScore a owl:DatatypeProperty ;
+    rdfs:label "frontier score"@en ;
+    rdfs:comment "The review-scoped frontier score of an included Work."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:frontierComponentVelocity a owl:DatatypeProperty ;
+    rdfs:label "frontier component: velocity"@en ;
+    rdfs:comment "The age-normalized citation-velocity component of an Inclusion's review-scoped frontier score."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:frontierComponentMainPathLeaf a owl:DatatypeProperty ;
+    rdfs:label "frontier component: main-path leaf"@en ;
+    rdfs:comment "The main-path-leaf component of an Inclusion's review-scoped frontier score."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:frontierComponentClusterGrowth a owl:DatatypeProperty ;
+    rdfs:label "frontier component: cluster growth"@en ;
+    rdfs:comment "The fast-growing-cluster component of an Inclusion's review-scoped frontier score."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:frontierComponentConceptNovelty a owl:DatatypeProperty ;
+    rdfs:label "frontier component: concept novelty"@en ;
+    rdfs:comment "The concept-novelty component of an Inclusion's review-scoped frontier score."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:frontierComponentSotaClaim a owl:DatatypeProperty ;
+    rdfs:label "frontier component: SOTA claim"@en ;
+    rdfs:comment "The tracked-benchmark SOTA-claim component of an Inclusion's review-scoped frontier score."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:frontierComponentNotPeerReviewed a owl:DatatypeProperty ;
+    rdfs:label "frontier component: not peer reviewed"@en ;
+    rdfs:comment "The preprint-or-official-blog component of an Inclusion's review-scoped frontier score."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:decimal .
+
+ptl:role a owl:DatatypeProperty ;
+    rdfs:label "review role"@en ;
+    rdfs:comment "A repeatable closed role for an included Work: foundational, backbone, bridge, survey, or rising."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range xsd:string .
+
+ptl:inCluster a owl:ObjectProperty ;
+    rdfs:label "in cluster"@en ;
+    rdfs:comment "Links an Inclusion to the review-scoped Cluster containing its Work."@en ;
+    rdfs:domain ptl:Inclusion ;
+    rdfs:range ptl:Cluster .
+
+ptl:level a owl:DatatypeProperty ;
+    rdfs:label "cluster level"@en ;
+    rdfs:comment "The integer hierarchy level of a Cluster."@en ;
+    rdfs:domain ptl:Cluster ;
+    rdfs:range xsd:integer .
+
+ptl:parentCluster a owl:ObjectProperty ;
+    rdfs:label "parent cluster"@en ;
+    rdfs:comment "The optional parent Cluster in the review-scoped cluster hierarchy."@en ;
+    rdfs:domain ptl:Cluster ;
+    rdfs:range ptl:Cluster .
+
+ptl:summary a owl:DatatypeProperty ;
+    rdfs:label "cluster summary"@en ;
+    rdfs:comment "A natural-language summary of a Cluster."@en ;
+    rdfs:domain ptl:Cluster ;
+    rdfs:range xsd:string .
+
+ptl:growthRate a owl:DatatypeProperty ;
+    rdfs:label "growth rate"@en ;
+    rdfs:comment "The review-scoped growth rate of a Cluster."@en ;
+    rdfs:domain ptl:Cluster ;
+    rdfs:range xsd:decimal .
+
+ptl:topConcept a owl:ObjectProperty ;
+    rdfs:label "top concept"@en ;
+    rdfs:comment "The leading concept associated with a Cluster."@en ;
+    rdfs:domain ptl:Cluster ;
+    rdfs:range skos:Concept .
+
+ptl:clusterA a owl:ObjectProperty ;
+    rdfs:label "cluster A"@en ;
+    rdfs:comment "The lexicographically smaller Cluster in an unordered ClusterPair."@en ;
+    rdfs:domain ptl:ClusterPair ;
+    rdfs:range ptl:Cluster .
+
+ptl:clusterB a owl:ObjectProperty ;
+    rdfs:label "cluster B"@en ;
+    rdfs:comment "The lexicographically larger Cluster in an unordered ClusterPair."@en ;
+    rdfs:domain ptl:ClusterPair ;
+    rdfs:range ptl:Cluster .
+
+ptl:semanticSimilarity a owl:DatatypeProperty ;
+    rdfs:label "semantic similarity"@en ;
+    rdfs:comment "The review-scoped semantic similarity of a ClusterPair, in the closed numeric interval [0,1]."@en ;
+    rdfs:domain ptl:ClusterPair ;
+    rdfs:range xsd:decimal .
+
+ptl:crossCitationCount a owl:DatatypeProperty ;
+    rdfs:label "cross-citation count"@en ;
+    rdfs:comment "The integer count of citations crossing between the two Clusters in a ClusterPair."@en ;
+    rdfs:domain ptl:ClusterPair ;
+    rdfs:range xsd:integer .
+
+ptl:gapType a owl:DatatypeProperty ;
+    rdfs:label "gap type"@en ;
+    rdfs:comment "The closed type of a GapHypothesis."@en ;
+    rdfs:domain ptl:GapHypothesis ;
+    rdfs:range xsd:string .
+
+ptl:statement a owl:DatatypeProperty ;
+    rdfs:label "gap statement"@en ;
+    rdfs:comment "The natural-language statement of a GapHypothesis."@en ;
+    rdfs:domain ptl:GapHypothesis ;
+    rdfs:range xsd:string .
+
+ptl:supportedBy a owl:ObjectProperty ;
+    rdfs:label "supported by"@en ;
+    rdfs:comment "Links a GapHypothesis to a Limitation, FutureWork, Claim, Result, or Work that supports the hypothesis."@en ;
+    rdfs:domain ptl:GapHypothesis ;
+    rdfs:range [
+        a owl:Class ;
+        owl:unionOf ( ptl:Limitation ptl:FutureWork ptl:Claim ptl:Result ptl:Work )
+    ] .
+
+ptl:confidence a owl:DatatypeProperty ;
+    rdfs:label "confidence"@en ;
+    rdfs:comment "A GapHypothesis confidence score in the closed numeric interval [0,1]."@en ;
+    rdfs:domain ptl:GapHypothesis ;
+    rdfs:range xsd:decimal .
+
+ptl:verificationOutcome a owl:DatatypeProperty ;
+    rdfs:label "verification outcome"@en ;
+    rdfs:comment "The closed verification outcome of a GapHypothesis."@en ;
+    rdfs:domain ptl:GapHypothesis ;
+    rdfs:range xsd:string .
+
+ptl:userStatus a owl:DatatypeProperty ;
+    rdfs:label "user status"@en ;
+    rdfs:comment "The closed user status of a GapHypothesis: proposed, accepted, or rejected."@en ;
+    rdfs:domain ptl:GapHypothesis ;
+    rdfs:range xsd:string .
+
+ptl:userNote a owl:DatatypeProperty ;
+    rdfs:label "user note"@en ;
+    rdfs:comment "An optional user note attached to a GapHypothesis."@en ;
+    rdfs:domain ptl:GapHypothesis ;
+    rdfs:range xsd:string .
+
+#################################################################
+# Evidence and provenance properties
+#################################################################
+
+ptl:quote a owl:DatatypeProperty ;
+    rdfs:label "evidence quote"@en ;
+    rdfs:comment "A verbatim, string-verified quote supporting a statement."@en ;
+    rdfs:domain ptl:Evidence ;
+    rdfs:range xsd:string .
+
+ptl:locator a owl:DatatypeProperty ;
+    rdfs:label "evidence locator"@en ;
+    rdfs:comment "A page, section, paragraph, or other locator for an Evidence quote."@en ;
+    rdfs:domain ptl:Evidence ;
+    rdfs:range xsd:string .
+
+ptl:fromWork a owl:ObjectProperty ;
+    rdfs:label "from Work"@en ;
+    rdfs:comment "The Work from which an Evidence quote was extracted; it must equal the owning statement's ptl:ofWork."@en ;
+    rdfs:domain ptl:Evidence ;
+    rdfs:range ptl:Work ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:comment "Alignment: rdfs:subPropertyOf prov:wasDerivedFrom is genuine because the Evidence item is derived from its source Work."@en .
+
+ptl:fromSourceKind a owl:DatatypeProperty ;
+    rdfs:label "evidence source kind"@en ;
+    rdfs:comment "The closed source kind of Evidence: abstract, fullText, or blogHtml."@en ;
+    rdfs:domain ptl:Evidence ;
+    rdfs:range xsd:string .
+
+ptl:model a owl:DatatypeProperty ;
+    rdfs:label "extraction model"@en ;
+    rdfs:comment "The model identifier used by an extraction run."@en ;
+    rdfs:domain prov:Activity ;
+    rdfs:range xsd:string .
+
+ptl:promptVersion a owl:DatatypeProperty ;
+    rdfs:label "prompt version"@en ;
+    rdfs:comment "The prompt version used by an extraction run."@en ;
+    rdfs:domain prov:Activity ;
+    rdfs:range xsd:string .
+
+ptl:ontologyVersion a owl:DatatypeProperty ;
+    rdfs:label "ontology version"@en ;
+    rdfs:comment "The ontology version used by an extraction run."@en ;
+    rdfs:domain prov:Activity ;
+    rdfs:range xsd:string .
+
+#################################################################
+# Standard vocabulary declarations used by the contract
+#################################################################
+
+dcterms:title a owl:DatatypeProperty ;
+    rdfs:label "title"@en ;
+    rdfs:comment "The title of a Work."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+dcterms:created a owl:DatatypeProperty ;
+    rdfs:label "created"@en ;
+    rdfs:comment "The creation date of an ontology or other described resource; the ontology header uses an xsd:date value."@en ;
+    rdfs:domain owl:Ontology ;
+    rdfs:range xsd:date .
+
+dcterms:abstract a owl:DatatypeProperty ;
+    rdfs:label "abstract"@en ;
+    rdfs:comment "The abstract of a Work, when available."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range xsd:string .
+
+dcterms:issued a owl:DatatypeProperty ;
+    rdfs:label "issued"@en ;
+    rdfs:comment "The issue date or year of a Work; the binding permits xsd:date or xsd:gYear."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range rdfs:Literal .
+
+dcterms:creator a owl:ObjectProperty ;
+    rdfs:label "creator"@en ;
+    rdfs:comment "The standard creator relation specialized by ptl:authoredBy."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range foaf:Person .
+
+dcterms:publisher a owl:ObjectProperty ;
+    rdfs:label "publisher"@en ;
+    rdfs:comment "The standard publisher relation specialized by ptl:publishedBy."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range ptl:Organization .
+
+dcterms:isPartOf a owl:ObjectProperty ;
+    rdfs:label "is part of"@en ;
+    rdfs:comment "The standard containment relation used as an alignment for Work ownership and venue membership."@en ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range rdfs:Resource .
+
+dcterms:hasVersion a owl:ObjectProperty ;
+    rdfs:label "has version"@en ;
+    rdfs:comment "The standard version relation specialized by ptl:hasVersion."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range ptl:Work .
+
+dcterms:subject a owl:ObjectProperty ;
+    rdfs:label "subject"@en ;
+    rdfs:comment "The standard subject relation specialized by ptl:about."@en ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range skos:Concept .
+
+skos:broader a owl:ObjectProperty ;
+    rdfs:label "broader"@en ;
+    rdfs:comment "The SKOS broader concept relation used between canonicalized concepts."@en ;
+    rdfs:domain skos:Concept ;
+    rdfs:range skos:Concept .
+
+skos:narrower a owl:ObjectProperty ;
+    rdfs:label "narrower"@en ;
+    rdfs:comment "The SKOS narrower concept relation used between canonicalized concepts."@en ;
+    rdfs:domain skos:Concept ;
+    rdfs:range skos:Concept .
+
+skos:exactMatch a owl:ObjectProperty ;
+    rdfs:label "exact match"@en ;
+    rdfs:comment "A SKOS exact match from a canonicalized concept to an external concept."@en ;
+    rdfs:domain skos:Concept ;
+    rdfs:range skos:Concept .
+
+skos:closeMatch a owl:ObjectProperty ;
+    rdfs:label "close match"@en ;
+    rdfs:comment "A SKOS close match used for approximate external alignment."@en ;
+    rdfs:domain skos:Concept ;
+    rdfs:range skos:Concept .
+
+cito:cites a owl:ObjectProperty ;
+    rdfs:label "cites"@en ;
+    rdfs:comment "The plain CiTO citation shortcut materialized alongside an ptl:Citation node."@en ;
+    rdfs:domain ptl:Work ;
+    rdfs:range ptl:Work .
+
+prov:endedAtTime a owl:DatatypeProperty ;
+    rdfs:label "ended at time"@en ;
+    rdfs:comment "The PROV-O end time of an extraction activity."@en ;
+    rdfs:domain prov:Activity ;
+    rdfs:range xsd:dateTime .
+
+prov:wasGeneratedBy a owl:ObjectProperty ;
+    rdfs:label "was generated by"@en ;
+    rdfs:comment "The PROV-O relation from a content entity to the extraction activity that generated it."@en ;
+    rdfs:domain prov:Entity ;
+    rdfs:range prov:Activity .
+
+prov:wasDerivedFrom a owl:ObjectProperty ;
+    rdfs:label "was derived from"@en ;
+    rdfs:comment "The PROV-O derivation relation aligned with ptl:hasEvidence and ptl:fromWork."@en ;
+    rdfs:domain prov:Entity ;
+    rdfs:range prov:Entity .
+
+#################################################################
+# Closed CiTO citation-function values
+#################################################################
+
+cito:obtainsBackgroundFrom a owl:ObjectProperty, owl:NamedIndividual ;
+    rdfs:label "obtains background from"@en ;
+    rdfs:comment "Allowed M0 value for ptl:citationFunction; the cited Work supplies background."@en .
+
+cito:usesMethodIn a owl:ObjectProperty, owl:NamedIndividual ;
+    rdfs:label "uses method in"@en ;
+    rdfs:comment "Allowed M0 value for ptl:citationFunction; the citing Work uses a method from the cited Work."@en .
+
+cito:usesDataFrom a owl:ObjectProperty, owl:NamedIndividual ;
+    rdfs:label "uses data from"@en ;
+    rdfs:comment "Allowed M0 value for ptl:citationFunction; the citing Work uses data from the cited Work."@en .
+
+cito:extends a owl:ObjectProperty, owl:NamedIndividual ;
+    rdfs:label "extends"@en ;
+    rdfs:comment "Allowed M0 value for ptl:citationFunction; the citing Work extends the cited Work."@en .
+
+cito:critiques a owl:ObjectProperty, owl:NamedIndividual ;
+    rdfs:label "critiques"@en ;
+    rdfs:comment "Allowed M0 value for ptl:citationFunction; the citing Work critiques the cited Work."@en .
+
+cito:disputes a owl:ObjectProperty, owl:NamedIndividual ;
+    rdfs:label "disputes"@en ;
+    rdfs:comment "Allowed M0 value for ptl:citationFunction; the citing Work disputes the cited Work."@en .
+
+cito:supports a owl:ObjectProperty, owl:NamedIndividual ;
+    rdfs:label "supports"@en ;
+    rdfs:comment "Allowed M0 value for ptl:citationFunction; the citing Work supports the cited Work."@en .
+
+cito:reviews a owl:ObjectProperty, owl:NamedIndividual ;
+    rdfs:label "reviews"@en ;
+    rdfs:comment "Allowed M0 value for ptl:citationFunction; the citing Work reviews the cited Work."@en .

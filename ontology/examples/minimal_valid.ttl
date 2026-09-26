@@ -1,0 +1,203 @@
+@prefix ptl: <https://w3id.org/portolan/ontology#> .
+@prefix ptlr: <https://w3id.org/portolan/id/> .
+@prefix ptlg: <https://w3id.org/portolan/graph/> .
+@prefix cito: <http://purl.org/spar/cito/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# The bibliographic facts below are limited to title, year, arXiv identifier,
+# and the source-tier assertions supplied by eval/golden/seeds.yaml.
+<https://w3id.org/portolan/graph/biblio> {
+    <https://w3id.org/portolan/id/work/arxiv/1706.03762>
+        a ptl:Work, fabio:Work ;
+        dcterms:title "Attention Is All You Need" ;
+        dcterms:issued "2017"^^xsd:gYear ;
+        ptl:arxivId "1706.03762" ;
+        ptl:sourceTier "preprint" .
+
+    <https://w3id.org/portolan/id/work/arxiv/2005.11401>
+        a ptl:Work, fabio:Work ;
+        dcterms:title "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" ;
+        dcterms:issued "2020"^^xsd:gYear ;
+        ptl:arxivId "2005.11401" ;
+        ptl:sourceTier "preprint" .
+
+    <https://w3id.org/portolan/id/work/arxiv/2402.07630>
+        a ptl:Work, fabio:Work ;
+        dcterms:title "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering" ;
+        dcterms:issued "2024"^^xsd:gYear ;
+        ptl:arxivId "2402.07630" ;
+        ptl:sourceTier "preprint" .
+
+    # The shortcut and the reified citation are both required by the contract.
+    <https://w3id.org/portolan/id/work/arxiv/2005.11401>
+        cito:cites <https://w3id.org/portolan/id/work/arxiv/1706.03762> .
+
+    <https://w3id.org/portolan/id/citation/621f75383bd6a3975d9a69756a5f5a5bca55dfab>
+        a ptl:Citation, cito:Citation ;
+        ptl:citingWork <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:citedWork <https://w3id.org/portolan/id/work/arxiv/1706.03762> ;
+        ptl:citationFunction cito:usesMethodIn .
+}
+
+<https://w3id.org/portolan/graph/content/minimal> {
+    # The content graph runId is "minimal", so its provenance activity uses
+    # the ratified ptlr:extraction/{runId} IRI pattern.
+    <https://w3id.org/portolan/id/extraction/minimal>
+        a prov:Activity ;
+        ptl:model "fixture-model" ;
+        ptl:promptVersion "fixture-prompt-v1" ;
+        ptl:ontologyVersion "0.2" ;
+        prov:endedAtTime "2026-09-22T00:00:00Z"^^xsd:dateTime .
+
+    <https://w3id.org/portolan/id/concept/problem/knowledge-intensive-nlp-tasks>
+        a ptl:Problem, skos:Concept ;
+        skos:prefLabel "knowledge-intensive NLP tasks" ;
+        prov:wasGeneratedBy <https://w3id.org/portolan/id/extraction/minimal> .
+
+    <https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation>
+        a ptl:Method, skos:Concept ;
+        skos:prefLabel "retrieval-augmented generation" ;
+        prov:wasGeneratedBy <https://w3id.org/portolan/id/extraction/minimal> .
+
+    <https://w3id.org/portolan/id/concept/dataset/knowledge-intensive-nlp-tasks>
+        a ptl:Dataset, skos:Concept ;
+        skos:prefLabel "knowledge-intensive NLP tasks" ;
+        prov:wasGeneratedBy <https://w3id.org/portolan/id/extraction/minimal> .
+
+    <https://w3id.org/portolan/id/concept/metric/exact-match>
+        a ptl:Metric, skos:Concept ;
+        skos:prefLabel "exact match" ;
+        ptl:metricDirection "higherIsBetter" ;
+        prov:wasGeneratedBy <https://w3id.org/portolan/id/extraction/minimal> .
+
+    <https://w3id.org/portolan/id/contribution/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks/1>
+        a ptl:Contribution ;
+        ptl:ofWork <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:addresses <https://w3id.org/portolan/id/concept/problem/knowledge-intensive-nlp-tasks> ;
+        ptl:proposes <https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation> ;
+        ptl:evaluatesOn <https://w3id.org/portolan/id/concept/dataset/knowledge-intensive-nlp-tasks> ;
+        ptl:reports <https://w3id.org/portolan/id/result/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks/1> ;
+        ptl:contributionKind "method" ;
+        ptl:hasEvidence <https://w3id.org/portolan/id/evidence/5070b63dff46a90164480caf173e4ab8cea53b9f> ;
+        prov:wasGeneratedBy <https://w3id.org/portolan/id/extraction/minimal> .
+
+    <https://w3id.org/portolan/id/result/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks/1>
+        a ptl:Result ;
+        ptl:ofWork <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:ofMethod <https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation> ;
+        ptl:onDataset <https://w3id.org/portolan/id/concept/dataset/knowledge-intensive-nlp-tasks> ;
+        ptl:withMetric <https://w3id.org/portolan/id/concept/metric/exact-match> ;
+        # Structural fixture value: it exercises the required decimal slot and
+        # is not presented as additional metadata from the seed file.
+        ptl:value "0.50"^^xsd:decimal ;
+        ptl:hasEvidence <https://w3id.org/portolan/id/evidence/5070b63dff46a90164480caf173e4ab8cea53b9f> ;
+        prov:wasGeneratedBy <https://w3id.org/portolan/id/extraction/minimal> .
+
+    <https://w3id.org/portolan/id/limitation/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks/1>
+        a ptl:Limitation ;
+        ptl:ofWork <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:limitationText "The fixture does not cover evaluation outside knowledge-intensive NLP tasks" ;
+        ptl:about <https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation> ;
+        ptl:limitationOf <https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation> ;
+        ptl:hasEvidence <https://w3id.org/portolan/id/evidence/5070b63dff46a90164480caf173e4ab8cea53b9f> ;
+        prov:wasGeneratedBy <https://w3id.org/portolan/id/extraction/minimal> .
+
+    <https://w3id.org/portolan/id/evidence/5070b63dff46a90164480caf173e4ab8cea53b9f>
+        a ptl:Evidence ;
+        ptl:quote "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" ;
+        ptl:locator "title" ;
+        ptl:fromWork <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:fromSourceKind "fullText" ;
+        prov:wasGeneratedBy <https://w3id.org/portolan/id/extraction/minimal> .
+}
+
+<https://w3id.org/portolan/graph/review/minimal-kgqa> {
+    <https://w3id.org/portolan/id/review/minimal-kgqa>
+        a ptl:Review ;
+        ptl:seedKind "paper" ;
+        # A paper seed retains its source identifier as a string; the
+        # resolved ptl:Work is present separately in the biblio graph.
+        ptl:seedValue "1706.03762"^^xsd:string ;
+        ptl:hasProtocol <https://w3id.org/portolan/id/protocol/minimal-kgqa> ;
+        ptl:budgetWorks 3 .
+
+    <https://w3id.org/portolan/id/protocol/minimal-kgqa>
+        a ptl:ReviewProtocol ;
+        ptl:scopeStatement "Small illustrative KGQA/RAG review fixture" ;
+        ptl:inclusionCriterion "Seed-linked works in the bounded fixture" ;
+        ptl:fromYear "2017"^^xsd:gYear ;
+        ptl:toYear "2024"^^xsd:gYear ;
+        ptl:allowedTier "preprint" ;
+        ptl:maxWorks 3 ;
+        ptl:maxSnowballDepth 1 .
+
+    <https://w3id.org/portolan/id/cluster/minimal-kgqa/1>
+        a ptl:Cluster ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/minimal-kgqa> ;
+        ptl:level 1 ;
+        rdfs:label "retrieval-augmented generation" ;
+        ptl:summary "Works connecting retrieval with generation for knowledge-intensive tasks" ;
+        ptl:growthRate "0.00"^^xsd:decimal ;
+        ptl:topConcept <https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation> .
+
+    <https://w3id.org/portolan/id/cluster/minimal-kgqa/2>
+        a ptl:Cluster ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/minimal-kgqa> ;
+        ptl:level 1 ;
+        rdfs:label "graph reasoning" ;
+        ptl:summary "Works connecting graph structure with question answering" ;
+        ptl:growthRate "0.00"^^xsd:decimal ;
+        ptl:topConcept <https://w3id.org/portolan/id/concept/problem/knowledge-intensive-nlp-tasks> .
+
+    <https://w3id.org/portolan/id/inclusion/minimal-kgqa/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks>
+        a ptl:Inclusion ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/minimal-kgqa> ;
+        ptl:ofWork <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:decision "included" ;
+        ptl:stage "screening" ;
+        ptl:discoveredVia "seed" ;
+        ptl:relevance "0.50"^^xsd:decimal ;
+        ptl:role "backbone" ;
+        ptl:inCluster <https://w3id.org/portolan/id/cluster/minimal-kgqa/1> ;
+        ptl:frontierScore "0.50"^^xsd:decimal ;
+        ptl:frontierComponentVelocity "0.50"^^xsd:decimal ;
+        ptl:frontierComponentMainPathLeaf "1.00"^^xsd:decimal ;
+        ptl:frontierComponentClusterGrowth "0.00"^^xsd:decimal ;
+        ptl:frontierComponentConceptNovelty "0.50"^^xsd:decimal ;
+        ptl:frontierComponentSotaClaim "0.00"^^xsd:decimal ;
+        ptl:frontierComponentNotPeerReviewed "1.00"^^xsd:decimal .
+
+    <https://w3id.org/portolan/id/cluster-pair/minimal-kgqa/1>
+        a ptl:ClusterPair ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/minimal-kgqa> ;
+        ptl:clusterA <https://w3id.org/portolan/id/cluster/minimal-kgqa/1> ;
+        ptl:clusterB <https://w3id.org/portolan/id/cluster/minimal-kgqa/2> ;
+        ptl:semanticSimilarity "0.50"^^xsd:decimal ;
+        ptl:crossCitationCount "0"^^xsd:integer .
+
+    <https://w3id.org/portolan/id/gap/minimal-kgqa/1>
+        a ptl:GapHypothesis ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/minimal-kgqa> ;
+        ptl:gapType "bridgingGap" ;
+        ptl:statement "The retrieval and graph-reasoning lines still need a common evaluation frame" ;
+        ptl:about <https://w3id.org/portolan/id/concept/problem/knowledge-intensive-nlp-tasks> ;
+        ptl:supportedBy <https://w3id.org/portolan/id/result/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks/1> ;
+        ptl:confidence "0.50"^^xsd:decimal ;
+        ptl:verificationOutcome "notChecked" ;
+        ptl:userStatus "proposed" .
+
+    <https://w3id.org/portolan/id/contribution/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks/1>
+        ptl:addressesLimitation <https://w3id.org/portolan/id/limitation/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks/1> .
+
+    <https://w3id.org/portolan/id/evidence/1f2dd8cf84593210b34c2a377dbfff8afb6f841f>
+        a ptl:Evidence ;
+        ptl:quote "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering" ;
+        ptl:locator "title" ;
+        ptl:fromWork <https://w3id.org/portolan/id/work/arxiv/2402.07630> ;
+        ptl:fromSourceKind "fullText" .
+}

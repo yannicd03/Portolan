@@ -1,0 +1,32 @@
+# CQ09 — Which clusters grew fastest in the last 18 months, and which concepts first appeared in them?
+# PARAMS: ?review (IRI, review-scoped)
+# NOTE: ptl:growthRate is the pipeline's precomputed 18-month cluster-growth
+# metric; ptl:topConcept is the review-scoped cluster-to-concept link used here.
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?cluster ?clusterLabel ?growthRate ?concept ?firstSeenWork ?firstSeenDate
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  # /PARAM-BLOCK
+
+  GRAPH ?reviewGraph {
+    ?cluster a ptl:Cluster ;
+      ptl:ofReview ?review ;
+      ptl:growthRate ?growthRate ;
+      ptl:topConcept ?concept .
+    OPTIONAL { ?cluster rdfs:label ?clusterLabel }
+  }
+  GRAPH ?contentGraph {
+    ?concept ptl:firstSeenIn ?firstSeenWork .
+  }
+  GRAPH ptlg:biblio {
+    ?firstSeenWork a ptl:Work ;
+      dcterms:issued ?firstSeenDate .
+  }
+}
+ORDER BY DESC(?growthRate) ?cluster ?concept

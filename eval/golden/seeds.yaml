@@ -1,0 +1,160 @@
+# Golden mini-graph seed set — M0
+#
+# Topic: knowledge-graph question answering and retrieval-augmented generation over
+# structured knowledge. Chosen because it is a CS/AI topic the user knows well
+# (AMA-KBQA precedent), it has a real citation backbone spanning 2013-2024, and it
+# exercises every layer of the ontology: a dense Problem x Method x Dataset x Metric
+# structure, surveys, preprints, and a peer-reviewed non-arXiv paper.
+#
+# `arxiv` / `doi` are HINTS ONLY. The builder must resolve each entry against a live
+# source, compare the fetched title to `title` (normalized), and FAIL LOUDLY on a
+# mismatch or an ambiguous search rather than silently accepting a different paper.
+# A hint of `null` means: resolve by title search.
+#
+# On `source_tier`: the contract treats a preprint and its published version as DISTINCT Work
+# nodes linked by ptl:hasVersion, with the tier shown being the best tier of any version. A seed
+# resolved via arXiv therefore expects `preprint` even when the paper was later published at a
+# peer-reviewed venue — the record being built IS the arXiv version. `peerReviewed` appears only
+# where the seed resolves to the published record (webqsp via ACL, sciqa via its DOI).
+#
+# `expect` fields are hand-asserted properties used as assertions by the builder's
+# self-check. They are not the source of truth for metadata — the API response is.
+
+version: 1
+topic: kgqa-rag
+description: >-
+  Knowledge-graph question answering and retrieval-augmented generation over
+  structured knowledge, 2013-2024.
+
+papers:
+  # --- foundations -------------------------------------------------------------
+  - key: transformer
+    title: "Attention Is All You Need"
+    year: 2017
+    arxiv: "1706.03762"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: bert
+    title: "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+    year: 2018
+    arxiv: "1810.04805"
+    expect: {source_tier: preprint, is_survey: false}
+
+  # --- retrieval-augmented QA backbone -----------------------------------------
+  - key: realm
+    title: "REALM: Retrieval-Augmented Language Model Pre-Training"
+    year: 2020
+    arxiv: "2002.08909"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: dpr
+    title: "Dense Passage Retrieval for Open-Domain Question Answering"
+    year: 2020
+    arxiv: "2004.04906"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: rag
+    title: "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
+    year: 2020
+    arxiv: "2005.11401"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: fid
+    title: "Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering"
+    year: 2020
+    arxiv: "2007.01282"
+    expect: {source_tier: preprint, is_survey: false}
+
+  # --- KBQA / semantic parsing lineage ------------------------------------------
+  - key: webqsp
+    title: "The Value of Semantic Parse Labeling for Knowledge Base Question Answering"
+    year: 2016
+    arxiv: null          # ACL 2016, not on arXiv — resolve via Semantic Scholar/Crossref
+    expect: {source_tier: peerReviewed, is_survey: false}
+  - key: complexwebquestions
+    title: "The Web as a Knowledge-Base for Answering Complex Questions"
+    year: 2018
+    arxiv: "1803.06643"
+    expect: {source_tier: preprint, is_survey: false}
+
+  # --- reasoning / prompting primitives -----------------------------------------
+  - key: cot
+    title: "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"
+    year: 2022
+    arxiv: "2201.11903"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: react
+    title: "ReAct: Synergizing Reasoning and Acting in Language Models"
+    year: 2022
+    arxiv: "2210.03629"
+    expect: {source_tier: preprint, is_survey: false}
+
+  # --- LLM + KG methods ----------------------------------------------------------
+  - key: structgpt
+    title: "StructGPT: A General Framework for Large Language Model to Reason over Structured Data"
+    year: 2023
+    arxiv: "2305.09645"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: kaping
+    title: "Knowledge-Augmented Language Model Prompting for Zero-Shot Knowledge Graph Question Answering"
+    year: 2023
+    arxiv: null
+    expect: {source_tier: preprint, is_survey: false}
+  - key: think_on_graph
+    title: "Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph"
+    year: 2023
+    arxiv: "2307.07697"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: rog
+    title: "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning"
+    year: 2023
+    arxiv: "2310.01061"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: g_retriever
+    title: "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering"
+    year: 2024
+    arxiv: "2402.07630"
+    expect: {source_tier: preprint, is_survey: false}
+
+  # --- RAG quality / structure ---------------------------------------------------
+  - key: self_rag
+    title: "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection"
+    year: 2023
+    arxiv: "2310.11511"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: lost_in_the_middle
+    title: "Lost in the Middle: How Language Models Use Long Contexts"
+    year: 2023
+    arxiv: "2307.03172"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: graphrag
+    title: "From Local to Global: A Graph RAG Approach to Query-Focused Summarization"
+    year: 2024
+    arxiv: "2404.16130"
+    expect: {source_tier: preprint, is_survey: false}
+  - key: hipporag
+    title: "HippoRAG: Neurobiologically Inspired Long-Term Memory for Large Language Models"
+    year: 2024
+    arxiv: null
+    expect: {source_tier: preprint, is_survey: false}
+  - key: lightrag
+    title: "LightRAG: Simple and Fast Retrieval-Augmented Generation"
+    year: 2024
+    arxiv: null
+    expect: {source_tier: preprint, is_survey: false}
+
+  # --- surveys (must be flagged, not drowned out) ---------------------------------
+  - key: llm_kg_roadmap
+    title: "Unifying Large Language Models and Knowledge Graphs: A Roadmap"
+    year: 2023
+    arxiv: "2306.08302"
+    expect: {source_tier: preprint, is_survey: true}
+  - key: graphrag_survey
+    title: "Graph Retrieval-Augmented Generation: A Survey"
+    year: 2024
+    arxiv: null
+    expect: {source_tier: preprint, is_survey: true}
+
+  # --- peer-reviewed, non-arXiv, and directly relevant to this project -------------
+  - key: sciqa
+    title: "SciQA: a Scientific Question Answering Benchmark for Scholarly Knowledge"
+    year: 2023
+    arxiv: null
+    doi: "10.1038/s41598-023-33607-z"
+    expect: {source_tier: peerReviewed, is_survey: false}

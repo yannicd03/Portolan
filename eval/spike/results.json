@@ -1,0 +1,1833 @@
+{
+  "backends": {
+    "neo4j": {
+      "backend": "neo4j",
+      "competency_questions": [
+        {
+          "best_wall_time_seconds": 0.0027224679943174124,
+          "error": null,
+          "executed": true,
+          "number": "CQ01",
+          "parameters": {
+            "review": "kgqa-rag"
+          },
+          "query_file": "ontology/competency/cypher/cq01_review_roles_by_cluster.cypher",
+          "query_non_comment_line_count": 12,
+          "row_count": 29,
+          "row_counts_across_runs": [
+            29
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 29,
+              "wall_time_seconds": 0.16195502103073522
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 29,
+              "wall_time_seconds": 0.0034026550129055977
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 29,
+              "wall_time_seconds": 0.0027224679943174124
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.003409408964216709,
+          "error": null,
+          "executed": true,
+          "number": "CQ02",
+          "parameters": {
+            "review": "kgqa-rag",
+            "seed": "https://w3id.org/portolan/id/work/arxiv/1706.03762"
+          },
+          "query_file": "ontology/competency/cypher/cq02_seed_main_path.cypher",
+          "query_non_comment_line_count": 21,
+          "row_count": 17,
+          "row_counts_across_runs": [
+            17
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 17,
+              "wall_time_seconds": 0.3329587450134568
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 17,
+              "wall_time_seconds": 0.0041741179884411395
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 17,
+              "wall_time_seconds": 0.003409408964216709
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0026831119903363287,
+          "error": null,
+          "executed": true,
+          "number": "CQ03",
+          "parameters": {
+            "problem": "https://w3id.org/portolan/id/concept/problem/knowledge-graph-question-answering"
+          },
+          "query_file": "ontology/competency/cypher/cq03_methods_for_problem.cypher",
+          "query_non_comment_line_count": 12,
+          "row_count": 20,
+          "row_counts_across_runs": [
+            20
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 20,
+              "wall_time_seconds": 0.16055767703801394
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 20,
+              "wall_time_seconds": 0.0037236670032143593
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 20,
+              "wall_time_seconds": 0.0026831119903363287
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.006112188973929733,
+          "error": null,
+          "executed": true,
+          "number": "CQ04",
+          "parameters": {
+            "review": "kgqa-rag"
+          },
+          "query_file": "ontology/competency/cypher/cq04_best_result_by_dataset_metric.cypher",
+          "query_non_comment_line_count": 31,
+          "row_count": 5,
+          "row_counts_across_runs": [
+            5
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 5,
+              "wall_time_seconds": 0.31808800500584766
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 5,
+              "wall_time_seconds": 0.006112188973929733
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 5,
+              "wall_time_seconds": 0.006565304996911436
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.016637838969472796,
+          "error": null,
+          "executed": true,
+          "number": "CQ05",
+          "parameters": {
+            "n": 3,
+            "review": "kgqa-rag"
+          },
+          "query_file": "ontology/competency/cypher/cq05_dense_empty_problem_method_cells.cypher",
+          "query_non_comment_line_count": 18,
+          "row_count": 8,
+          "row_counts_across_runs": [
+            8
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 8,
+              "wall_time_seconds": 0.17126756301149726
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 8,
+              "wall_time_seconds": 0.0198164299945347
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 8,
+              "wall_time_seconds": 0.016637838969472796
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.002054105047136545,
+          "error": null,
+          "executed": true,
+          "number": "CQ06",
+          "parameters": {
+            "n": 3,
+            "review": "kgqa-rag"
+          },
+          "query_file": "ontology/competency/cypher/cq06_recurring_unaddressed_limitations.cypher",
+          "query_non_comment_line_count": 25,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.13566170603735372
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.002470762003213167
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.002054105047136545
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0013146040146239102,
+          "error": null,
+          "executed": true,
+          "number": "CQ07",
+          "parameters": {
+            "review": "kgqa-rag"
+          },
+          "query_file": "ontology/competency/cypher/cq07_contradicted_claims.cypher",
+          "query_non_comment_line_count": 14,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.06761592702241614
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.001721540989819914
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0013146040146239102
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.028476922016125172,
+          "error": null,
+          "executed": true,
+          "number": "CQ08",
+          "parameters": {
+            "review": "kgqa-rag"
+          },
+          "query_file": "ontology/competency/cypher/cq08_uncompared_method_pairs.cypher",
+          "query_non_comment_line_count": 23,
+          "row_count": 19,
+          "row_counts_across_runs": [
+            19
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 19,
+              "wall_time_seconds": 0.5579634849564172
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 19,
+              "wall_time_seconds": 0.035792147973552346
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 19,
+              "wall_time_seconds": 0.028476922016125172
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0012465619947761297,
+          "error": null,
+          "executed": true,
+          "number": "CQ09",
+          "parameters": {
+            "review": "kgqa-rag"
+          },
+          "query_file": "ontology/competency/cypher/cq09_fastest_cluster_growth.cypher",
+          "query_non_comment_line_count": 11,
+          "row_count": 4,
+          "row_counts_across_runs": [
+            4
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 4,
+              "wall_time_seconds": 0.053552450030110776
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 4,
+              "wall_time_seconds": 0.0016152570024132729
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 4,
+              "wall_time_seconds": 0.0012465619947761297
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0016569570288993418,
+          "error": null,
+          "executed": true,
+          "number": "CQ10",
+          "parameters": {
+            "review": "kgqa-rag"
+          },
+          "query_file": "ontology/competency/cypher/cq10_frontier_non_peer_reviewed_share.cypher",
+          "query_non_comment_line_count": 29,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.09021634503733367
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.002267878968268633
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0016569570288993418
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0018475049873813987,
+          "error": null,
+          "executed": true,
+          "number": "CQ11",
+          "parameters": {
+            "review": "kgqa-rag",
+            "similarityThreshold": 0.75
+          },
+          "query_file": "ontology/competency/cypher/cq11_semantically_close_disconnected_clusters.cypher",
+          "query_non_comment_line_count": 13,
+          "row_count": 2,
+          "row_counts_across_runs": [
+            2
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 2,
+              "wall_time_seconds": 0.06124366499716416
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 2,
+              "wall_time_seconds": 0.002417237963527441
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 2,
+              "wall_time_seconds": 0.0018475049873813987
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0013377389986999333,
+          "error": null,
+          "executed": true,
+          "number": "CQ12",
+          "parameters": {
+            "assertion": "https://w3id.org/portolan/id/contribution/arxiv-1706.03762/1"
+          },
+          "query_file": "ontology/competency/cypher/cq12_assertion_provenance.cypher",
+          "query_non_comment_line_count": 16,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.08201937202829868
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.002257088024634868
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0013377389986999333
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0017135569942183793,
+          "error": null,
+          "executed": true,
+          "number": "CQ13",
+          "parameters": {
+            "review": "kgqa-rag",
+            "work": "https://w3id.org/portolan/id/work/arxiv/1706.03762"
+          },
+          "query_file": "ontology/competency/cypher/cq13_excluded_work_reason_stage.cypher",
+          "query_non_comment_line_count": 10,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.044798297982197255
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.001718805986456573
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0017135569942183793
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0013350840308703482,
+          "error": null,
+          "executed": true,
+          "number": "CQ14",
+          "parameters": {
+            "review": "kgqa-rag"
+          },
+          "query_file": "ontology/competency/cypher/cq14_rejected_gap_hypotheses.cypher",
+          "query_non_comment_line_count": 11,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.04680889897281304
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0013350840308703482
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0014886610442772508
+            }
+          ]
+        }
+      ],
+      "export": {
+        "comparison_to_oxigraph": {
+          "available": true,
+          "extra_in_neo4j_count": 0,
+          "extra_in_neo4j_examples": [],
+          "missing_from_neo4j_count": 0,
+          "missing_from_neo4j_examples": [],
+          "reference": "oxigraph Turtle triple set"
+        },
+        "elapsed_seconds": 0.20589727099286392,
+        "error": null,
+        "executed": true,
+        "known_partition_metadata_omissions": [
+          "reviewId",
+          "extractionRun"
+        ],
+        "observed_fidelity_notes": [
+          "Plain Turtle has no named-graph syntax, so partition boundaries cannot be retained.",
+          "Neo4jStore.records_to_turtle omits the LPG partition properties reviewId and extractionRun.",
+          "Neo4j stores cito:cites as a CITES relationship; the exporter reconstructs the RDF citation node and shortcut."
+        ],
+        "parse_error": null,
+        "parsed_triple_count": 1886,
+        "triple_count": 1886,
+        "turtle_bytes": 150414
+      },
+      "load": {
+        "elapsed_seconds": 4.25259254098637,
+        "error": null,
+        "executed": true
+      },
+      "native_constraints": {
+        "accepted_count": 35,
+        "enterprise_only_rejections": [
+          "metric_direction_exists",
+          "work_title_exists",
+          "work_issued_exists",
+          "work_source_tier_exists",
+          "contribution_kind_exists",
+          "result_value_exists",
+          "claim_text_exists",
+          "limitation_text_exists",
+          "future_work_text_exists",
+          "evidence_quote_exists",
+          "evidence_source_kind_exists",
+          "review_seed_kind_exists",
+          "review_seed_value_exists",
+          "inclusion_decision_exists",
+          "inclusion_stage_exists",
+          "gap_type_exists",
+          "gap_statement_exists",
+          "gap_confidence_exists",
+          "gap_verification_outcome_exists",
+          "gap_user_status_exists",
+          "addresses_limitation_review_exists",
+          "cluster_pair_review_exists",
+          "cluster_pair_similarity_exists",
+          "cluster_pair_cross_citation_exists"
+        ],
+        "executed": true,
+        "rejected_count": 24,
+        "shape_count_in_ontology": 9,
+        "shapes": {
+          "1": {
+            "accepted_constraint_fragments": [],
+            "fully_enforced_natively": false,
+            "note": "Property fragments were measured, but the shape also contains relationship, conditional, range, or closed-enumeration rules.",
+            "rejected_constraint_fragments": [
+              "work_title_exists",
+              "work_issued_exists",
+              "work_source_tier_exists"
+            ],
+            "shape": 1
+          },
+          "2": {
+            "accepted_constraint_fragments": [],
+            "fully_enforced_natively": false,
+            "note": "No checked-in Neo4j constraint claims this shape.",
+            "rejected_constraint_fragments": [],
+            "shape": 2
+          },
+          "3": {
+            "accepted_constraint_fragments": [],
+            "fully_enforced_natively": false,
+            "note": "Property fragments were measured, but the shape also contains relationship, conditional, range, or closed-enumeration rules.",
+            "rejected_constraint_fragments": [
+              "contribution_kind_exists",
+              "claim_text_exists",
+              "limitation_text_exists",
+              "future_work_text_exists",
+              "evidence_quote_exists",
+              "evidence_source_kind_exists"
+            ],
+            "shape": 3
+          },
+          "4": {
+            "accepted_constraint_fragments": [],
+            "fully_enforced_natively": false,
+            "note": "Property fragments were measured, but the shape also contains relationship, conditional, range, or closed-enumeration rules.",
+            "rejected_constraint_fragments": [
+              "result_value_exists"
+            ],
+            "shape": 4
+          },
+          "5": {
+            "accepted_constraint_fragments": [],
+            "fully_enforced_natively": false,
+            "note": "Property fragments were measured, but the shape also contains relationship, conditional, range, or closed-enumeration rules.",
+            "rejected_constraint_fragments": [
+              "inclusion_decision_exists",
+              "inclusion_stage_exists"
+            ],
+            "shape": 5
+          },
+          "6": {
+            "accepted_constraint_fragments": [
+              "gap_hypothesis_iri_unique",
+              "gap_review_status_index"
+            ],
+            "fully_enforced_natively": false,
+            "note": "Property fragments were measured, but the shape also contains relationship, conditional, range, or closed-enumeration rules.",
+            "rejected_constraint_fragments": [
+              "gap_type_exists",
+              "gap_statement_exists",
+              "gap_confidence_exists",
+              "gap_verification_outcome_exists",
+              "gap_user_status_exists"
+            ],
+            "shape": 6
+          },
+          "7": {
+            "accepted_constraint_fragments": [],
+            "fully_enforced_natively": false,
+            "note": "No checked-in Neo4j constraint claims this shape.",
+            "rejected_constraint_fragments": [],
+            "shape": 7
+          },
+          "8": {
+            "accepted_constraint_fragments": [],
+            "fully_enforced_natively": false,
+            "note": "Property fragments were measured, but the shape also contains relationship, conditional, range, or closed-enumeration rules.",
+            "rejected_constraint_fragments": [
+              "metric_direction_exists"
+            ],
+            "shape": 8
+          },
+          "9": {
+            "accepted_constraint_fragments": [
+              "cluster_pair_review_index"
+            ],
+            "fully_enforced_natively": false,
+            "note": "Property fragments were measured, but the shape also contains relationship, conditional, range, or closed-enumeration rules.",
+            "rejected_constraint_fragments": [
+              "cluster_pair_review_exists",
+              "cluster_pair_similarity_exists",
+              "cluster_pair_cross_citation_exists"
+            ],
+            "shape": 9
+          }
+        },
+        "statements": [
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "work_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.07307537295855582
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "author_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.04048049304401502
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "organization_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.037170376046560705
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "venue_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.03832330700242892
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "concept_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.03505082399351522
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "problem_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.035259858006611466
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "method_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.03268997499253601
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "dataset_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.0345785099780187
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "metric_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.035758643003646284
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Metric {metricDirection}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Metric {metricDirection}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "metric_direction_exists",
+            "shape": 8,
+            "wall_time_seconds": 0.02305867604445666
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "contribution_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.033725909946952015
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "result_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.0347062079817988
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "claim_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.03443421999691054
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "limitation_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.03294405696215108
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "future_work_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.039433044963516295
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "evidence_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.032222561014350504
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "review_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.033984681009314954
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "review_protocol_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.02974031603662297
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "inclusion_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.0353298339759931
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "cluster_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.0322038650047034
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "gap_hypothesis_iri_unique",
+            "shape": 6,
+            "wall_time_seconds": 0.033747782988939434
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "constraint",
+            "name": "activity_iri_unique",
+            "shape": null,
+            "wall_time_seconds": 0.0296323070069775
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Work {title}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Work {title}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "work_title_exists",
+            "shape": 1,
+            "wall_time_seconds": 0.011469537043012679
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Work {issued}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Work {issued}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "work_issued_exists",
+            "shape": 1,
+            "wall_time_seconds": 0.010652364988345653
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Work {sourceTier}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Work {sourceTier}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "work_source_tier_exists",
+            "shape": 1,
+            "wall_time_seconds": 0.010615443985443562
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Contribution {contributionKind}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Contribution {contributionKind}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "contribution_kind_exists",
+            "shape": 3,
+            "wall_time_seconds": 0.013076015980914235
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Result {value}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Result {value}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "result_value_exists",
+            "shape": 4,
+            "wall_time_seconds": 0.01032176602166146
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Claim {claimText}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Claim {claimText}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "claim_text_exists",
+            "shape": 3,
+            "wall_time_seconds": 0.010594704013783485
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Limitation {limitationText}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Limitation {limitationText}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "limitation_text_exists",
+            "shape": 3,
+            "wall_time_seconds": 0.011759068001993
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:FutureWork {futureWorkText}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:FutureWork {futureWorkText}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "future_work_text_exists",
+            "shape": 3,
+            "wall_time_seconds": 0.010530079016461968
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Evidence {quote}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Evidence {quote}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "evidence_quote_exists",
+            "shape": 3,
+            "wall_time_seconds": 0.341910713003017
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Evidence {fromSourceKind}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Evidence {fromSourceKind}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "evidence_source_kind_exists",
+            "shape": 3,
+            "wall_time_seconds": 0.011231756012421101
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Review {seedKind}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Review {seedKind}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "review_seed_kind_exists",
+            "shape": null,
+            "wall_time_seconds": 0.008626395021565259
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Review {seedValue}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Review {seedValue}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "review_seed_value_exists",
+            "shape": null,
+            "wall_time_seconds": 0.009294197021517903
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Inclusion {decision}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Inclusion {decision}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "inclusion_decision_exists",
+            "shape": 5,
+            "wall_time_seconds": 0.01043926301645115
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Inclusion {stage}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:Inclusion {stage}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "inclusion_stage_exists",
+            "shape": 5,
+            "wall_time_seconds": 0.00991479802178219
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {gapType}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {gapType}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "gap_type_exists",
+            "shape": 6,
+            "wall_time_seconds": 0.009652920998632908
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {statement}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {statement}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "gap_statement_exists",
+            "shape": 6,
+            "wall_time_seconds": 0.010137139004655182
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {confidence}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {confidence}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "gap_confidence_exists",
+            "shape": 6,
+            "wall_time_seconds": 0.009887696010991931
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {verificationOutcome}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {verificationOutcome}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "gap_verification_outcome_exists",
+            "shape": 6,
+            "wall_time_seconds": 0.014189361012540758
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {userStatus}), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='NODE PROPERTY EXISTENCE', schema=(:GapHypothesis {userStatus}), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "gap_user_status_exists",
+            "shape": 6,
+            "wall_time_seconds": 0.010904943977948278
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "result_value_index",
+            "shape": null,
+            "wall_time_seconds": 0.03278293501352891
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "work_issued_index",
+            "shape": null,
+            "wall_time_seconds": 0.026880272023845464
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "work_source_tier_index",
+            "shape": null,
+            "wall_time_seconds": 0.024883135978598148
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "inclusion_review_main_path_index",
+            "shape": null,
+            "wall_time_seconds": 0.030994855042081326
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "inclusion_review_decision_index",
+            "shape": null,
+            "wall_time_seconds": 0.024145789968315512
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "inclusion_frontier_score_index",
+            "shape": null,
+            "wall_time_seconds": 0.028970005980227143
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "inclusion_frontier_components_index",
+            "shape": null,
+            "wall_time_seconds": 0.041829493013210595
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "metric_direction_index",
+            "shape": null,
+            "wall_time_seconds": 0.02413808403071016
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "addresses_limitation_review_index",
+            "shape": null,
+            "wall_time_seconds": 0.027902118978090584
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='RELATIONSHIP PROPERTY EXISTENCE', schema=()-[:ADDRESSES_LIMITATION {reviewId}]-(), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='RELATIONSHIP PROPERTY EXISTENCE', schema=()-[:ADDRESSES_LIMITATION {reviewId}]-(), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "addresses_limitation_review_exists",
+            "shape": null,
+            "wall_time_seconds": 0.010340703011024743
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "cluster_pair_review_index",
+            "shape": 9,
+            "wall_time_seconds": 0.0316066779778339
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='RELATIONSHIP PROPERTY EXISTENCE', schema=()-[:CLUSTER_PAIR {reviewId}]-(), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='RELATIONSHIP PROPERTY EXISTENCE', schema=()-[:CLUSTER_PAIR {reviewId}]-(), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "cluster_pair_review_exists",
+            "shape": 9,
+            "wall_time_seconds": 0.007499703962821513
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='RELATIONSHIP PROPERTY EXISTENCE', schema=()-[:CLUSTER_PAIR {semanticSimilarity}]-(), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='RELATIONSHIP PROPERTY EXISTENCE', schema=()-[:CLUSTER_PAIR {semanticSimilarity}]-(), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "cluster_pair_similarity_exists",
+            "shape": 9,
+            "wall_time_seconds": 0.006483948032837361
+          },
+          {
+            "accepted": false,
+            "enterprise_only_error": true,
+            "error": "{neo4j_code: Neo.DatabaseError.Schema.ConstraintCreationFailed} {message: Unable to create Constraint( type='RELATIONSHIP PROPERTY EXISTENCE', schema=()-[:CLUSTER_PAIR {crossCitationCount}]-(), graphTypeDependence='INDEPENDENT' ):\nProperty existence constraint requires Neo4j Enterprise Edition. Note that only the first found violation is shown.} {gql_status: 50N11} {gql_status_description: error: general processing exception - constraint creation failed. Unable to create 'Constraint( type='RELATIONSHIP PROPERTY EXISTENCE', schema=()-[:CLUSTER_PAIR {crossCitationCount}]-(), graphTypeDependence='INDEPENDENT' )'.}",
+            "kind": "constraint",
+            "name": "cluster_pair_cross_citation_exists",
+            "shape": 9,
+            "wall_time_seconds": 0.005990173027385026
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "cluster_review_growth_index",
+            "shape": null,
+            "wall_time_seconds": 0.024893736001104116
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "gap_review_status_index",
+            "shape": 6,
+            "wall_time_seconds": 0.022941929986700416
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "problem_iri_lookup_index",
+            "shape": null,
+            "wall_time_seconds": 0.012965022004209459
+          },
+          {
+            "accepted": true,
+            "enterprise_only_error": false,
+            "error": null,
+            "kind": "index",
+            "name": "method_iri_lookup_index",
+            "shape": null,
+            "wall_time_seconds": 0.005587272986304015
+          }
+        ]
+      },
+      "status": "completed",
+      "validation": {
+        "elapsed_seconds": 1.7203188920393586,
+        "error": null,
+        "executed": true,
+        "path": "Neo4j export_turtle() -> validation.validate()",
+        "report": {
+          "conforms": true,
+          "error": null,
+          "report_text": "Validation Report\nConforms: True\n",
+          "shapes_path": "ontology/shapes.ttl",
+          "skipped": false,
+          "violations": [],
+          "warnings": []
+        }
+      }
+    },
+    "oxigraph": {
+      "backend": "oxigraph",
+      "competency_questions": [
+        {
+          "best_wall_time_seconds": 0.0004876140155829489,
+          "error": null,
+          "executed": true,
+          "number": "CQ01",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+          },
+          "query_file": "ontology/competency/sparql/cq01_review_roles_by_cluster.rq",
+          "query_non_comment_line_count": 24,
+          "row_count": 29,
+          "row_counts_across_runs": [
+            29
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 29,
+              "wall_time_seconds": 0.0009201909997500479
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 29,
+              "wall_time_seconds": 0.0005251459660939872
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 29,
+              "wall_time_seconds": 0.0004876140155829489
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0008393439929932356,
+          "error": null,
+          "executed": true,
+          "number": "CQ02",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag",
+            "seed": "https://w3id.org/portolan/id/work/arxiv/1706.03762"
+          },
+          "query_file": "ontology/competency/sparql/cq02_seed_main_path.rq",
+          "query_non_comment_line_count": 33,
+          "row_count": 17,
+          "row_counts_across_runs": [
+            17
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 17,
+              "wall_time_seconds": 0.0008711559930816293
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 17,
+              "wall_time_seconds": 0.0008393439929932356
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 17,
+              "wall_time_seconds": 0.0008401859668083489
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0006616110331378877,
+          "error": null,
+          "executed": true,
+          "number": "CQ03",
+          "parameters": {
+            "problem": "https://w3id.org/portolan/id/concept/problem/knowledge-graph-question-answering"
+          },
+          "query_file": "ontology/competency/sparql/cq03_methods_for_problem.rq",
+          "query_non_comment_line_count": 36,
+          "row_count": 20,
+          "row_counts_across_runs": [
+            20
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 20,
+              "wall_time_seconds": 0.0006890840013511479
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 20,
+              "wall_time_seconds": 0.0006686230190098286
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 20,
+              "wall_time_seconds": 0.0006616110331378877
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.006368585047312081,
+          "error": null,
+          "executed": true,
+          "number": "CQ04",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+          },
+          "query_file": "ontology/competency/sparql/cq04_best_result_by_dataset_metric.rq",
+          "query_non_comment_line_count": 60,
+          "row_count": 5,
+          "row_counts_across_runs": [
+            5
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 5,
+              "wall_time_seconds": 0.006625131005421281
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 5,
+              "wall_time_seconds": 0.0064085329649969935
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 5,
+              "wall_time_seconds": 0.006368585047312081
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.03656696900725365,
+          "error": null,
+          "executed": true,
+          "number": "CQ05",
+          "parameters": {
+            "n": 3,
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+          },
+          "query_file": "ontology/competency/sparql/cq05_dense_empty_problem_method_cells.rq",
+          "query_non_comment_line_count": 55,
+          "row_count": 8,
+          "row_counts_across_runs": [
+            8
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 8,
+              "wall_time_seconds": 0.03656696900725365
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 8,
+              "wall_time_seconds": 0.037013602966908365
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 8,
+              "wall_time_seconds": 0.03673827002057806
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0007169980090111494,
+          "error": null,
+          "executed": true,
+          "number": "CQ06",
+          "parameters": {
+            "n": 3,
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+          },
+          "query_file": "ontology/competency/sparql/cq06_recurring_unaddressed_limitations.rq",
+          "query_non_comment_line_count": 56,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0007642789860256016
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0007169980090111494
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0007211160263977945
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0018658710177987814,
+          "error": null,
+          "executed": true,
+          "number": "CQ07",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+          },
+          "query_file": "ontology/competency/sparql/cq07_contradicted_claims.rq",
+          "query_non_comment_line_count": 36,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.001872464024927467
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0018742369720712304
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0018658710177987814
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.07709663599962369,
+          "error": null,
+          "executed": true,
+          "number": "CQ08",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+          },
+          "query_file": "ontology/competency/sparql/cq08_uncompared_method_pairs.rq",
+          "query_non_comment_line_count": 61,
+          "row_count": 19,
+          "row_counts_across_runs": [
+            19
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 19,
+              "wall_time_seconds": 0.07809351501055062
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 19,
+              "wall_time_seconds": 0.07738084596348926
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 19,
+              "wall_time_seconds": 0.07709663599962369
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0002238629967905581,
+          "error": null,
+          "executed": true,
+          "number": "CQ09",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+          },
+          "query_file": "ontology/competency/sparql/cq09_fastest_cluster_growth.rq",
+          "query_non_comment_line_count": 23,
+          "row_count": 4,
+          "row_counts_across_runs": [
+            4
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 4,
+              "wall_time_seconds": 0.0003333949716761708
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 4,
+              "wall_time_seconds": 0.00025425199419260025
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 4,
+              "wall_time_seconds": 0.0002238629967905581
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0012701479718089104,
+          "error": null,
+          "executed": true,
+          "number": "CQ10",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+          },
+          "query_file": "ontology/competency/sparql/cq10_frontier_non_peer_reviewed_share.rq",
+          "query_non_comment_line_count": 52,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0012997149606235325
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0013071399880573153
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0012701479718089104
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0003277640207670629,
+          "error": null,
+          "executed": true,
+          "number": "CQ11",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag",
+            "similarityThreshold": 0.75
+          },
+          "query_file": "ontology/competency/sparql/cq11_semantically_close_disconnected_clusters.rq",
+          "query_non_comment_line_count": 32,
+          "row_count": 2,
+          "row_counts_across_runs": [
+            2
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 2,
+              "wall_time_seconds": 0.0003482240135781467
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 2,
+              "wall_time_seconds": 0.00034111004788428545
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 2,
+              "wall_time_seconds": 0.0003277640207670629
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0002289830008521676,
+          "error": null,
+          "executed": true,
+          "number": "CQ12",
+          "parameters": {
+            "assertion": "https://w3id.org/portolan/id/contribution/arxiv-1706.03762/1"
+          },
+          "query_file": "ontology/competency/sparql/cq12_assertion_provenance.rq",
+          "query_non_comment_line_count": 28,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.00023814098676666617
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0002289830008521676
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.00026277900906279683
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.00020004704128950834,
+          "error": null,
+          "executed": true,
+          "number": "CQ13",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag",
+            "work": "https://w3id.org/portolan/id/work/arxiv/1706.03762"
+          },
+          "query_file": "ontology/competency/sparql/cq13_excluded_work_reason_stage.rq",
+          "query_non_comment_line_count": 21,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.00021961500169709325
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.00020828295964747667
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.00020004704128950834
+            }
+          ]
+        },
+        {
+          "best_wall_time_seconds": 0.0001739970175549388,
+          "error": null,
+          "executed": true,
+          "number": "CQ14",
+          "parameters": {
+            "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+          },
+          "query_file": "ontology/competency/sparql/cq14_rejected_gap_hypotheses.rq",
+          "query_non_comment_line_count": 16,
+          "row_count": 1,
+          "row_counts_across_runs": [
+            1
+          ],
+          "runs": [
+            {
+              "attempt": 1,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0001739970175549388
+            },
+            {
+              "attempt": 2,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.00017530896002426744
+            },
+            {
+              "attempt": 3,
+              "error": null,
+              "executed": true,
+              "row_count": 1,
+              "wall_time_seconds": 0.0001789769739843905
+            }
+          ]
+        }
+      ],
+      "export": {
+        "elapsed_seconds": 0.09199513896601275,
+        "error": null,
+        "executed": true,
+        "known_partition_metadata_omissions": [],
+        "parse_error": null,
+        "parsed_triple_count": 1886,
+        "triple_count": 1886,
+        "turtle_bytes": 150346
+      },
+      "load": {
+        "elapsed_seconds": 0.2016361490241252,
+        "error": null,
+        "executed": true
+      },
+      "status": "completed",
+      "validation": {
+        "elapsed_seconds": 1.8802293689805083,
+        "error": null,
+        "executed": true,
+        "path": "Oxigraph export_turtle() -> validation.validate()",
+        "report": {
+          "conforms": true,
+          "error": null,
+          "report_text": "Validation Report\nConforms: True\n",
+          "shapes_path": "ontology/shapes.ttl",
+          "skipped": false,
+          "violations": [],
+          "warnings": []
+        }
+      }
+    }
+  },
+  "generated_at_utc": "2026-09-26T16:50:04Z",
+  "requested_backend": "both",
+  "schema_version": "m0-spike-v1",
+  "skip_neo4j_if_unavailable": false
+}

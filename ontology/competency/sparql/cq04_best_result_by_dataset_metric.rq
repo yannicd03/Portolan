@@ -1,0 +1,72 @@
+# CQ04 — What is the best reported result per dataset and metric, by which method, from which source tier?
+# PARAMS: ?review (IRI, review-scoped)
+# NOTE: v0.2 uses ptl:metricDirection; tied best values are returned and the
+# ordering expression normalizes higher-is-better and lower-is-better metrics.
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?dataset ?datasetLabel ?metric ?metricLabel ?metricDirection
+                ?bestValue ?method ?work ?sourceTier
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  # /PARAM-BLOCK
+
+  GRAPH ?reviewGraph {
+    ?inclusion a ptl:Inclusion ;
+      ptl:ofReview ?review ;
+      ptl:ofWork ?work ;
+      ptl:decision "included" .
+  }
+
+  GRAPH ?contentGraph {
+    ?result a ptl:Result ;
+      ptl:ofWork ?work ;
+      ptl:ofMethod ?method ;
+      ptl:onDataset ?dataset ;
+      ptl:withMetric ?metric ;
+      ptl:value ?bestValue .
+    ?metric a ptl:Metric ;
+      ptl:metricDirection ?metricDirection .
+  }
+  FILTER (
+    ?metricDirection = "higherIsBetter" ||
+    ?metricDirection = "lowerIsBetter"
+  )
+
+  FILTER NOT EXISTS {
+    GRAPH ?higherReviewGraph {
+      ?higherInclusion a ptl:Inclusion ;
+        ptl:ofReview ?review ;
+        ptl:ofWork ?higherWork ;
+        ptl:decision "included" .
+    }
+    GRAPH ?higherContentGraph {
+      ?higherResult a ptl:Result ;
+        ptl:ofWork ?higherWork ;
+        ptl:onDataset ?dataset ;
+        ptl:withMetric ?metric ;
+        ptl:value ?higherValue .
+      ?metric a ptl:Metric ;
+        ptl:metricDirection ?metricDirection .
+    }
+    FILTER (
+      (?metricDirection = "higherIsBetter" && ?higherValue > ?bestValue) ||
+      (?metricDirection = "lowerIsBetter" && ?higherValue < ?bestValue)
+    )
+  }
+
+  GRAPH ptlg:biblio {
+    ?work a ptl:Work ;
+      ptl:sourceTier ?sourceTier .
+  }
+  OPTIONAL { GRAPH ?contentGraph { ?dataset rdfs:label ?datasetLabel } }
+  OPTIONAL { GRAPH ?contentGraph { ?metric rdfs:label ?metricLabel } }
+}
+ORDER BY ?datasetLabel ?metricLabel
+         (IF(?metricDirection = "higherIsBetter", 0 - ?bestValue, ?bestValue))
+         ?method ?work

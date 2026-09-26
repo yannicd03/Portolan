@@ -1,0 +1,64 @@
+# CQ10 — What share of frontier works is not peer-reviewed, and which organizations publish them?
+# PARAMS: ?review (IRI, review-scoped)
+# NOTE: v0.2 treats a frontier work as an included work with a positive composite
+# ptl:frontierScore and all six named frontier components present.
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+
+SELECT DISTINCT ?review ?nonPeerReviewedShare ?organization
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  # /PARAM-BLOCK
+
+  {
+    SELECT ?review
+           (SUM(?nonPeer) / COUNT(DISTINCT ?shareWork) AS ?nonPeerReviewedShare)
+    WHERE {
+      GRAPH ?shareReviewGraph {
+        ?shareInclusion a ptl:Inclusion ;
+          ptl:ofReview ?review ;
+          ptl:ofWork ?shareWork ;
+          ptl:frontierScore ?shareScore ;
+          ptl:frontierComponentVelocity ?shareVelocity ;
+          ptl:frontierComponentMainPathLeaf ?shareMainPathLeaf ;
+          ptl:frontierComponentClusterGrowth ?shareClusterGrowth ;
+          ptl:frontierComponentConceptNovelty ?shareConceptNovelty ;
+          ptl:frontierComponentSotaClaim ?shareSotaClaim ;
+          ptl:frontierComponentNotPeerReviewed ?shareNotPeerReviewed ;
+          ptl:decision "included" .
+        FILTER (?shareScore > 0)
+      }
+      GRAPH ptlg:biblio {
+        ?shareWork ptl:sourceTier ?shareTier .
+      }
+      BIND(IF(?shareTier = "peerReviewed", 0, 1) AS ?nonPeer)
+    }
+    GROUP BY ?review
+  }
+
+  # Publisher data is optional: the share remains meaningful when the
+  # bibliography has no publisher organizations for these works.
+  OPTIONAL {
+    GRAPH ?reviewGraph {
+      ?inclusion a ptl:Inclusion ;
+        ptl:ofReview ?review ;
+        ptl:ofWork ?work ;
+        ptl:frontierScore ?frontierScore ;
+        ptl:frontierComponentVelocity ?velocity ;
+        ptl:frontierComponentMainPathLeaf ?mainPathLeaf ;
+        ptl:frontierComponentClusterGrowth ?clusterGrowth ;
+        ptl:frontierComponentConceptNovelty ?conceptNovelty ;
+        ptl:frontierComponentSotaClaim ?sotaClaim ;
+        ptl:frontierComponentNotPeerReviewed ?notPeerReviewed ;
+        ptl:decision "included" .
+    }
+    GRAPH ptlg:biblio {
+      ?work ptl:sourceTier ?sourceTier ;
+        ptl:publishedBy ?organization .
+    }
+    FILTER (?sourceTier != "peerReviewed")
+  }
+}
+ORDER BY DESC(?nonPeerReviewedShare) ?organization

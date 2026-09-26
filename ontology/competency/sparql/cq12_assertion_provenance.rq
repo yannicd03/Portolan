@@ -1,0 +1,35 @@
+# CQ12 — For any assertion shown in the UI: which quote, from which work, extracted by which model and prompt version, supports it?
+# PARAMS: ?assertion (IRI, statement-scoped)
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?assertion ?evidence ?quote ?work ?workTitle ?fromSourceKind
+       ?activity ?model ?promptVersion ?endedAt
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?assertion { <https://w3id.org/portolan/id/contribution/arxiv-1706.03762/1> }
+  # /PARAM-BLOCK
+
+  GRAPH ?assertionGraph {
+    ?assertion ptl:hasEvidence ?evidence ;
+      prov:wasGeneratedBy ?activity .
+    ?evidence a ptl:Evidence ;
+      ptl:quote ?quote ;
+      ptl:fromWork ?work ;
+      ptl:fromSourceKind ?fromSourceKind .
+  }
+  GRAPH ?provenanceGraph {
+    ?activity a prov:Activity ;
+      ptl:model ?model ;
+      ptl:promptVersion ?promptVersion .
+    OPTIONAL { ?activity prov:endedAtTime ?endedAt }
+  }
+  GRAPH ptlg:biblio {
+    ?work a ptl:Work ;
+      dcterms:title ?workTitle .
+  }
+}
+ORDER BY ?work ?evidence

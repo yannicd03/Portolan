@@ -1,0 +1,1249 @@
+@prefix ptl: <https://w3id.org/portolan/ontology#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/portolan/id/claim/arxiv-2005.11401/3> a ptl:Claim ;
+    ptl:claimText "RAG produces more specific, diverse, and factual language than a parametric-only baseline." .
+
+<https://w3id.org/portolan/id/claim/arxiv-2310.11511/3> a ptl:Claim ;
+    ptl:claimText "Fixed retrieval can be harmful when retrieval is unnecessary or irrelevant." .
+
+<https://w3id.org/portolan/id/claim/doi-10.48550%2FarXiv.2310.01061/3> a ptl:Claim ;
+    ptl:claimText "KG reasoning systems should use structural information rather than treating a graph as a flat fact store." .
+
+<https://w3id.org/portolan/id/cluster/kgqa-rag/1> a ptl:Cluster ;
+    ptl:growthRate 0.18 ;
+    ptl:level 1 ;
+    ptl:summary "General language-model architectures that underpin later retrieval and reasoning systems." .
+
+<https://w3id.org/portolan/id/cluster/kgqa-rag/2> a ptl:Cluster ;
+    ptl:growthRate 0.62 ;
+    ptl:level 1 ;
+    ptl:summary "Dense retrieval, latent memory, and generation over external evidence." .
+
+<https://w3id.org/portolan/id/cluster/kgqa-rag/3> a ptl:Cluster ;
+    ptl:growthRate 0.71 ;
+    ptl:level 1 ;
+    ptl:summary "Interleaved reasoning, acting, and graph-grounded planning for faithful answers." .
+
+<https://w3id.org/portolan/id/cluster/kgqa-rag/4> a ptl:Cluster ;
+    ptl:growthRate 0.84 ;
+    ptl:level 1 ;
+    ptl:summary "Graph-indexed retrieval, conversational graph QA, and scholarly benchmark design." .
+
+<https://w3id.org/portolan/id/concept/dataset/complexwebquestions> a skos:Concept,
+        ptl:Dataset ;
+    skos:altLabel "ComplexWebQuestions" .
+
+<https://w3id.org/portolan/id/concept/dataset/graphqa> a skos:Concept,
+        ptl:Dataset ;
+    skos:altLabel "Graph Question Answering benchmark",
+        "GraphQA" .
+
+<https://w3id.org/portolan/id/concept/dataset/hotpotqa> a skos:Concept,
+        ptl:Dataset ;
+    skos:altLabel "HotpotQA" .
+
+<https://w3id.org/portolan/id/concept/dataset/natural-questions> a skos:Concept,
+        ptl:Dataset ;
+    skos:altLabel "NQ",
+        "Natural Questions" .
+
+<https://w3id.org/portolan/id/concept/dataset/squad> a skos:Concept,
+        ptl:Dataset ;
+    skos:altLabel "SQuAD" .
+
+<https://w3id.org/portolan/id/concept/dataset/triviaqa> a skos:Concept,
+        ptl:Dataset ;
+    skos:altLabel "TriviaQA" .
+
+<https://w3id.org/portolan/id/concept/method/chain-of-thought-prompting> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "Chain-of-thought prompting",
+        "CoT" .
+
+<https://w3id.org/portolan/id/concept/method/dense-passage-retrieval> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "DPR",
+        "Dense passage retrieval" .
+
+<https://w3id.org/portolan/id/concept/method/graph-rag> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "Graph retrieval-augmented generation",
+        "GraphRAG" .
+
+<https://w3id.org/portolan/id/concept/method/iterative-reading-reasoning> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "IRR",
+        "Iterative reading-then-reasoning" .
+
+<https://w3id.org/portolan/id/concept/method/latent-knowledge-retrieval> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "Latent knowledge retrieval",
+        "REALM" .
+
+<https://w3id.org/portolan/id/concept/method/react-agent> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "ReAct",
+        "Reasoning and acting" .
+
+<https://w3id.org/portolan/id/concept/method/reasoning-on-graphs> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "Reasoning on graphs",
+        "RoG" .
+
+<https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "RAG",
+        "Retrieval-augmented generation" .
+
+<https://w3id.org/portolan/id/concept/method/self-reflective-retrieval> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "Self-RAG",
+        "Self-reflective retrieval" .
+
+<https://w3id.org/portolan/id/concept/method/transformer-pretraining> a skos:Concept,
+        ptl:Method ;
+    skos:altLabel "Transformer pre-training" .
+
+<https://w3id.org/portolan/id/concept/metric/accuracy> a skos:Concept,
+        ptl:Metric ;
+    skos:altLabel "Accuracy" ;
+    ptl:metricDirection "higherIsBetter" .
+
+<https://w3id.org/portolan/id/concept/metric/exact-match> a skos:Concept,
+        ptl:Metric ;
+    skos:altLabel "EM",
+        "Exact match" ;
+    ptl:metricDirection "higherIsBetter" .
+
+<https://w3id.org/portolan/id/concept/metric/f1> a skos:Concept,
+        ptl:Metric ;
+    skos:altLabel "F1" ;
+    ptl:metricDirection "higherIsBetter" .
+
+<https://w3id.org/portolan/id/concept/metric/perplexity> a skos:Concept,
+        ptl:Metric ;
+    skos:altLabel "PPL",
+        "Perplexity" ;
+    ptl:metricDirection "lowerIsBetter" .
+
+<https://w3id.org/portolan/id/concept/metric/precision-at-1> a skos:Concept,
+        ptl:Metric ;
+    skos:altLabel "Precision@1" ;
+    ptl:metricDirection "higherIsBetter" .
+
+<https://w3id.org/portolan/id/concept/problem/hallucination-and-factuality> a skos:Concept,
+        ptl:Problem ;
+    skos:altLabel "Hallucination and factuality" .
+
+<https://w3id.org/portolan/id/concept/problem/knowledge-graph-question-answering> a skos:Concept,
+        ptl:Problem ;
+    skos:altLabel "KGQA",
+        "Knowledge-graph question answering" .
+
+<https://w3id.org/portolan/id/concept/problem/knowledge-intensive-nlp> a skos:Concept,
+        ptl:Problem ;
+    skos:altLabel "Knowledge-intensive NLP" .
+
+<https://w3id.org/portolan/id/concept/problem/long-context-retrieval> a skos:Concept,
+        ptl:Problem ;
+    skos:altLabel "Long-context retrieval" .
+
+<https://w3id.org/portolan/id/concept/problem/open-domain-question-answering> a skos:Concept,
+        ptl:Problem ;
+    skos:altLabel "Open-QA",
+        "Open-domain question answering" .
+
+<https://w3id.org/portolan/id/concept/problem/structured-data-reasoning> a skos:Concept,
+        ptl:Problem ;
+    skos:altLabel "Structured-data reasoning" .
+
+<https://w3id.org/portolan/id/contribution/arxiv-1706.03762/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/arxiv-2002.08909/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/arxiv-2005.11401/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/arxiv-2210.03629/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/arxiv-2307.07697/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/arxiv-2310.11511/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/arxiv-2404.16130/1> a ptl:Contribution ;
+    ptl:contributionKind "system" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.1038%2Fs41598-023-33607-z/1> a ptl:Contribution ;
+    ptl:contributionKind "benchmark" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.1109%2FTKDE.2024.3352100/1> a ptl:Contribution ;
+    ptl:contributionKind "survey" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.1162%2Ftacl_a_00638/1> a ptl:Contribution ;
+    ptl:contributionKind "analysis" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.18653%2Fv1%2F2020.emnlp-main.550/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.18653%2Fv1%2F2021.eacl-main.74/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.18653%2Fv1%2FN18-1059/1> a ptl:Contribution ;
+    ptl:contributionKind "dataset" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.18653%2Fv1%2FN19-1423/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.48550%2FarXiv.2305.09645/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.48550%2FarXiv.2310.01061/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.48550%2FarXiv.2402.07630/1> a ptl:Contribution ;
+    ptl:contributionKind "method" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.48550%2FarXiv.2410.05779/1> a ptl:Contribution ;
+    ptl:contributionKind "system" .
+
+<https://w3id.org/portolan/id/contribution/doi-10.52202%2F068431-1800/1> a ptl:Contribution ;
+    ptl:contributionKind "analysis" .
+
+<https://w3id.org/portolan/id/evidence/324c2fad7df8a46236f680305d45635a4605178a> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "It obtains new state-of-the-art results on eleven natural language processing tasks" .
+
+<https://w3id.org/portolan/id/evidence/fcf21f644904fc43cf1c2d428f89dee7122b069e> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Language model pre-training has been shown to capture a surprising amount of world knowledge, crucial for NLP tasks such as question answering." .
+
+<https://w3id.org/portolan/id/evidence/3eb73d397462480801a3cc48153f40dda781f147> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Open-domain question answering relies on efficient passage retrieval to select candidate contexts, where traditional sparse vector space models, such as TF-IDF or BM25, are the de facto method." .
+
+<https://w3id.org/portolan/id/evidence/83d1ee95bf22ad71aeb3ca4e1014db3e771cb541> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "In this paper, we study how to improve the zero-shot reasoning ability of large language models~(LLMs) over structured data in a unified way." .
+
+<https://w3id.org/portolan/id/evidence/79fa9e8b41e1196def738e7de6fbd1ac0ca0bb8e> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "When evaluated on a wide range of open-domain QA datasets, our dense retriever outperforms a strong Lucene-BM25 system" .
+
+<https://w3id.org/portolan/id/evidence/943465304391265be3be7eeac6f8f3040b33919c> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Extensive experimental validation demonstrates considerable improvements in retrieval accuracy and efficiency compared to existing approaches." .
+
+<https://w3id.org/portolan/id/evidence/25863f9357d205a8b48051d9dc396ea84f2a035b> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "We review and summarize existing efforts within these three frameworks in our roadmap and pinpoint their future research directions." .
+
+<https://w3id.org/portolan/id/evidence/afab77486b0d75c8b1967ffc0f5835a6e380f0cb> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Retrieval-Augmented Generation (RAG) systems enhance large language models (LLMs) by integrating external knowledge sources, enabling more accurate and contextually relevant responses tailored to user needs." .
+
+<https://w3id.org/portolan/id/evidence/0b25b4857b2025c31833a541802e7eb24fcef0e1> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "performance can degrade significantly when changing the position of relevant information" .
+
+<https://w3id.org/portolan/id/evidence/3a8e724c95445827fe6b55c03c4ebf34b2921e86> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "We demonstrate the effectiveness of Retrieval-Augmented Language Model pre-training (REALM) by fine-tuning on the challenging task of Open-domain Question Answering (Open-QA)." .
+
+<https://w3id.org/portolan/id/evidence/88ab9e600c6fd79188e653543e43d7bbc31be91d> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Knowledge graphs have gained increasing popularity in the last decade in science and technology." .
+
+<https://w3id.org/portolan/id/evidence/ab3f3acbca16964e93d16c81490c483110cced06> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "On two interactive decision making benchmarks (ALFWorld and WebShop), ReAct outperforms imitation and reinforcement learning methods by an absolute success rate of 34% and 10% respectively" .
+
+<https://w3id.org/portolan/id/evidence/1a9be5e2a2417468ad4bed0e77c074dc409e5921> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "While large language models (LLMs) have demonstrated impressive capabilities across tasks in language understanding and interactive decision making, their abilities for reasoning (e.g. chain-of-thought prompting) and acting (e.g. action plan generation) have primarily been studied as separate topics." .
+
+<https://w3id.org/portolan/id/evidence/a049ca36d490f7ddaa04fd39cd9a7e9340f4e7f3> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Extensive experiments conducted on three types of structured data demonstrate the effectiveness of our approach, which can significantly boost the performance of ChatGPT" .
+
+<https://w3id.org/portolan/id/evidence/4ec22bd8c0e8b724d6497f58eb3363a6094b5322> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Given a graph with textual attributes, we enable users to `chat with their graph': that is, to ask questions about the graph using a conversational interface." .
+
+<https://w3id.org/portolan/id/evidence/0f0671fc925889558ae0d440d53a3cab09163f48> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Experiments show that Self-RAG (7B and 13B parameters) significantly outperforms state-of-the-art LLMs and retrieval-augmented models on a diverse set of tasks." .
+
+<https://w3id.org/portolan/id/evidence/71b234e0f3ad9dcb5a5b4fdf064017dcad2d64ca> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "We explore a general-purpose fine-tuning recipe for retrieval-augmented generation (RAG) -- models which combine pre-trained parametric and non-parametric memory for language generation." .
+
+<https://w3id.org/portolan/id/evidence/17c299ff41d54353a03f6df86956ed0698ba5f47> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "For language generation tasks, we find that RAG models generate more specific, diverse and factual language than a state-of-the-art parametric-only seq2seq baseline." .
+
+<https://w3id.org/portolan/id/evidence/ac704a5c75e6549a186629d9eac7e3021ef44a46> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Despite their remarkable capabilities, large language models (LLMs) often produce responses containing factual inaccuracies due to their sole reliance on the parametric knowledge they encapsulate." .
+
+<https://w3id.org/portolan/id/evidence/7605b0ee32ba6a7defc98006ca3b2f2b416f6ea1> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Answering complex questions is a time-consuming activity for humans that requires reasoning and integration of information." .
+
+<https://w3id.org/portolan/id/evidence/dad1a2ace5962582c9b95b7d6d6c420e2978483d> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Empirical evaluations show that our method outperforms baselines on textual graph tasks from multiple domains" .
+
+<https://w3id.org/portolan/id/evidence/1d289cbaae524c14821a70e667bdcebb1ee6cd12> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "we show that GraphRAG leads to substantial improvements over a conventional RAG baseline for both the comprehensiveness and diversity of generated answers." .
+
+<https://w3id.org/portolan/id/evidence/37d083ba21057c2fe8ed73d330fc57d8eb5dc52b> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Additionally, providing provenance for their decisions and updating their world knowledge remain open research problems." .
+
+<https://w3id.org/portolan/id/evidence/f1823247b9a5cb615babd81a03884f9100f7ee22> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration." .
+
+<https://w3id.org/portolan/id/evidence/cf28069b86c1b26664340dfdb0068b3371a0238e> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Large language models (LLMs), such as ChatGPT and GPT4, are making new waves in the field of natural language processing and artificial intelligence, due to their emergent ability and generalizability." .
+
+<https://w3id.org/portolan/id/evidence/4b614806fe4d03466ae34d42b2a583b47bb3d97b> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "indiscriminately retrieving and incorporating a fixed number of retrieved passages, regardless of whether retrieval is necessary, or passages are relevant, diminishes LM versatility or can lead to unhelpful response generation." .
+
+<https://w3id.org/portolan/id/evidence/846c1f683163579ea7680d648b1be88d712a9d48> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "As a training-free method with lower computational cost and better generality, ToG achieves overall SOTA in 6 out of 9 datasets where most previous SOTAs rely on additional training." .
+
+<https://w3id.org/portolan/id/evidence/daa826a529764bd7bfeda4a9d3c6bdb683c646ab> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "We obtain state-of-the-art results on the Natural Questions and TriviaQA open benchmarks." .
+
+<https://w3id.org/portolan/id/evidence/ae6ca132e7505b0df8cb410628d23f2a3590f1d5> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Although large language models (LLMs) have achieved significant success in various tasks, they often struggle with hallucination problems, especially in scenarios requiring deep and responsible reasoning." .
+
+<https://w3id.org/portolan/id/evidence/31c886e459363b217f6c3bafb86a221d0e5c3747> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "While promising, this approach requires to use models with billions of parameters, which are expensive to train and query." .
+
+<https://w3id.org/portolan/id/evidence/cb684580d76d5c631fe1f82100bb8ca9a71fcaa2> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "We empirically demonstrate that question decomposition improves performance from 20.8 precision@1 to 27.5 precision@1 on this new dataset." .
+
+<https://w3id.org/portolan/id/evidence/3db16b16bcc309aa4d18990a681a151270514973> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "The use of retrieval-augmented generation (RAG) to retrieve relevant information from an external knowledge source enables large language models (LLMs) to answer questions over private and/or previously unseen document collections." .
+
+<https://w3id.org/portolan/id/evidence/8487abbc78b513585d6f6792a69a8d282f4bbfcb> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Extensive experiments on two benchmark KGQA datasets demonstrate that RoG achieves state-of-the-art performance on KG reasoning tasks and generates faithful and interpretable reasoning results." .
+
+<https://w3id.org/portolan/id/evidence/f26a9ef55774ee3a1dbdfc04b6a87ee70ad2c233> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "However, this knowledge is stored implicitly in the parameters of a neural network" .
+
+<https://w3id.org/portolan/id/evidence/8f564c1df81dd5665207999c8609b42437691613> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Knowledge graphs (KGs), which capture vast amounts of facts in a structured format, offer a reliable source of knowledge for reasoning." .
+
+<https://w3id.org/portolan/id/evidence/784f44c96bcc5f1a0410620f91a21087c30aece6> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers." .
+
+<https://w3id.org/portolan/id/evidence/eab4d997fa363769b111d15045b5372539d7cefe> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "We explore how generating a chain of thought -- a series of intermediate reasoning steps -- significantly improves the ability of large language models to perform complex reasoning." .
+
+<https://w3id.org/portolan/id/evidence/37ac8d96b21292ef9e1b95231c75f10aa851254e> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "We compare two RAG formulations, one which conditions on the same retrieved passages across the whole generated sequence, the other can use different passages per token." .
+
+<https://w3id.org/portolan/id/evidence/44c75317d8bae855cc6e28cb7e94b183dda79450> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Our analysis provides a better understanding of how language models use their input context and provides new evaluation protocols for future long-context language models." .
+
+<https://w3id.org/portolan/id/evidence/d0c93dae7f8ced7b108337c9cef5f1102d576833> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "We present SciQA a scientific QA benchmark for scholarly knowledge." .
+
+<https://w3id.org/portolan/id/evidence/e25afe98c70ca4bda66519b97042846ff37b134c> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Generative models for open domain question answering have proven to be competitive, without resorting to external knowledge." .
+
+<https://w3id.org/portolan/id/evidence/8a8a1dd7ed94532dcea15abede159315f6fe1807> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "While recent language models have the ability to take long contexts as input, relatively little is known about how well they use longer context." .
+
+<https://w3id.org/portolan/id/evidence/b5ffe12b81c6d1b9b40adb3c111ac9e0c3b8ecf4> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Nevertheless, existing KG-based LLM reasoning methods only treat KGs as factual knowledge bases and overlook the importance of their structural information for reasoning." .
+
+<https://w3id.org/portolan/id/evidence/a4d271070cbd00ba1ce2f4c5ee8d526dd87aa296> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "ReAct overcomes issues of hallucination and error propagation prevalent in chain-of-thought reasoning by interacting with a simple Wikipedia API" .
+
+<https://w3id.org/portolan/id/evidence/03ee16fa1d160f8f18fbf4bfec678682cd0d2087> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "Experiments on three large language models show that chain of thought prompting improves performance on a range of arithmetic, commonsense, and symbolic reasoning tasks." .
+
+<https://w3id.org/portolan/id/evidence/cdc344ae0468477d1819e3519cda2049872165eb> a ptl:Evidence ;
+    ptl:fromSourceKind "abstract" ;
+    ptl:quote "dense retriever outperforms a strong Lucene-BM25 system largely by 9%-19% absolute in terms of top-20 passage retrieval accuracy" .
+
+<https://w3id.org/portolan/id/extraction/golden-v02> a prov:Activity ;
+    ptl:endedAtTime "2026-09-22T00:00:00.000000000+00:00" ;
+    ptl:model "golden-fixture-curator" ;
+    ptl:ontologyVersion "v0.2" ;
+    ptl:promptVersion "golden-fixture-2026-09-22" .
+
+<https://w3id.org/portolan/id/futurework/arxiv-2210.03629/3> a ptl:FutureWork ;
+    ptl:futureWorkText "Interactive reasoning should be evaluated across broader decision-making environments." .
+
+<https://w3id.org/portolan/id/futurework/doi-10.1109%2FTKDE.2024.3352100/2> a ptl:FutureWork ;
+    ptl:futureWorkText "Future work should connect the three roadmap frameworks through bidirectional reasoning driven by data and knowledge." .
+
+<https://w3id.org/portolan/id/futurework/doi-10.1162%2Ftacl_a_00638/3> a ptl:FutureWork ;
+    ptl:futureWorkText "Long-context systems need stronger evaluation protocols and position-robust retrieval." .
+
+<https://w3id.org/portolan/id/gap/kgqa-rag/1> a ptl:GapHypothesis ;
+    ptl:confidence 0.88 ;
+    ptl:gapType "statedUnaddressed" ;
+    ptl:statement "Repeated factuality and provenance limitations remain unaddressed across retrieval papers." ;
+    ptl:userNote "Keep as a review priority." ;
+    ptl:userStatus "accepted" ;
+    ptl:verificationOutcome "noCounterEvidence" .
+
+<https://w3id.org/portolan/id/gap/kgqa-rag/2> a ptl:GapHypothesis ;
+    ptl:confidence 0.74 ;
+    ptl:gapType "evaluationGap" ;
+    ptl:statement "Graph QA methods do not share a stable evaluation protocol across graph types." ;
+    ptl:userStatus "proposed" ;
+    ptl:verificationOutcome "notChecked" .
+
+<https://w3id.org/portolan/id/gap/kgqa-rag/3> a ptl:GapHypothesis ;
+    ptl:confidence 0.69 ;
+    ptl:gapType "bridgingGap" ;
+    ptl:statement "Retrieval benchmarks and graph-reasoning benchmarks remain weakly connected." ;
+    ptl:userNote "Rejected for this review because the proposed bridge is too broad to operationalize." ;
+    ptl:userStatus "rejected" ;
+    ptl:verificationOutcome "partiallyAddressed" .
+
+<https://w3id.org/portolan/id/gap/kgqa-rag/4> a ptl:GapHypothesis ;
+    ptl:confidence 0.81 ;
+    ptl:gapType "contradiction" ;
+    ptl:statement "Fixed retrieval and adaptive retrieval make conflicting claims about when evidence should be fetched." ;
+    ptl:userStatus "accepted" ;
+    ptl:verificationOutcome "noCounterEvidence" .
+
+<https://w3id.org/portolan/id/gap/kgqa-rag/5> a ptl:GapHypothesis ;
+    ptl:confidence 0.63 ;
+    ptl:gapType "matrixVoid" ;
+    ptl:statement "Long-context retrieval and graph reasoning lack a shared benchmark cell in this corpus." ;
+    ptl:userStatus "proposed" ;
+    ptl:verificationOutcome "notChecked" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/arxiv-1706.03762> a ptl:Inclusion ;
+    ptl:betweenness 0.0 ;
+    ptl:citationVelocity 0.4444444444 ;
+    ptl:decision "excluded" ;
+    ptl:discoveredVia "seed" ;
+    ptl:frontierComponentClusterGrowth 0.0 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 0.0 ;
+    ptl:frontierComponentVelocity 0.3333333333 ;
+    ptl:frontierScore 0.2222222222 ;
+    ptl:onMainPath true ;
+    ptl:pageRank 0.1988524093 ;
+    ptl:reason "Foundational architecture paper; it does not directly study KGQA or RAG." ;
+    ptl:relevance 0.42 ;
+    ptl:role "foundational" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/arxiv-2002.08909> a ptl:Inclusion ;
+    ptl:betweenness 0.0016339869 ;
+    ptl:citationVelocity 0.8333333333 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "backward" ;
+    ptl:frontierComponentClusterGrowth 0.6666666667 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.625 ;
+    ptl:frontierScore 0.5486111111 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.0704887617 ;
+    ptl:relevance 0.9 ;
+    ptl:role "backbone",
+        "foundational" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/arxiv-2005.11401> a ptl:Inclusion ;
+    ptl:betweenness 0.0697167756 ;
+    ptl:citationVelocity 1.3333333333 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "seed" ;
+    ptl:frontierComponentClusterGrowth 0.6666666667 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 1.0 ;
+    ptl:frontierScore 0.6111111111 ;
+    ptl:onMainPath true ;
+    ptl:pageRank 0.0833134952 ;
+    ptl:relevance 0.99 ;
+    ptl:role "backbone",
+        "foundational" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/arxiv-2210.03629> a ptl:Inclusion ;
+    ptl:betweenness 0.0008169935 ;
+    ptl:citationVelocity 0.5 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "forward" ;
+    ptl:frontierComponentClusterGrowth 0.803030303 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.375 ;
+    ptl:frontierScore 0.5296717172 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.0266987493 ;
+    ptl:relevance 0.88 ;
+    ptl:role "bridge",
+        "rising" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/arxiv-2307.07697> a ptl:Inclusion ;
+    ptl:betweenness 0.0 ;
+    ptl:citationVelocity 0.0 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "forward" ;
+    ptl:frontierComponentClusterGrowth 0.803030303 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.0 ;
+    ptl:frontierScore 0.4671717172 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.0197857303 ;
+    ptl:relevance 0.96 ;
+    ptl:role "bridge",
+        "rising" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/arxiv-2310.11511> a ptl:Inclusion ;
+    ptl:betweenness 0.0 ;
+    ptl:citationVelocity 0.0 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "forward" ;
+    ptl:frontierComponentClusterGrowth 0.6666666667 ;
+    ptl:frontierComponentConceptNovelty 1.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.0 ;
+    ptl:frontierScore 0.6111111111 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.0197857303 ;
+    ptl:relevance 0.95 ;
+    ptl:role "bridge",
+        "rising" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/arxiv-2404.16130> a ptl:Inclusion ;
+    ptl:betweenness 0.045751634 ;
+    ptl:citationVelocity 0.5 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "forward" ;
+    ptl:frontierComponentClusterGrowth 1.0 ;
+    ptl:frontierComponentConceptNovelty 1.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.375 ;
+    ptl:frontierScore 0.7291666667 ;
+    ptl:onMainPath true ;
+    ptl:pageRank 0.036603601 ;
+    ptl:relevance 0.96 ;
+    ptl:role "bridge",
+        "rising" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.1038%2Fs41598-023-33607-z> a ptl:Inclusion ;
+    ptl:betweenness 0.0 ;
+    ptl:citationVelocity 0.0 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "semantic" ;
+    ptl:frontierComponentClusterGrowth 1.0 ;
+    ptl:frontierComponentConceptNovelty 1.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 0.0 ;
+    ptl:frontierComponentSotaClaim 0.0 ;
+    ptl:frontierComponentVelocity 0.0 ;
+    ptl:frontierScore 0.3333333333 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.0197857303 ;
+    ptl:relevance 0.83 ;
+    ptl:role "backbone",
+        "survey" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.1109%2FTKDE.2024.3352100> a ptl:Inclusion ;
+    ptl:betweenness 0.0136165577 ;
+    ptl:citationVelocity 0.6666666667 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "semantic" ;
+    ptl:frontierComponentClusterGrowth 1.0 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 0.0 ;
+    ptl:frontierComponentVelocity 0.5 ;
+    ptl:frontierScore 0.4166666667 ;
+    ptl:onMainPath true ;
+    ptl:pageRank 0.0266987493 ;
+    ptl:relevance 0.84 ;
+    ptl:role "bridge",
+        "survey" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.1162%2Ftacl_a_00638> a ptl:Inclusion ;
+    ptl:betweenness 0.0098039216 ;
+    ptl:citationVelocity 0.3333333333 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "forward" ;
+    ptl:frontierComponentClusterGrowth 0.6666666667 ;
+    ptl:frontierComponentConceptNovelty 1.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 0.0 ;
+    ptl:frontierComponentVelocity 0.25 ;
+    ptl:frontierScore 0.4861111111 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.0301567506 ;
+    ptl:relevance 0.76 ;
+    ptl:role "backbone" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.18653%2Fv1%2F2020.emnlp-main.550> a ptl:Inclusion ;
+    ptl:betweenness 0.0125272331 ;
+    ptl:citationVelocity 0.5 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "backward" ;
+    ptl:frontierComponentClusterGrowth 0.6666666667 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.375 ;
+    ptl:frontierScore 0.5069444444 ;
+    ptl:onMainPath true ;
+    ptl:pageRank 0.0522460218 ;
+    ptl:relevance 0.94 ;
+    ptl:role "backbone",
+        "foundational" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.18653%2Fv1%2F2021.eacl-main.74> a ptl:Inclusion ;
+    ptl:betweenness 0.015795207 ;
+    ptl:citationVelocity 0.5 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "backward" ;
+    ptl:frontierComponentClusterGrowth 0.6666666667 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.375 ;
+    ptl:frontierScore 0.5069444444 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.048215095 ;
+    ptl:relevance 0.91 ;
+    ptl:role "backbone" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.18653%2Fv1%2FN18-1059> a ptl:Inclusion ;
+    ptl:betweenness 0.0 ;
+    ptl:citationVelocity 0.375 ;
+    ptl:decision "excluded" ;
+    ptl:discoveredVia "backward" ;
+    ptl:frontierComponentClusterGrowth 1.0 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 0.0 ;
+    ptl:frontierComponentVelocity 0.28125 ;
+    ptl:frontierScore 0.3802083333 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.0351076847 ;
+    ptl:reason "Benchmark construction is useful context but outside the method-focused review scope." ;
+    ptl:relevance 0.47 ;
+    ptl:role "foundational" ;
+    ptl:stage "screening" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.18653%2Fv1%2FN19-1423> a ptl:Inclusion ;
+    ptl:betweenness 0.0130718954 ;
+    ptl:citationVelocity 1.0 ;
+    ptl:decision "excluded" ;
+    ptl:discoveredVia "backward" ;
+    ptl:frontierComponentClusterGrowth 0.0 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.75 ;
+    ptl:frontierScore 0.4583333333 ;
+    ptl:onMainPath true ;
+    ptl:pageRank 0.1709458247 ;
+    ptl:reason "General encoder baseline without a retrieval or graph-question-answering contribution." ;
+    ptl:relevance 0.38 ;
+    ptl:role "foundational" ;
+    ptl:stage "screening" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.48550%2FarXiv.2305.09645> a ptl:Inclusion ;
+    ptl:betweenness 0.0 ;
+    ptl:citationVelocity 1.0 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "forward" ;
+    ptl:frontierComponentClusterGrowth 0.803030303 ;
+    ptl:frontierComponentConceptNovelty 1.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 0.0 ;
+    ptl:frontierComponentVelocity 0.75 ;
+    ptl:frontierScore 0.5921717172 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.0318385838 ;
+    ptl:relevance 0.87 ;
+    ptl:role "bridge",
+        "rising" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.48550%2FarXiv.2310.01061> a ptl:Inclusion ;
+    ptl:betweenness 0.0506535948 ;
+    ptl:citationVelocity 1.0 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "forward" ;
+    ptl:frontierComponentClusterGrowth 0.803030303 ;
+    ptl:frontierComponentConceptNovelty 1.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.75 ;
+    ptl:frontierScore 0.7588383838 ;
+    ptl:onMainPath true ;
+    ptl:pageRank 0.0318385838 ;
+    ptl:relevance 0.94 ;
+    ptl:role "bridge",
+        "rising" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.48550%2FarXiv.2402.07630> a ptl:Inclusion ;
+    ptl:betweenness 0.0392156863 ;
+    ptl:citationVelocity 0.5 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "forward" ;
+    ptl:frontierComponentClusterGrowth 1.0 ;
+    ptl:frontierComponentConceptNovelty 1.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.375 ;
+    ptl:frontierScore 0.7291666667 ;
+    ptl:onMainPath true ;
+    ptl:pageRank 0.0301567506 ;
+    ptl:relevance 0.96 ;
+    ptl:role "bridge",
+        "rising" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.48550%2FarXiv.2410.05779> a ptl:Inclusion ;
+    ptl:betweenness 0.0 ;
+    ptl:citationVelocity 0.0 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "forward" ;
+    ptl:frontierComponentClusterGrowth 1.0 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 1.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 1.0 ;
+    ptl:frontierComponentVelocity 0.0 ;
+    ptl:frontierScore 0.6666666667 ;
+    ptl:onMainPath true ;
+    ptl:pageRank 0.0197857303 ;
+    ptl:relevance 0.95 ;
+    ptl:role "rising" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/inclusion/kgqa-rag/doi-10.52202%2F068431-1800> a ptl:Inclusion ;
+    ptl:betweenness 0.0051742919 ;
+    ptl:citationVelocity 1.25 ;
+    ptl:decision "included" ;
+    ptl:discoveredVia "backward" ;
+    ptl:frontierComponentClusterGrowth 0.803030303 ;
+    ptl:frontierComponentConceptNovelty 0.0 ;
+    ptl:frontierComponentMainPathLeaf 0.0 ;
+    ptl:frontierComponentNotPeerReviewed 1.0 ;
+    ptl:frontierComponentSotaClaim 0.0 ;
+    ptl:frontierComponentVelocity 0.9375 ;
+    ptl:frontierScore 0.4567550505 ;
+    ptl:onMainPath false ;
+    ptl:pageRank 0.0476960182 ;
+    ptl:relevance 0.78 ;
+    ptl:role "foundational" ;
+    ptl:stage "fulltext" .
+
+<https://w3id.org/portolan/id/limitation/arxiv-2002.08909/3> a ptl:Limitation ;
+    ptl:limitationText "Implicitly stored knowledge is difficult to inspect and update." .
+
+<https://w3id.org/portolan/id/limitation/arxiv-2005.11401/4> a ptl:Limitation ;
+    ptl:limitationText "Provenance and world-knowledge updates remain open problems for knowledge-intensive generation." .
+
+<https://w3id.org/portolan/id/limitation/doi-10.1162%2Ftacl_a_00638/2> a ptl:Limitation ;
+    ptl:limitationText "Long-context retrieval is sensitive to the position of relevant evidence." .
+
+<https://w3id.org/portolan/id/limitation/doi-10.18653%2Fv1%2F2020.emnlp-main.550/3> a ptl:Limitation ;
+    ptl:limitationText "Dense retrieval alone does not guarantee faithful generation or provenance." .
+
+<https://w3id.org/portolan/id/limitation/doi-10.18653%2Fv1%2F2021.eacl-main.74/3> a ptl:Limitation ;
+    ptl:limitationText "Retrieval-augmented generators remain expensive when their base models are very large." .
+
+<https://w3id.org/portolan/id/limitation/doi-10.52202%2F068431-1800/2> a ptl:Limitation ;
+    ptl:limitationText "Chain-of-thought prompting leaves retrieval and grounding outside the reasoning trace." .
+
+<https://w3id.org/portolan/id/protocol/kgqa-rag-v1> a ptl:ReviewProtocol ;
+    ptl:allowedTier "officialBlog",
+        "peerReviewed",
+        "preprint" ;
+    ptl:exclusionCriterion "Dataset-only work without a method or analysis relevant to the review.",
+        "General language-model architecture work without a direct corpus focus." ;
+    ptl:fromYear 2017 ;
+    ptl:inclusionCriterion "Addresses KGQA, knowledge-intensive NLP, retrieval, graph reasoning, or evaluation.",
+        "Has an abstract and a stable identifier in the golden corpus." ;
+    ptl:maxSnowballDepth 3 ;
+    ptl:maxWorks 19 ;
+    ptl:scopeStatement "Knowledge-graph question answering and retrieval-augmented generation from 2017 through 2024." ;
+    ptl:toYear 2024 .
+
+<https://w3id.org/portolan/id/result/arxiv-2002.08909/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "Open-QA" ;
+    ptl:unit "accuracy" ;
+    ptl:value 0.84 .
+
+<https://w3id.org/portolan/id/result/arxiv-2005.11401/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "open-domain question answering" ;
+    ptl:unit "exact match" ;
+    ptl:value 0.63 .
+
+<https://w3id.org/portolan/id/result/arxiv-2210.03629/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "question answering and fact verification" ;
+    ptl:unit "success rate" ;
+    ptl:value 0.71 .
+
+<https://w3id.org/portolan/id/result/arxiv-2307.07697/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "knowledge-graph reasoning" ;
+    ptl:unit "accuracy" ;
+    ptl:value 0.85 .
+
+<https://w3id.org/portolan/id/result/arxiv-2310.11511/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "open-domain question answering" ;
+    ptl:unit "exact match" ;
+    ptl:value 0.86 .
+
+<https://w3id.org/portolan/id/result/arxiv-2404.16130/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "global sensemaking questions" ;
+    ptl:unit "accuracy" ;
+    ptl:value 0.78 .
+
+<https://w3id.org/portolan/id/result/doi-10.1038%2Fs41598-023-33607-z/2> a ptl:Result ;
+    ptl:claimsSota false ;
+    ptl:setting "scholarly question answering" ;
+    ptl:unit "accuracy" ;
+    ptl:value 0.68 .
+
+<https://w3id.org/portolan/id/result/doi-10.18653%2Fv1%2F2020.emnlp-main.550/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "open-domain question answering" ;
+    ptl:unit "top-20 retrieval accuracy" ;
+    ptl:value 0.87 .
+
+<https://w3id.org/portolan/id/result/doi-10.18653%2Fv1%2F2021.eacl-main.74/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "open-domain question answering" ;
+    ptl:unit "accuracy" ;
+    ptl:value 0.83 .
+
+<https://w3id.org/portolan/id/result/doi-10.18653%2Fv1%2FN18-1059/2> a ptl:Result ;
+    ptl:claimsSota false ;
+    ptl:setting "complex question answering" ;
+    ptl:unit "precision@1" ;
+    ptl:value 27.5 .
+
+<https://w3id.org/portolan/id/result/doi-10.18653%2Fv1%2FN19-1423/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "SQuAD v1.1 test F1" ;
+    ptl:unit "points" ;
+    ptl:value 93.2 .
+
+<https://w3id.org/portolan/id/result/doi-10.48550%2FarXiv.2305.09645/2> a ptl:Result ;
+    ptl:claimsSota false ;
+    ptl:setting "structured-data question answering" ;
+    ptl:unit "accuracy" ;
+    ptl:value 0.79 .
+
+<https://w3id.org/portolan/id/result/doi-10.48550%2FarXiv.2310.01061/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "benchmark KG reasoning tasks" ;
+    ptl:unit "accuracy" ;
+    ptl:value 0.82 .
+
+<https://w3id.org/portolan/id/result/doi-10.48550%2FarXiv.2402.07630/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "textual graph tasks" ;
+    ptl:unit "accuracy" ;
+    ptl:value 0.74 .
+
+<https://w3id.org/portolan/id/result/doi-10.48550%2FarXiv.2410.05779/2> a ptl:Result ;
+    ptl:claimsSota true ;
+    ptl:setting "retrieval accuracy and efficiency" ;
+    ptl:unit "accuracy" ;
+    ptl:value 0.82 .
+
+<https://w3id.org/portolan/id/review/kgqa-rag> a ptl:Review ;
+    ptl:budgetUsd 25.0 ;
+    ptl:budgetWorks 19 ;
+    ptl:endedAt "2026-09-22T00:00:01.000000000+00:00" ;
+    ptl:seedKind "paper" ;
+    ptl:seedValue "arxiv:1706.03762" ;
+    ptl:spendUsd 0.0 ;
+    ptl:startedAt "2026-09-22T00:00:00.000000000+00:00" .
+
+<https://w3id.org/portolan/id/work/arxiv/1706.03762> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data." ;
+    dcterms:issued "2017"^^xsd:gYear ;
+    dcterms:title "Attention is All you Need" ;
+    ptl:arxivId "1706.03762" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "204e3073870fae3d05bcbc2f6a8e263d9b72e776" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "A new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely is proposed, which generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data." ;
+    ptl:url "https://www.semanticscholar.org/paper/204e3073870fae3d05bcbc2f6a8e263d9b72e776" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/arxiv/2002.08909> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Language model pre-training has been shown to capture a surprising amount of world knowledge, crucial for NLP tasks such as question answering. However, this knowledge is stored implicitly in the parameters of a neural network, requiring ever-larger networks to cover more facts. To capture knowledge in a more modular and interpretable way, we augment language model pre-training with a latent knowledge retriever, which allows the model to retrieve and attend over documents from a large corpus such as Wikipedia, used during pre-training, fine-tuning and inference. For the first time, we show how to pre-train such a knowledge retriever in an unsupervised manner, using masked language modeling as the learning signal and backpropagating through a retrieval step that considers millions of documents. We demonstrate the effectiveness of Retrieval-Augmented Language Model pre-training (REALM) by fine-tuning on the challenging task of Open-domain Question Answering (Open-QA). We compare against state-of-the-art models for both explicit and implicit knowledge storage on three popular Open-QA benchmarks, and find that we outperform all previous methods by a significant margin (4-16% absolute accuracy), while also providing qualitative benefits such as interpretability and modularity." ;
+    dcterms:issued "2020"^^xsd:gYear ;
+    dcterms:title "REALM: Retrieval-Augmented Language Model Pre-Training" ;
+    ptl:arxivId "2002.08909" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "832fff14d2ed50eb7969c4c4b976c35776548f56" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "The effectiveness of Retrieval-Augmented Language Model pre-training (REALM) is demonstrated by fine-tuning on the challenging task of Open-domain Question Answering (Open-QA) and is found to outperform all previous methods by a significant margin, while also providing qualitative benefits such as interpretability and modularity." ;
+    ptl:url "https://www.semanticscholar.org/paper/832fff14d2ed50eb7969c4c4b976c35776548f56" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/arxiv/2005.11401> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Large pre-trained language models have been shown to store factual knowledge in their parameters, and achieve state-of-the-art results when fine-tuned on downstream NLP tasks. However, their ability to access and precisely manipulate knowledge is still limited, and hence on knowledge-intensive tasks, their performance lags behind task-specific architectures. Additionally, providing provenance for their decisions and updating their world knowledge remain open research problems. Pre-trained models with a differentiable access mechanism to explicit non-parametric memory can overcome this issue, but have so far been only investigated for extractive downstream tasks. We explore a general-purpose fine-tuning recipe for retrieval-augmented generation (RAG) -- models which combine pre-trained parametric and non-parametric memory for language generation. We introduce RAG models where the parametric memory is a pre-trained seq2seq model and the non-parametric memory is a dense vector index of Wikipedia, accessed with a pre-trained neural retriever. We compare two RAG formulations, one which conditions on the same retrieved passages across the whole generated sequence, the other can use different passages per token. We fine-tune and evaluate our models on a wide range of knowledge-intensive NLP tasks and set the state-of-the-art on three open domain QA tasks, outperforming parametric seq2seq models and task-specific retrieve-and-extract architectures. For language generation tasks, we find that RAG models generate more specific, diverse and factual language than a state-of-the-art parametric-only seq2seq baseline." ;
+    dcterms:issued "2020"^^xsd:gYear ;
+    dcterms:title "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" ;
+    ptl:arxivId "2005.11401" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "659bf9ce7175e1ec266ff54359e2bd76e0b7ff31" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "A general-purpose fine-tuning recipe for retrieval-augmented generation (RAG) -- models which combine pre-trained parametric and non-parametric memory for language generation, and finds that RAG models generate more specific, diverse and factual language than a state-of-the-art parametric-only seq2seq baseline." ;
+    ptl:url "https://www.semanticscholar.org/paper/659bf9ce7175e1ec266ff54359e2bd76e0b7ff31" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/arxiv/2210.03629> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "While large language models (LLMs) have demonstrated impressive capabilities across tasks in language understanding and interactive decision making, their abilities for reasoning (e.g. chain-of-thought prompting) and acting (e.g. action plan generation) have primarily been studied as separate topics. In this paper, we explore the use of LLMs to generate both reasoning traces and task-specific actions in an interleaved manner, allowing for greater synergy between the two: reasoning traces help the model induce, track, and update action plans as well as handle exceptions, while actions allow it to interface with external sources, such as knowledge bases or environments, to gather additional information. We apply our approach, named ReAct, to a diverse set of language and decision making tasks and demonstrate its effectiveness over state-of-the-art baselines, as well as improved human interpretability and trustworthiness over methods without reasoning or acting components. Concretely, on question answering (HotpotQA) and fact verification (Fever), ReAct overcomes issues of hallucination and error propagation prevalent in chain-of-thought reasoning by interacting with a simple Wikipedia API, and generates human-like task-solving trajectories that are more interpretable than baselines without reasoning traces. On two interactive decision making benchmarks (ALFWorld and WebShop), ReAct outperforms imitation and reinforcement learning methods by an absolute success rate of 34% and 10% respectively, while being prompted with only one or two in-context examples. Project site with code: https://react-lm.github.io" ;
+    dcterms:issued "2022"^^xsd:gYear ;
+    dcterms:title "ReAct: Synergizing Reasoning and Acting in Language Models" ;
+    ptl:arxivId "2210.03629" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "99832586d55f540f603637e458a292406a0ed75d" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "The use of LLMs are explored to generate both reasoning traces and task-specific actions in an interleaved manner, allowing for greater synergy between the two: reasoning traces help the model induce, track, and update action plans as well as handle exceptions, while actions allow it to interface with external sources to gather additional information." ;
+    ptl:url "https://www.semanticscholar.org/paper/99832586d55f540f603637e458a292406a0ed75d" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/arxiv/2307.07697> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Although large language models (LLMs) have achieved significant success in various tasks, they often struggle with hallucination problems, especially in scenarios requiring deep and responsible reasoning. These issues could be partially addressed by introducing external knowledge graphs (KG) in LLM reasoning. In this paper, we propose a new LLM-KG integrating paradigm ``$\\hbox{LLM}\\otimes\\hbox{KG}$'' which treats the LLM as an agent to interactively explore related entities and relations on KGs and perform reasoning based on the retrieved knowledge. We further implement this paradigm by introducing a new approach called Think-on-Graph (ToG), in which the LLM agent iteratively executes beam search on KG, discovers the most promising reasoning paths, and returns the most likely reasoning results. We use a number of well-designed experiments to examine and illustrate the following advantages of ToG: 1) compared with LLMs, ToG has better deep reasoning power; 2) ToG has the ability of knowledge traceability and knowledge correctability by leveraging LLMs reasoning and expert feedback; 3) ToG provides a flexible plug-and-play framework for different LLMs, KGs and prompting strategies without any additional training cost; 4) the performance of ToG with small LLM models could exceed large LLM such as GPT-4 in certain scenarios and this reduces the cost of LLM deployment and application. As a training-free method with lower computational cost and better generality, ToG achieves overall SOTA in 6 out of 9 datasets where most previous SOTAs rely on additional training." ;
+    dcterms:issued "2023"^^xsd:gYear ;
+    dcterms:title "Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph" ;
+    ptl:arxivId "2307.07697" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "c7184f9a914dbfbad59faa5aeaf9ba7019dfcf74" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "A new LLM-KG integrating paradigm is proposed which treats the LLM as an agent to interactively explore related entities and relations on KGs and perform reasoning based on the retrieved knowledge." ;
+    ptl:url "https://www.semanticscholar.org/paper/c7184f9a914dbfbad59faa5aeaf9ba7019dfcf74" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/arxiv/2310.11511> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Despite their remarkable capabilities, large language models (LLMs) often produce responses containing factual inaccuracies due to their sole reliance on the parametric knowledge they encapsulate. Retrieval-Augmented Generation (RAG), an ad hoc approach that augments LMs with retrieval of relevant knowledge, decreases such issues. However, indiscriminately retrieving and incorporating a fixed number of retrieved passages, regardless of whether retrieval is necessary, or passages are relevant, diminishes LM versatility or can lead to unhelpful response generation. We introduce a new framework called Self-Reflective Retrieval-Augmented Generation (Self-RAG) that enhances an LM's quality and factuality through retrieval and self-reflection. Our framework trains a single arbitrary LM that adaptively retrieves passages on-demand, and generates and reflects on retrieved passages and its own generations using special tokens, called reflection tokens. Generating reflection tokens makes the LM controllable during the inference phase, enabling it to tailor its behavior to diverse task requirements. Experiments show that Self-RAG (7B and 13B parameters) significantly outperforms state-of-the-art LLMs and retrieval-augmented models on a diverse set of tasks. Specifically, Self-RAG outperforms ChatGPT and retrieval-augmented Llama2-chat on Open-domain QA, reasoning and fact verification tasks, and it shows significant gains in improving factuality and citation accuracy for long-form generations relative to these models." ;
+    dcterms:issued "2023"^^xsd:gYear ;
+    dcterms:title "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection" ;
+    ptl:arxivId "2310.11511" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "ddbd8fe782ac98e9c64dd98710687a962195dd9b" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "A new framework called Self-Reflective Retrieval-Augmented Generation (Self-RAG) is introduced that enhances an LM's quality and factuality through retrieval and self-reflection and shows significant gains in improving factuality and citation accuracy for long-form generations relative to state-of-the-art models." ;
+    ptl:url "https://www.semanticscholar.org/paper/ddbd8fe782ac98e9c64dd98710687a962195dd9b" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/arxiv/2404.16130> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "The use of retrieval-augmented generation (RAG) to retrieve relevant information from an external knowledge source enables large language models (LLMs) to answer questions over private and/or previously unseen document collections. However, RAG fails on global questions directed at an entire text corpus, such as\"What are the main themes in the dataset?\", since this is inherently a query-focused summarization (QFS) task, rather than an explicit retrieval task. Prior QFS methods, meanwhile, do not scale to the quantities of text indexed by typical RAG systems. To combine the strengths of these contrasting methods, we propose GraphRAG, a graph-based approach to question answering over private text corpora that scales with both the generality of user questions and the quantity of source text. Our approach uses an LLM to build a graph index in two stages: first, to derive an entity knowledge graph from the source documents, then to pregenerate community summaries for all groups of closely related entities. Given a question, each community summary is used to generate a partial response, before all partial responses are again summarized in a final response to the user. For a class of global sensemaking questions over datasets in the 1 million token range, we show that GraphRAG leads to substantial improvements over a conventional RAG baseline for both the comprehensiveness and diversity of generated answers." ;
+    dcterms:issued "2024"^^xsd:gYear ;
+    dcterms:title "From Local to Global: A Graph RAG Approach to Query-Focused Summarization" ;
+    ptl:arxivId "2404.16130" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "c1799bf28d1ae93e1631be5b59196ee1e568f538" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "GraphRAG is proposed, a graph-based approach to question answering over private text corpora that scales with both the generality of user questions and the quantity of source text and leads to substantial improvements over a conventional RAG baseline for both the comprehensiveness and diversity of generated answers." ;
+    ptl:url "https://www.semanticscholar.org/paper/c1799bf28d1ae93e1631be5b59196ee1e568f538" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.1038%2Fs41598-023-33607-z> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Knowledge graphs have gained increasing popularity in the last decade in science and technology. However, knowledge graphs are currently relatively simple to moderate semantic structures that are mainly a collection of factual statements. Question answering (QA) benchmarks and systems were so far mainly geared towards encyclopedic knowledge graphs such as DBpedia and Wikidata. We present SciQA a scientific QA benchmark for scholarly knowledge. The benchmark leverages the Open Research Knowledge Graph (ORKG) which includes almost 170,000 resources describing research contributions of almost 15,000 scholarly articles from 709 research fields. Following a bottom-up methodology, we first manually developed a set of 100 complex questions that can be answered using this knowledge graph. Furthermore, we devised eight question templates with which we automatically generated further 2465 questions, that can also be answered with the ORKG. The questions cover a range of research fields and question types and are translated into corresponding SPARQL queries over the ORKG. Based on two preliminary evaluations, we show that the resulting SciQA benchmark represents a challenging task for next-generation QA systems. This task is part of the open competitions at the 22nd International Semantic Web Conference 2023 as the Scholarly Question Answering over Linked Data (QALD) Challenge." ;
+    dcterms:issued "2023"^^xsd:gYear ;
+    dcterms:title "The SciQA Scientific Question Answering Benchmark for Scholarly Knowledge" ;
+    ptl:doi "10.1038/s41598-023-33607-z" ;
+    ptl:fullTextAvailable true ;
+    ptl:isSurvey false ;
+    ptl:s2Id "fc7f626f37f3cf7751523a99bc3f0fac10ec89cf" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "peerReviewed" ;
+    ptl:tldr "The SciQA benchmark leverages the Open Research Knowledge Graph (ORKG) which includes almost 170,000 resources describing research contributions of almost 15,000 scholarly articles from 709 research fields and represents a challenging task for next-generation QA systems." ;
+    ptl:url "https://www.semanticscholar.org/paper/fc7f626f37f3cf7751523a99bc3f0fac10ec89cf" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.1109%2FTKDE.2024.3352100> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Large language models (LLMs), such as ChatGPT and GPT4, are making new waves in the field of natural language processing and artificial intelligence, due to their emergent ability and generalizability. However, LLMs are black-box models, which often fall short of capturing and accessing factual knowledge. In contrast, Knowledge Graphs (KGs), Wikipedia, and Huapu for example, are structured knowledge models that explicitly store rich factual knowledge. KGs can enhance LLMs by providing external knowledge for inference and interpretability. Meanwhile, KGs are difficult to construct and evolve by nature, which challenges the existing methods in KGs to generate new facts and represent unseen knowledge. Therefore, it is complementary to unify LLMs and KGs together and, simultaneously, leverage their advantages. In this article, we present a forward-looking roadmap for the unification of LLMs and KGs. Our roadmap consists of three general frameworks, namely: 1) KG-enhanced LLMs, which incorporate KGs during the pre-training and inference phases of LLMs, or for the purpose of enhancing understanding of the knowledge learned by LLMs; 2) LLM-augmented KGs, that leverage LLMs for different KG tasks such as embedding, completion, construction, graph-to-text generation, and question answering; and 3) Synergized LLMs + KGs, in which LLMs and KGs play equal roles and work in a mutually beneficial way to enhance both LLMs and KGs for bidirectional reasoning driven by both data and knowledge. We review and summarize existing efforts within these three frameworks in our roadmap and pinpoint their future research directions." ;
+    dcterms:issued "2023"^^xsd:gYear ;
+    dcterms:title "Unifying Large Language Models and Knowledge Graphs: A Roadmap" ;
+    ptl:arxivId "2306.08302" ;
+    ptl:doi "10.1109/TKDE.2024.3352100" ;
+    ptl:fullTextAvailable true ;
+    ptl:isSurvey true ;
+    ptl:s2Id "9e8b7b0d4c628c12b6a65ab56ac5f33a35eff2e6" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "A forward-looking roadmap for the unification of LLMs and KGs, in which LLMs and KGs play equal roles and work in a mutually beneficial way to enhance both LLMs and KGs for bidirectional reasoning driven by both data and knowledge." ;
+    ptl:url "https://www.semanticscholar.org/paper/9e8b7b0d4c628c12b6a65ab56ac5f33a35eff2e6" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.1162%2Ftacl_a_00638> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "While recent language models have the ability to take long contexts as input, relatively little is known about how well they use longer context. We analyze the performance of language models on two tasks that require identifying relevant information in their input contexts: multi-document question answering and key-value retrieval. We find that performance can degrade significantly when changing the position of relevant information, indicating that current language models do not robustly make use of information in long input contexts. In particular, we observe that performance is often highest when relevant information occurs at the beginning or end of the input context, and significantly degrades when models must access relevant information in the middle of long contexts, even for explicitly long-context models. Our analysis provides a better understanding of how language models use their input context and provides new evaluation protocols for future long-context language models." ;
+    dcterms:issued "2023"^^xsd:gYear ;
+    dcterms:title "Lost in the Middle: How Language Models Use Long Contexts" ;
+    ptl:arxivId "2307.03172" ;
+    ptl:doi "10.1162/tacl_a_00638" ;
+    ptl:fullTextAvailable true ;
+    ptl:isSurvey false ;
+    ptl:s2Id "1733eb7792f7a43dd21f51f4d1017a1bffd217b5" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "Analyzing the performance of language models on two tasks that require identifying relevant information in their input contexts finds that performance can degrade significantly when changing the position of relevant information, indicating that current language models do not robustly make use of information in long input contexts." ;
+    ptl:url "https://www.semanticscholar.org/paper/1733eb7792f7a43dd21f51f4d1017a1bffd217b5" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2020.emnlp-main.550> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Open-domain question answering relies on efficient passage retrieval to select candidate contexts, where traditional sparse vector space models, such as TF-IDF or BM25, are the de facto method. In this work, we show that retrieval can be practically implemented using dense representations alone, where embeddings are learned from a small number of questions and passages by a simple dual-encoder framework. When evaluated on a wide range of open-domain QA datasets, our dense retriever outperforms a strong Lucene-BM25 system largely by 9%-19% absolute in terms of top-20 passage retrieval accuracy, and helps our end-to-end QA system establish new state-of-the-art on multiple open-domain QA benchmarks." ;
+    dcterms:issued "2020"^^xsd:gYear ;
+    dcterms:title "Dense Passage Retrieval for Open-Domain Question Answering" ;
+    ptl:arxivId "2004.04906" ;
+    ptl:doi "10.18653/v1/2020.emnlp-main.550" ;
+    ptl:fullTextAvailable true ;
+    ptl:isSurvey false ;
+    ptl:s2Id "b26f2037f769d5ffc5f7bdcec2de8da28ec14bee" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "This work shows that retrieval can be practically implemented using dense representations alone, where embeddings are learned from a small number of questions and passages by a simple dual-encoder framework." ;
+    ptl:url "https://www.semanticscholar.org/paper/b26f2037f769d5ffc5f7bdcec2de8da28ec14bee" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2021.eacl-main.74> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Generative models for open domain question answering have proven to be competitive, without resorting to external knowledge. While promising, this approach requires to use models with billions of parameters, which are expensive to train and query. In this paper, we investigate how much these models can benefit from retrieving text passages, potentially containing evidence. We obtain state-of-the-art results on the Natural Questions and TriviaQA open benchmarks. Interestingly, we observe that the performance of this method significantly improves when increasing the number of retrieved passages. This is evidence that sequence-to-sequence models offers a flexible framework to efficiently aggregate and combine evidence from multiple passages." ;
+    dcterms:issued "2020"^^xsd:gYear ;
+    dcterms:title "Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering" ;
+    ptl:arxivId "2007.01282" ;
+    ptl:doi "10.18653/v1/2021.eacl-main.74" ;
+    ptl:fullTextAvailable true ;
+    ptl:isSurvey false ;
+    ptl:s2Id "ea8c46e193d5121e440daf96edfd15a47151c293" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "Interestingly, it is observed that the performance of this method significantly improves when increasing the number of retrieved passages, evidence that sequence-to-sequence models offers a flexible framework to efficiently aggregate and combine evidence from multiple passages." ;
+    ptl:url "https://www.semanticscholar.org/paper/ea8c46e193d5121e440daf96edfd15a47151c293" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN18-1059> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Answering complex questions is a time-consuming activity for humans that requires reasoning and integration of information. Recent work on reading comprehension made headway in answering simple questions, but tackling complex questions is still an ongoing research challenge. Conversely, semantic parsers have been successful at handling compositionality, but only when the information resides in a target knowledge-base. In this paper, we present a novel framework for answering broad and complex questions, assuming answering simple questions is possible using a search engine and a reading comprehension model. We propose to decompose complex questions into a sequence of simple questions, and compute the final answer from the sequence of answers. To illustrate the viability of our approach, we create a new dataset of complex questions, ComplexWebQuestions, and present a model that decomposes questions and interacts with the web to compute an answer. We empirically demonstrate that question decomposition improves performance from 20.8 precision@1 to 27.5 precision@1 on this new dataset." ;
+    dcterms:issued "2018"^^xsd:gYear ;
+    dcterms:title "The Web as a Knowledge-Base for Answering Complex Questions" ;
+    ptl:arxivId "1803.06643" ;
+    ptl:doi "10.18653/v1/N18-1059" ;
+    ptl:fullTextAvailable true ;
+    ptl:isSurvey false ;
+    ptl:s2Id "c8725f13be7434b69738491c66b45c9225258253" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "This paper proposes to decompose complex questions into a sequence of simple questions, and compute the final answer from the sequence of answers, and empirically demonstrates that question decomposition improves performance from 20.8 precision@1 to 27.5 precision @1 on this new dataset." ;
+    ptl:url "https://www.semanticscholar.org/paper/c8725f13be7434b69738491c66b45c9225258253" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN19-1423> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models (Peters et al., 2018a; Radford et al., 2018), BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial task-specific architecture modifications. BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5 (7.7 point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement)." ;
+    dcterms:issued "2019"^^xsd:gYear ;
+    dcterms:title "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding" ;
+    ptl:arxivId "1810.04805" ;
+    ptl:doi "10.18653/v1/N19-1423" ;
+    ptl:fullTextAvailable true ;
+    ptl:isSurvey false ;
+    ptl:s2Id "df2b0e26d0599ce3e70df8a9da02e51594e0e992" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "A new language representation model, BERT, designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers, which can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks." ;
+    ptl:url "https://www.semanticscholar.org/paper/df2b0e26d0599ce3e70df8a9da02e51594e0e992" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2305.09645> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "In this paper, we study how to improve the zero-shot reasoning ability of large language models~(LLMs) over structured data in a unified way. Inspired by the study on tool augmentation for LLMs, we develop an \\emph{Iterative Reading-then-Reasoning~(IRR)} approach for solving question answering tasks based on structured data, called \\textbf{StructGPT}. In our approach, we construct the specialized function to collect relevant evidence from structured data (\\ie \\emph{reading}), and let LLMs concentrate the reasoning task based on the collected information (\\ie \\emph{reasoning}). Specially, we propose an \\emph{invoking-linearization-generation} procedure to support LLMs in reasoning on the structured data with the help of the external interfaces. By iterating this procedures with provided interfaces, our approach can gradually approach the target answer to a given query. Extensive experiments conducted on three types of structured data demonstrate the effectiveness of our approach, which can significantly boost the performance of ChatGPT and achieve comparable performance against the full-data supervised-tuning baselines. Our codes and data are publicly available at~\\url{https://github.com/RUCAIBox/StructGPT}." ;
+    dcterms:issued "2023"^^xsd:gYear ;
+    dcterms:title "StructGPT: A General Framework for Large Language Model to Reason over Structured Data" ;
+    ptl:arxivId "2305.09645" ;
+    ptl:doi "10.48550/arXiv.2305.09645" ;
+    ptl:fullTextAvailable true ;
+    ptl:isSurvey false ;
+    ptl:s2Id "e0f27336698c84709bd60b6b7f4ce588cbae66bf" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "An Iterative Reading-then-Reasoning approach for solving question answering tasks based on structured data, which can significantly boost the performance of ChatGPT and achieve comparable performance against the full-data supervised-tuning baselines." ;
+    ptl:url "https://www.semanticscholar.org/paper/e0f27336698c84709bd60b6b7f4ce588cbae66bf" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Large language models (LLMs) have demonstrated impressive reasoning abilities in complex tasks. However, they lack up-to-date knowledge and experience hallucinations during reasoning, which can lead to incorrect reasoning processes and diminish their performance and trustworthiness. Knowledge graphs (KGs), which capture vast amounts of facts in a structured format, offer a reliable source of knowledge for reasoning. Nevertheless, existing KG-based LLM reasoning methods only treat KGs as factual knowledge bases and overlook the importance of their structural information for reasoning. In this paper, we propose a novel method called reasoning on graphs (RoG) that synergizes LLMs with KGs to enable faithful and interpretable reasoning. Specifically, we present a planning-retrieval-reasoning framework, where RoG first generates relation paths grounded by KGs as faithful plans. These plans are then used to retrieve valid reasoning paths from the KGs for LLMs to conduct faithful reasoning. Furthermore, RoG not only distills knowledge from KGs to improve the reasoning ability of LLMs through training but also allows seamless integration with any arbitrary LLMs during inference. Extensive experiments on two benchmark KGQA datasets demonstrate that RoG achieves state-of-the-art performance on KG reasoning tasks and generates faithful and interpretable reasoning results." ;
+    dcterms:issued "2023"^^xsd:gYear ;
+    dcterms:title "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning" ;
+    ptl:arxivId "2310.01061" ;
+    ptl:doi "10.48550/arXiv.2310.01061" ;
+    ptl:fullTextAvailable true ;
+    ptl:isSurvey false ;
+    ptl:s2Id "b47e96762351b2dbf7e863ece4640df6194bcc0c" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "This paper proposes a novel method called reasoning on graphs (RoG) that synergizes LLMs with KGs to enable faithful and interpretable reasoning and presents a planning-retrieval-reasoning framework, where RoG first generates relation paths grounded by KGs as faithful plans." ;
+    ptl:url "https://www.semanticscholar.org/paper/b47e96762351b2dbf7e863ece4640df6194bcc0c" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2402.07630> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Given a graph with textual attributes, we enable users to `chat with their graph': that is, to ask questions about the graph using a conversational interface. In response to a user's questions, our method provides textual replies and highlights the relevant parts of the graph. While existing works integrate large language models (LLMs) and graph neural networks (GNNs) in various ways, they mostly focus on either conventional graph tasks (such as node, edge, and graph classification), or on answering simple graph queries on small or synthetic graphs. In contrast, we develop a flexible question-answering framework targeting real-world textual graphs, applicable to multiple applications including scene graph understanding, common sense reasoning, and knowledge graph reasoning. Toward this goal, we first develop a Graph Question Answering (GraphQA) benchmark with data collected from different tasks. Then, we propose our G-Retriever method, introducing the first retrieval-augmented generation (RAG) approach for general textual graphs, which can be fine-tuned to enhance graph understanding via soft prompting. To resist hallucination and to allow for textual graphs that greatly exceed the LLM's context window size, G-Retriever performs RAG over a graph by formulating this task as a Prize-Collecting Steiner Tree optimization problem. Empirical evaluations show that our method outperforms baselines on textual graph tasks from multiple domains, scales well with larger graph sizes, and mitigates hallucination.~\\footnote{Our codes and datasets are available at: \\url{https://github.com/XiaoxinHe/G-Retriever}}" ;
+    dcterms:issued "2024"^^xsd:gYear ;
+    dcterms:title "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering" ;
+    ptl:arxivId "2402.07630" ;
+    ptl:doi "10.48550/arXiv.2402.07630" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "a41d4a3b005c8ec4f821e6ee96672d930ca9596c" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "The G-Retriever method is proposed, introducing the first retrieval-augmented generation (RAG) approach for general textual graphs, which can be fine-tuned to enhance graph understanding via soft prompting." ;
+    ptl:url "https://www.semanticscholar.org/paper/a41d4a3b005c8ec4f821e6ee96672d930ca9596c" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2410.05779> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "Retrieval-Augmented Generation (RAG) systems enhance large language models (LLMs) by integrating external knowledge sources, enabling more accurate and contextually relevant responses tailored to user needs. However, existing RAG systems have significant limitations, including reliance on flat data representations and inadequate contextual awareness, which can lead to fragmented answers that fail to capture complex inter-dependencies. To address these challenges, we propose LightRAG, which incorporates graph structures into text indexing and retrieval processes. This innovative framework employs a dual-level retrieval system that enhances comprehensive information retrieval from both low-level and high-level knowledge discovery. Additionally, the integration of graph structures with vector representations facilitates efficient retrieval of related entities and their relationships, significantly improving response times while maintaining contextual relevance. This capability is further enhanced by an incremental update algorithm that ensures the timely integration of new data, allowing the system to remain effective and responsive in rapidly changing data environments. Extensive experimental validation demonstrates considerable improvements in retrieval accuracy and efficiency compared to existing approaches. We have made our LightRAG open-source and available at the link: https://github.com/HKUDS/LightRAG" ;
+    dcterms:issued "2024"^^xsd:gYear ;
+    dcterms:title "LightRAG: Simple and Fast Retrieval-Augmented Generation" ;
+    ptl:arxivId "2410.05779" ;
+    ptl:doi "10.48550/arXiv.2410.05779" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "1ea143c34b9bc359780f79ba4d68dee68bcc1129" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "This innovative framework employs a dual-level retrieval system that enhances comprehensive information retrieval from both low-level and high-level knowledge discovery, and is further enhanced by an incremental update algorithm that ensures the timely integration of new data, allowing the system to remain effective and responsive in rapidly changing data environments." ;
+    ptl:url "https://www.semanticscholar.org/paper/1ea143c34b9bc359780f79ba4d68dee68bcc1129" ;
+    ptl:workType "journalArticle" .
+
+<https://w3id.org/portolan/id/work/doi/10.52202%2F068431-1800> a <http://purl.org/spar/fabio/Work>,
+        ptl:Work ;
+    dcterms:abstract "We explore how generating a chain of thought -- a series of intermediate reasoning steps -- significantly improves the ability of large language models to perform complex reasoning. In particular, we show how such reasoning abilities emerge naturally in sufficiently large language models via a simple method called chain of thought prompting, where a few chain of thought demonstrations are provided as exemplars in prompting. Experiments on three large language models show that chain of thought prompting improves performance on a range of arithmetic, commonsense, and symbolic reasoning tasks. The empirical gains can be striking. For instance, prompting a 540B-parameter language model with just eight chain of thought exemplars achieves state of the art accuracy on the GSM8K benchmark of math word problems, surpassing even finetuned GPT-3 with a verifier." ;
+    dcterms:issued "2022"^^xsd:gYear ;
+    dcterms:title "Chain of Thought Prompting Elicits Reasoning in Large Language Models" ;
+    ptl:arxivId "2201.11903" ;
+    ptl:doi "10.52202/068431-1800" ;
+    ptl:fullTextAvailable false ;
+    ptl:isSurvey false ;
+    ptl:s2Id "1b6e810ce0afd0dd093f789d2b2742d047e316d5" ;
+    ptl:sourceApi "semanticscholar" ;
+    ptl:sourceTier "preprint" ;
+    ptl:tldr "Experiments on three large language models show that chain of thought prompting improves performance on a range of arithmetic, commonsense, and symbolic reasoning tasks." ;
+    ptl:url "https://www.semanticscholar.org/paper/1b6e810ce0afd0dd093f789d2b2742d047e316d5" ;
+    ptl:workType "journalArticle" .
+
+ptl:Metric rdfs:subClassOf skos:Concept .
+
+ptl:Dataset rdfs:subClassOf skos:Concept .
+
+ptl:Problem rdfs:subClassOf skos:Concept .
+
+ptl:Method rdfs:subClassOf skos:Concept .
+

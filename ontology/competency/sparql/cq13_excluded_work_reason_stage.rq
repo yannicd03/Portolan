@@ -1,0 +1,28 @@
+# CQ13 — Why was work W excluded from review R, and at which stage?
+# PARAMS: ?review (IRI, review-scoped), ?work (IRI, work)
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?work ?title ?review ?stage ?reason
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  VALUES ?work { <https://w3id.org/portolan/id/work/arxiv/1706.03762> }
+  # /PARAM-BLOCK
+
+  GRAPH ?reviewGraph {
+    ?inclusion a ptl:Inclusion ;
+      ptl:ofReview ?review ;
+      ptl:ofWork ?work ;
+      ptl:decision "excluded" ;
+      ptl:stage ?stage ;
+      ptl:reason ?reason .
+  }
+  GRAPH ptlg:biblio {
+    ?work a ptl:Work ;
+      dcterms:title ?title .
+  }
+}
+ORDER BY ?stage ?work

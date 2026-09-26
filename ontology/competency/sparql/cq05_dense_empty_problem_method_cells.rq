@@ -1,0 +1,72 @@
+# CQ05 — Which problem × method pairs have no contribution while both the row and the column have at least n?
+# PARAMS: ?review (IRI, review-scoped), ?n (integer, minimum row/column support)
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+
+SELECT ?problem ?method ?problemWorkCount ?methodWorkCount
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  VALUES ?n { 3 }
+  # /PARAM-BLOCK
+
+  # Oxigraph does not reliably compare an aggregate directly to a VALUES-bound
+  # variable in HAVING. Compute the supports in a subquery, then filter them
+  # against the shared threshold in the outer query.
+  {
+    SELECT ?problem ?method
+           (COUNT(DISTINCT ?rowWork) AS ?problemWorkCount)
+           (COUNT(DISTINCT ?columnWork) AS ?methodWorkCount)
+    WHERE {
+      # Candidate problem rows and method columns are independently supported by
+      # included works in the selected review.
+      GRAPH ?reviewGraph {
+        ?rowInclusion a ptl:Inclusion ;
+          ptl:ofReview ?review ;
+          ptl:ofWork ?rowWork ;
+          ptl:decision "included" .
+        ?columnInclusion a ptl:Inclusion ;
+          ptl:ofReview ?review ;
+          ptl:ofWork ?columnWork ;
+          ptl:decision "included" .
+      }
+
+      GRAPH ?contentGraph {
+        ?rowContribution a ptl:Contribution ;
+          ptl:ofWork ?rowWork ;
+          ptl:addresses ?problem .
+        ?problem a ptl:Problem .
+        ?rowContribution ?rowMethodProperty ?rowMethod .
+        VALUES ?rowMethodProperty { ptl:proposes ptl:uses }
+        ?rowMethod a ptl:Method .
+
+        ?columnContribution a ptl:Contribution ;
+          ptl:ofWork ?columnWork .
+        ?columnContribution ?columnMethodProperty ?method .
+        VALUES ?columnMethodProperty { ptl:proposes ptl:uses }
+        ?method a ptl:Method .
+      }
+    }
+    GROUP BY ?problem ?method
+  }
+
+  FILTER (?problemWorkCount >= ?n && ?methodWorkCount >= ?n)
+
+  # The cell is empty only when no included work contributes to this exact pair.
+  FILTER NOT EXISTS {
+    GRAPH ?cellReviewGraph {
+      ?cellInclusion a ptl:Inclusion ;
+        ptl:ofReview ?review ;
+        ptl:ofWork ?cellWork ;
+        ptl:decision "included" .
+    }
+    GRAPH ?cellContentGraph {
+      ?cellContribution a ptl:Contribution ;
+        ptl:ofWork ?cellWork ;
+        ptl:addresses ?problem .
+      ?cellContribution ?cellMethodProperty ?method .
+      VALUES ?cellMethodProperty { ptl:proposes ptl:uses }
+    }
+  }
+}
+ORDER BY ?problem ?method

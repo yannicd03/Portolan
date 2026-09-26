@@ -1,0 +1,44 @@
+# CQ02 — What is the main path from the seed's ancestors to the newest works?
+# PARAMS: ?review (IRI, review-scoped), ?seed (IRI, golden seed work)
+# NOTE: main-path membership is precomputed in review scope and read via ptl:onMainPath; this query does not recompute main-path centrality.
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?from ?fromTitle ?fromIssued ?to ?toTitle ?toIssued
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  VALUES ?seed { <https://w3id.org/portolan/id/work/arxiv/1706.03762> }
+  # /PARAM-BLOCK
+
+  GRAPH ?reviewGraph {
+    ?fromInclusion a ptl:Inclusion ;
+      ptl:ofReview ?review ;
+      ptl:ofWork ?from ;
+      ptl:onMainPath true .
+    ?toInclusion a ptl:Inclusion ;
+      ptl:ofReview ?review ;
+      ptl:ofWork ?to ;
+      ptl:onMainPath true .
+  }
+
+  GRAPH ptlg:biblio {
+    ?to cito:cites ?from .
+    ?from dcterms:title ?fromTitle ;
+      dcterms:issued ?fromIssued .
+    ?to dcterms:title ?toTitle ;
+      dcterms:issued ?toIssued .
+  }
+
+  # Keep direct main-path edges on either side of the seed, including the seed edge itself.
+  FILTER (
+    ?from = ?seed ||
+    ?to = ?seed ||
+    EXISTS { GRAPH ptlg:biblio { ?seed cito:cites+ ?from } } ||
+    EXISTS { GRAPH ptlg:biblio { ?to cito:cites+ ?seed } }
+  )
+}
+ORDER BY ?fromIssued ?toIssued ?from ?to

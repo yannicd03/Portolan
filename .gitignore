@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Secrets and local config
+.env
+.env.local
+
+# Data: caches, raw payloads, stores
+data/
+cache/
+*.db
+*.sqlite3
+store/oxigraph/
+store/neo4j/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+
+# OS
+.DS_Store

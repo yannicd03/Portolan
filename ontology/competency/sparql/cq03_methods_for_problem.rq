@@ -1,0 +1,46 @@
+# CQ03 — Which methods address problem P, and on which datasets and metrics were they evaluated?
+# PARAMS: ?problem (IRI, concept)
+# NOTE: Methods are retained when a contribution has no reported Result; dataset and metric are
+# unbound in that sparse-evidence row, matching the Cypher binding's OPTIONAL traversal.
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?method ?methodLabel ?dataset ?datasetLabel ?metric ?metricLabel ?work ?title
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?problem { <https://w3id.org/portolan/id/concept/problem/knowledge-graph-question-answering> }
+  # /PARAM-BLOCK
+
+  GRAPH ?contentGraph {
+    ?problem a ptl:Problem .
+    ?contribution a ptl:Contribution ;
+      ptl:ofWork ?work ;
+      ptl:addresses ?problem .
+    ?contribution ?methodProperty ?method .
+    VALUES ?methodProperty { ptl:proposes ptl:uses }
+    ?method a ptl:Method .
+    OPTIONAL {
+      ?contribution ptl:reports ?result .
+      ?result a ptl:Result ;
+        ptl:ofWork ?work ;
+        ptl:ofMethod ?method ;
+        ptl:onDataset ?dataset ;
+        ptl:withMetric ?metric .
+      ?dataset a ptl:Dataset .
+      ?metric a ptl:Metric .
+      OPTIONAL { ?dataset rdfs:label ?datasetLabel }
+      OPTIONAL { ?metric rdfs:label ?metricLabel }
+    }
+    OPTIONAL { ?method rdfs:label ?methodLabel }
+  }
+
+  GRAPH ptlg:biblio {
+    ?work a ptl:Work ;
+      dcterms:title ?title .
+  }
+}
+ORDER BY ?methodLabel ?datasetLabel ?metricLabel ?title

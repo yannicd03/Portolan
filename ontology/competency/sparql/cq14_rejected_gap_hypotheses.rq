@@ -1,0 +1,23 @@
+# CQ14 — Which gap hypotheses did the user reject, so a re-run does not resurface them?
+# PARAMS: ?review (IRI, review-scoped)
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+
+SELECT ?gap ?statement ?about ?confidence ?verificationOutcome ?userNote
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  # /PARAM-BLOCK
+
+  GRAPH ?reviewGraph {
+    ?gap a ptl:GapHypothesis ;
+      ptl:ofReview ?review ;
+      ptl:statement ?statement ;
+      ptl:confidence ?confidence ;
+      ptl:verificationOutcome ?verificationOutcome ;
+      ptl:userStatus "rejected" .
+    OPTIONAL { ?gap ptl:about ?about }
+    OPTIONAL { ?gap ptl:userNote ?userNote }
+  }
+}
+ORDER BY ?gap

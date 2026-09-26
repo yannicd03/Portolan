@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "citingPaper": {
+        "paperId": "s2-rag-001",
+        "externalIds": {"ArXiv": "2005.11401", "DOI": "10.48550/arXiv.2005.11401"},
+        "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "abstract": "We explore retrieval-augmented generation models for knowledge-intensive tasks.",
+        "venue": "Advances in Neural Information Processing Systems",
+        "year": 2020,
+        "publicationTypes": ["Conference"],
+        "openAccessPdf": {"url": "https://arxiv.org/pdf/2005.11401", "status": "GREEN"},
+        "tldr": {"model": "tldr@v2.0.0", "text": "Combines a parametric generator with a non-parametric dense retriever."}
+      },
+      "intents": ["background", "uses-method-in"],
+      "isInfluential": true,
+      "contexts": ["We use the Transformer architecture as the generator."]
+    }
+  ],
+  "offset": 0,
+  "next": null
+}

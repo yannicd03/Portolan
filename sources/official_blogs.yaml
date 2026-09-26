@@ -1,0 +1,160 @@
+# Official research blog allowlist — v1 (M0)
+#
+# Source-policy tier `officialBlog`: research posts and technical reports published on an
+# organization's OWN domain. A URL qualifies only if its host matches `domain` AND its path
+# starts with one of `path_prefixes`. Everything else is out: news, Wikipedia, Medium,
+# Substack, personal blogs, social media, forums, marketing pages, press releases.
+#
+# `verified` records an automated HEAD/GET check of the listed URL on the date given. It proves
+# the path exists and is reachable, nothing more — the path prefixes still need a human eye
+# before M5 ingestion, and sites reorganize.
+#
+# `ror` is deliberately null everywhere: ROR IDs were not looked up and must not be guessed.
+# Filling them is an M1 task (OpenAlex returns ROR IDs for institutions, so this comes free
+# once the OpenAlex adapter exists).
+#
+# Blog posts that merely announce a paper are linked to that paper via ptl:hasVersion rather
+# than counted as a separate work.
+
+version: 1
+checked: 2026-09-22
+scope: cs-ai
+
+organizations:
+  - name: Anthropic
+    org_kind: industry
+    ror: null
+    domain: anthropic.com
+    path_prefixes: ["/research", "/news"]
+    verified: {date: 2026-09-22, status: ok}
+    note: >-
+      /news carries both research posts and company announcements; screening must drop the
+      non-research ones rather than the allowlist.
+
+  - name: OpenAI
+    org_kind: industry
+    ror: null
+    domain: openai.com
+    path_prefixes: ["/index", "/research"]
+    verified: {date: 2026-09-22, status: blocked_403}
+    note: >-
+      Returns 403 to automated clients (bot protection). Ingestion will need a browser-like
+      fetch or this entry stays disabled. Flagged for a decision at M5, not resolved at M0.
+    enabled: false
+
+  - name: Google DeepMind
+    org_kind: industry
+    ror: null
+    domain: deepmind.google
+    path_prefixes: ["/discover/blog", "/research/publications"]
+    verified: {date: 2026-09-22, status: ok}
+
+  - name: Google Research
+    org_kind: industry
+    ror: null
+    domain: research.google
+    path_prefixes: ["/blog"]
+    verified: {date: 2026-09-22, status: ok}
+
+  - name: Meta AI
+    org_kind: industry
+    ror: null
+    domain: ai.meta.com
+    path_prefixes: ["/blog", "/research/publications"]
+    verified: {date: 2026-09-22, status: partial}
+    note: "/blog verified 200; /research/publications returned 500 on the check — re-verify."
+
+  - name: Microsoft Research
+    org_kind: industry
+    ror: null
+    domain: microsoft.com
+    path_prefixes: ["/en-us/research/blog", "/en-us/research/publication"]
+    verified: {date: 2026-09-22, status: ok}
+
+  - name: NVIDIA Research
+    org_kind: industry
+    ror: null
+    domain: developer.nvidia.com
+    path_prefixes: ["/blog"]
+    verified: {date: 2026-09-22, status: ok}
+    note: >-
+      developer.nvidia.com/blog is heavily product- and tutorial-weighted; screening carries
+      more of the load here than the allowlist does. research.nvidia.com/publications (also
+      verified ok) is the higher-signal path and is listed as its own entry.
+
+  - name: NVIDIA Research (publications)
+    org_kind: industry
+    ror: null
+    domain: research.nvidia.com
+    path_prefixes: ["/publications", "/labs"]
+    verified: {date: 2026-09-22, status: ok}
+
+  - name: Apple Machine Learning Research
+    org_kind: industry
+    ror: null
+    domain: machinelearning.apple.com
+    path_prefixes: ["/research"]
+    verified: {date: 2026-09-22, status: ok}
+
+  - name: Amazon Science
+    org_kind: industry
+    ror: null
+    domain: amazon.science
+    path_prefixes: ["/blog", "/publications"]
+    verified: {date: 2026-09-22, status: ok}
+
+  - name: IBM Research
+    org_kind: industry
+    ror: null
+    domain: research.ibm.com
+    path_prefixes: ["/blog", "/publications"]
+    verified: {date: 2026-09-22, status: ok}
+
+  - name: Allen Institute for AI
+    org_kind: nonprofit
+    ror: null
+    domain: allenai.org
+    path_prefixes: ["/blog", "/papers"]
+    verified: {date: 2026-09-22, status: ok}
+
+  - name: Hugging Face
+    org_kind: industry
+    ror: null
+    domain: huggingface.co
+    path_prefixes: ["/blog"]
+    verified: {date: 2026-09-22, status: ok}
+    note: >-
+      huggingface.co/blog hosts community posts alongside staff posts. Only posts under the
+      `huggingface` organization account qualify as officialBlog; the rest are excluded.
+
+  - name: Mistral AI
+    org_kind: industry
+    ror: null
+    domain: mistral.ai
+    path_prefixes: ["/news", "/research"]
+    verified: {date: 2026-09-22, status: ok}
+
+  - name: DeepSeek
+    org_kind: industry
+    ror: null
+    domain: api-docs.deepseek.com
+    path_prefixes: ["/news"]
+    verified: {date: 2026-09-22, status: ok}
+    note: >-
+      DeepSeek publishes release notes under its API docs domain rather than a research blog;
+      substantive model reports go to arXiv and are picked up there instead.
+
+  - name: Qwen
+    org_kind: industry
+    ror: null
+    domain: qwen.ai
+    path_prefixes: ["/blog"]
+    verified: {date: 2026-09-22, status: ok}
+    note: "Legacy posts live at qwenlm.github.io/blog (also verified ok); listed separately."
+
+  - name: Qwen (legacy blog)
+    org_kind: industry
+    ror: null
+    domain: qwenlm.github.io
+    path_prefixes: ["/blog"]
+    verified: {date: 2026-09-22, status: ok}

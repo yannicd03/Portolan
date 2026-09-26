@@ -1,0 +1,862 @@
+version: "0.2"
+
+content:
+  extraction_run:
+    run_id: golden-v02
+    model: golden-fixture-curator
+    prompt_version: golden-fixture-2026-09-22
+    ontology_version: v0.2
+    ended_at_time: "2026-09-22T00:00:00+00:00"
+
+  concepts:
+    problems:
+      - slug: knowledge-graph-question-answering
+        alt_label: [Knowledge-graph question answering, KGQA]
+        first_seen_in: sciqa
+      - slug: open-domain-question-answering
+        alt_label: [Open-domain question answering, Open-QA]
+        first_seen_in: dpr
+        broader: [knowledge-intensive-nlp]
+      - slug: knowledge-intensive-nlp
+        alt_label: [Knowledge-intensive NLP]
+        first_seen_in: rag
+      - slug: hallucination-and-factuality
+        alt_label: [Hallucination and factuality]
+        first_seen_in: rag
+      - slug: long-context-retrieval
+        alt_label: [Long-context retrieval]
+        first_seen_in: lost_in_the_middle
+      - slug: structured-data-reasoning
+        alt_label: [Structured-data reasoning]
+        first_seen_in: structgpt
+
+    methods:
+      - slug: transformer-pretraining
+        alt_label: [Transformer pre-training]
+        first_seen_in: transformer
+      - slug: dense-passage-retrieval
+        alt_label: [Dense passage retrieval, DPR]
+        first_seen_in: dpr
+        broader: [retrieval-augmented-generation]
+      - slug: retrieval-augmented-generation
+        alt_label: [Retrieval-augmented generation, RAG]
+        first_seen_in: rag
+      - slug: latent-knowledge-retrieval
+        alt_label: [Latent knowledge retrieval, REALM]
+        first_seen_in: realm
+        broader: [retrieval-augmented-generation]
+      - slug: chain-of-thought-prompting
+        alt_label: [Chain-of-thought prompting, CoT]
+        first_seen_in: cot
+      - slug: react-agent
+        alt_label: [Reasoning and acting, ReAct]
+        first_seen_in: react
+        extends_method: [chain-of-thought-prompting]
+      - slug: graph-rag
+        alt_label: [Graph retrieval-augmented generation, GraphRAG]
+        first_seen_in: graphrag
+        broader: [retrieval-augmented-generation]
+        extends_method: [retrieval-augmented-generation]
+      - slug: reasoning-on-graphs
+        alt_label: [Reasoning on graphs, RoG]
+        first_seen_in: rog
+        broader: [graph-rag]
+        extends_method: [graph-rag]
+      - slug: self-reflective-retrieval
+        alt_label: [Self-reflective retrieval, Self-RAG]
+        first_seen_in: self_rag
+        broader: [retrieval-augmented-generation]
+        extends_method: [retrieval-augmented-generation]
+      - slug: iterative-reading-reasoning
+        alt_label: [Iterative reading-then-reasoning, IRR]
+        first_seen_in: structgpt
+        broader: [structured-data-reasoning]
+        extends_method: [chain-of-thought-prompting]
+
+    datasets:
+      - slug: squad
+        alt_label: [SQuAD]
+        first_seen_in: bert
+      - slug: natural-questions
+        alt_label: [Natural Questions, NQ]
+        first_seen_in: dpr
+      - slug: triviaqa
+        alt_label: [TriviaQA]
+        first_seen_in: fid
+      - slug: hotpotqa
+        alt_label: [HotpotQA]
+        first_seen_in: react
+      - slug: complexwebquestions
+        alt_label: [ComplexWebQuestions]
+        first_seen_in: complexwebquestions
+      - slug: graphqa
+        alt_label: [Graph Question Answering benchmark, GraphQA]
+        first_seen_in: g_retriever
+
+    metrics:
+      - slug: f1
+        alt_label: [F1]
+        metric_direction: higherIsBetter
+        first_seen_in: bert
+      - slug: precision-at-1
+        alt_label: [Precision@1]
+        metric_direction: higherIsBetter
+        first_seen_in: complexwebquestions
+      - slug: accuracy
+        alt_label: [Accuracy]
+        metric_direction: higherIsBetter
+        first_seen_in: dpr
+      - slug: exact-match
+        alt_label: [Exact match, EM]
+        metric_direction: higherIsBetter
+        first_seen_in: rag
+      - slug: perplexity
+        alt_label: [Perplexity, PPL]
+        metric_direction: lowerIsBetter
+        first_seen_in: realm
+
+  statements:
+    - work: transformer
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [structured-data-reasoning]
+      proposes: [transformer-pretraining]
+      uses: [transformer-pretraining]
+      evaluates_on: [squad]
+      evidence:
+        - quote: 'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration.'
+
+    - work: bert
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [open-domain-question-answering]
+      proposes: [transformer-pretraining]
+      uses: [transformer-pretraining]
+      evaluates_on: [squad]
+      reports: [result:bert:2]
+      evidence:
+        - quote: 'We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers.'
+    - work: bert
+      kind: result
+      number: 2
+      of_method: transformer-pretraining
+      on_dataset: squad
+      with_metric: f1
+      value: "93.2"
+      unit: points
+      setting: SQuAD v1.1 test F1
+      claims_sota: true
+      evidence:
+        - quote: 'It obtains new state-of-the-art results on eleven natural language processing tasks'
+
+    - work: complexwebquestions
+      kind: contribution
+      number: 1
+      contribution_kind: dataset
+      addresses: [knowledge-graph-question-answering]
+      proposes: [iterative-reading-reasoning]
+      uses: [dense-passage-retrieval]
+      evaluates_on: [complexwebquestions]
+      reports: [result:complexwebquestions:2]
+      evidence:
+        - quote: 'Answering complex questions is a time-consuming activity for humans that requires reasoning and integration of information.'
+    - work: complexwebquestions
+      kind: result
+      number: 2
+      of_method: iterative-reading-reasoning
+      on_dataset: complexwebquestions
+      with_metric: precision-at-1
+      value: "27.5"
+      unit: precision@1
+      setting: complex question answering
+      claims_sota: false
+      evidence:
+        - quote: 'We empirically demonstrate that question decomposition improves performance from 20.8 precision@1 to 27.5 precision@1 on this new dataset.'
+
+    - work: cot
+      kind: contribution
+      number: 1
+      contribution_kind: analysis
+      addresses: [structured-data-reasoning]
+      proposes: [chain-of-thought-prompting]
+      uses: [transformer-pretraining]
+      evaluates_on: [hotpotqa]
+      evidence:
+        - quote: 'We explore how generating a chain of thought -- a series of intermediate reasoning steps -- significantly improves the ability of large language models to perform complex reasoning.'
+    - work: cot
+      kind: limitation
+      number: 2
+      limitation_text: Chain-of-thought prompting leaves retrieval and grounding outside the reasoning trace.
+      about: [structured-data-reasoning]
+      limitation_of: [chain-of-thought-prompting]
+      evidence:
+        - quote: 'Experiments on three large language models show that chain of thought prompting improves performance on a range of arithmetic, commonsense, and symbolic reasoning tasks.'
+
+    - work: dpr
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [open-domain-question-answering, knowledge-intensive-nlp]
+      proposes: [dense-passage-retrieval]
+      uses: [transformer-pretraining]
+      evaluates_on: [natural-questions]
+      reports: [result:dpr:2]
+      evidence:
+        - quote: 'Open-domain question answering relies on efficient passage retrieval to select candidate contexts, where traditional sparse vector space models, such as TF-IDF or BM25, are the de facto method.'
+    - work: dpr
+      kind: result
+      number: 2
+      of_method: dense-passage-retrieval
+      on_dataset: natural-questions
+      with_metric: accuracy
+      value: "0.87"
+      unit: top-20 retrieval accuracy
+      setting: open-domain question answering
+      claims_sota: true
+      evidence:
+        - quote: 'dense retriever outperforms a strong Lucene-BM25 system largely by 9%-19% absolute in terms of top-20 passage retrieval accuracy'
+    - work: dpr
+      kind: limitation
+      number: 3
+      limitation_text: Dense retrieval alone does not guarantee faithful generation or provenance.
+      about: [hallucination-and-factuality]
+      limitation_of: [dense-passage-retrieval]
+      evidence:
+        - quote: 'When evaluated on a wide range of open-domain QA datasets, our dense retriever outperforms a strong Lucene-BM25 system'
+
+    - work: fid
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [open-domain-question-answering, knowledge-intensive-nlp]
+      proposes: [retrieval-augmented-generation]
+      uses: [dense-passage-retrieval]
+      evaluates_on: [natural-questions, triviaqa]
+      reports: [result:fid:2]
+      evidence:
+        - quote: 'Generative models for open domain question answering have proven to be competitive, without resorting to external knowledge.'
+    - work: fid
+      kind: result
+      number: 2
+      of_method: retrieval-augmented-generation
+      on_dataset: natural-questions
+      with_metric: accuracy
+      value: "0.83"
+      unit: accuracy
+      setting: open-domain question answering
+      claims_sota: true
+      evidence:
+        - quote: 'We obtain state-of-the-art results on the Natural Questions and TriviaQA open benchmarks.'
+    - work: fid
+      kind: limitation
+      number: 3
+      limitation_text: Retrieval-augmented generators remain expensive when their base models are very large.
+      about: [hallucination-and-factuality]
+      limitation_of: [retrieval-augmented-generation]
+      evidence:
+        - quote: 'While promising, this approach requires to use models with billions of parameters, which are expensive to train and query.'
+
+    - work: g_retriever
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [knowledge-graph-question-answering, hallucination-and-factuality]
+      proposes: [graph-rag]
+      uses: [retrieval-augmented-generation]
+      evaluates_on: [graphqa]
+      reports: [result:g_retriever:2]
+      addresses_limitation: [limitation:lost_in_the_middle:2]
+      evidence:
+        - quote: "Given a graph with textual attributes, we enable users to `chat with their graph': that is, to ask questions about the graph using a conversational interface."
+    - work: g_retriever
+      kind: result
+      number: 2
+      of_method: graph-rag
+      on_dataset: graphqa
+      with_metric: accuracy
+      value: "0.74"
+      unit: accuracy
+      setting: textual graph tasks
+      claims_sota: true
+      evidence:
+        - quote: 'Empirical evaluations show that our method outperforms baselines on textual graph tasks from multiple domains'
+
+    - work: graphrag
+      kind: contribution
+      number: 1
+      contribution_kind: system
+      addresses: [knowledge-graph-question-answering, knowledge-intensive-nlp]
+      proposes: [graph-rag]
+      uses: [retrieval-augmented-generation]
+      evaluates_on: [graphqa]
+      reports: [result:graphrag:2]
+      evidence:
+        - quote: 'The use of retrieval-augmented generation (RAG) to retrieve relevant information from an external knowledge source enables large language models (LLMs) to answer questions over private and/or previously unseen document collections.'
+    - work: graphrag
+      kind: result
+      number: 2
+      of_method: graph-rag
+      on_dataset: graphqa
+      with_metric: accuracy
+      value: "0.78"
+      unit: accuracy
+      setting: global sensemaking questions
+      claims_sota: true
+      evidence:
+        - quote: 'we show that GraphRAG leads to substantial improvements over a conventional RAG baseline for both the comprehensiveness and diversity of generated answers.'
+
+    - work: lightrag
+      kind: contribution
+      number: 1
+      contribution_kind: system
+      addresses: [knowledge-graph-question-answering, hallucination-and-factuality]
+      proposes: [graph-rag]
+      uses: [retrieval-augmented-generation]
+      evaluates_on: [graphqa]
+      reports: [result:lightrag:2]
+      addresses_limitation: [limitation:realm:3]
+      evidence:
+        - quote: 'Retrieval-Augmented Generation (RAG) systems enhance large language models (LLMs) by integrating external knowledge sources, enabling more accurate and contextually relevant responses tailored to user needs.'
+    - work: lightrag
+      kind: result
+      number: 2
+      of_method: graph-rag
+      on_dataset: graphqa
+      with_metric: accuracy
+      value: "0.82"
+      unit: accuracy
+      setting: retrieval accuracy and efficiency
+      claims_sota: true
+      evidence:
+        - quote: 'Extensive experimental validation demonstrates considerable improvements in retrieval accuracy and efficiency compared to existing approaches.'
+
+    - work: llm_kg_roadmap
+      kind: contribution
+      number: 1
+      contribution_kind: survey
+      addresses: [knowledge-graph-question-answering, knowledge-intensive-nlp]
+      proposes: [graph-rag]
+      uses: [retrieval-augmented-generation]
+      evaluates_on: [graphqa]
+      evidence:
+        - quote: 'Large language models (LLMs), such as ChatGPT and GPT4, are making new waves in the field of natural language processing and artificial intelligence, due to their emergent ability and generalizability.'
+    - work: llm_kg_roadmap
+      kind: futurework
+      number: 2
+      future_work_text: Future work should connect the three roadmap frameworks through bidirectional reasoning driven by data and knowledge.
+      about: [knowledge-graph-question-answering]
+      evidence:
+        - quote: 'We review and summarize existing efforts within these three frameworks in our roadmap and pinpoint their future research directions.'
+
+    - work: lost_in_the_middle
+      kind: contribution
+      number: 1
+      contribution_kind: analysis
+      addresses: [long-context-retrieval, knowledge-intensive-nlp]
+      proposes: [retrieval-augmented-generation]
+      uses: [dense-passage-retrieval]
+      evaluates_on: [natural-questions]
+      evidence:
+        - quote: 'While recent language models have the ability to take long contexts as input, relatively little is known about how well they use longer context.'
+    - work: lost_in_the_middle
+      kind: limitation
+      number: 2
+      limitation_text: Long-context retrieval is sensitive to the position of relevant evidence.
+      about: [long-context-retrieval]
+      limitation_of: [retrieval-augmented-generation]
+      evidence:
+        - quote: 'performance can degrade significantly when changing the position of relevant information'
+    - work: lost_in_the_middle
+      kind: futurework
+      number: 3
+      future_work_text: Long-context systems need stronger evaluation protocols and position-robust retrieval.
+      about: [long-context-retrieval]
+      evidence:
+        - quote: 'Our analysis provides a better understanding of how language models use their input context and provides new evaluation protocols for future long-context language models.'
+
+    - work: rag
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [open-domain-question-answering, knowledge-intensive-nlp, hallucination-and-factuality]
+      proposes: [retrieval-augmented-generation]
+      uses: [dense-passage-retrieval, latent-knowledge-retrieval]
+      evaluates_on: [natural-questions, triviaqa]
+      reports: [result:rag:2]
+      evidence:
+        - quote: 'We explore a general-purpose fine-tuning recipe for retrieval-augmented generation (RAG) -- models which combine pre-trained parametric and non-parametric memory for language generation.'
+    - work: rag
+      kind: result
+      number: 2
+      of_method: retrieval-augmented-generation
+      on_dataset: natural-questions
+      with_metric: exact-match
+      value: "0.63"
+      unit: exact match
+      setting: open-domain question answering
+      claims_sota: true
+      evidence:
+        - quote: 'We compare two RAG formulations, one which conditions on the same retrieved passages across the whole generated sequence, the other can use different passages per token.'
+    - work: rag
+      kind: claim
+      number: 3
+      claim_text: RAG produces more specific, diverse, and factual language than a parametric-only baseline.
+      about: [retrieval-augmented-generation]
+      evidence:
+        - quote: 'For language generation tasks, we find that RAG models generate more specific, diverse and factual language than a state-of-the-art parametric-only seq2seq baseline.'
+    - work: rag
+      kind: limitation
+      number: 4
+      limitation_text: Provenance and world-knowledge updates remain open problems for knowledge-intensive generation.
+      about: [hallucination-and-factuality]
+      limitation_of: [retrieval-augmented-generation]
+      evidence:
+        - quote: 'Additionally, providing provenance for their decisions and updating their world knowledge remain open research problems.'
+
+    - work: react
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [knowledge-graph-question-answering, hallucination-and-factuality]
+      proposes: [react-agent]
+      uses: [chain-of-thought-prompting]
+      evaluates_on: [hotpotqa]
+      reports: [result:react:2]
+      evidence:
+        - quote: 'While large language models (LLMs) have demonstrated impressive capabilities across tasks in language understanding and interactive decision making, their abilities for reasoning (e.g. chain-of-thought prompting) and acting (e.g. action plan generation) have primarily been studied as separate topics.'
+    - work: react
+      kind: result
+      number: 2
+      of_method: react-agent
+      on_dataset: hotpotqa
+      with_metric: accuracy
+      value: "0.71"
+      unit: success rate
+      setting: question answering and fact verification
+      claims_sota: true
+      evidence:
+        - quote: 'ReAct overcomes issues of hallucination and error propagation prevalent in chain-of-thought reasoning by interacting with a simple Wikipedia API'
+    - work: react
+      kind: futurework
+      number: 3
+      future_work_text: Interactive reasoning should be evaluated across broader decision-making environments.
+      about: [knowledge-graph-question-answering]
+      evidence:
+        - quote: 'On two interactive decision making benchmarks (ALFWorld and WebShop), ReAct outperforms imitation and reinforcement learning methods by an absolute success rate of 34% and 10% respectively'
+
+    - work: realm
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [open-domain-question-answering, knowledge-intensive-nlp]
+      proposes: [latent-knowledge-retrieval]
+      uses: [transformer-pretraining]
+      evaluates_on: [natural-questions]
+      reports: [result:realm:2]
+      evidence:
+        - quote: 'Language model pre-training has been shown to capture a surprising amount of world knowledge, crucial for NLP tasks such as question answering.'
+    - work: realm
+      kind: result
+      number: 2
+      of_method: latent-knowledge-retrieval
+      on_dataset: natural-questions
+      with_metric: accuracy
+      value: "0.84"
+      unit: accuracy
+      setting: Open-QA
+      claims_sota: true
+      evidence:
+        - quote: "We demonstrate the effectiveness of Retrieval-Augmented Language Model pre-training (REALM) by fine-tuning on the challenging task of Open-domain Question Answering (Open-QA)."
+    - work: realm
+      kind: limitation
+      number: 3
+      limitation_text: Implicitly stored knowledge is difficult to inspect and update.
+      about: [knowledge-intensive-nlp]
+      limitation_of: [latent-knowledge-retrieval]
+      evidence:
+        - quote: 'However, this knowledge is stored implicitly in the parameters of a neural network'
+
+    - work: rog
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [knowledge-graph-question-answering, hallucination-and-factuality]
+      proposes: [reasoning-on-graphs]
+      uses: [graph-rag]
+      evaluates_on: [complexwebquestions]
+      reports: [result:rog:2]
+      evidence:
+        - quote: 'Knowledge graphs (KGs), which capture vast amounts of facts in a structured format, offer a reliable source of knowledge for reasoning.'
+    - work: rog
+      kind: result
+      number: 2
+      of_method: reasoning-on-graphs
+      on_dataset: complexwebquestions
+      with_metric: accuracy
+      value: "0.82"
+      unit: accuracy
+      setting: benchmark KG reasoning tasks
+      claims_sota: true
+      evidence:
+        - quote: 'Extensive experiments on two benchmark KGQA datasets demonstrate that RoG achieves state-of-the-art performance on KG reasoning tasks and generates faithful and interpretable reasoning results.'
+    - work: rog
+      kind: claim
+      number: 3
+      claim_text: KG reasoning systems should use structural information rather than treating a graph as a flat fact store.
+      about: [knowledge-graph-question-answering]
+      evidence:
+        - quote: 'Nevertheless, existing KG-based LLM reasoning methods only treat KGs as factual knowledge bases and overlook the importance of their structural information for reasoning.'
+
+    - work: sciqa
+      kind: contribution
+      number: 1
+      contribution_kind: benchmark
+      addresses: [knowledge-graph-question-answering, structured-data-reasoning]
+      proposes: [iterative-reading-reasoning]
+      uses: [graph-rag]
+      evaluates_on: [graphqa]
+      reports: [result:sciqa:2]
+      evidence:
+        - quote: 'Knowledge graphs have gained increasing popularity in the last decade in science and technology.'
+    - work: sciqa
+      kind: result
+      number: 2
+      of_method: iterative-reading-reasoning
+      on_dataset: graphqa
+      with_metric: accuracy
+      value: "0.68"
+      unit: accuracy
+      setting: scholarly question answering
+      claims_sota: false
+      evidence:
+        - quote: 'We present SciQA a scientific QA benchmark for scholarly knowledge.'
+
+    - work: self_rag
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [hallucination-and-factuality, open-domain-question-answering]
+      proposes: [self-reflective-retrieval]
+      uses: [retrieval-augmented-generation]
+      evaluates_on: [natural-questions]
+      reports: [result:self_rag:2]
+      addresses_limitation: [limitation:cot:2]
+      evidence:
+        - quote: 'Despite their remarkable capabilities, large language models (LLMs) often produce responses containing factual inaccuracies due to their sole reliance on the parametric knowledge they encapsulate.'
+    - work: self_rag
+      kind: result
+      number: 2
+      of_method: self-reflective-retrieval
+      on_dataset: natural-questions
+      with_metric: exact-match
+      value: "0.86"
+      unit: exact match
+      setting: open-domain question answering
+      claims_sota: true
+      evidence:
+        - quote: 'Experiments show that Self-RAG (7B and 13B parameters) significantly outperforms state-of-the-art LLMs and retrieval-augmented models on a diverse set of tasks.'
+    - work: self_rag
+      kind: claim
+      number: 3
+      claim_text: Fixed retrieval can be harmful when retrieval is unnecessary or irrelevant.
+      about: [retrieval-augmented-generation]
+      contradicts_claim: [claim:rag:3]
+      evidence:
+        - quote: 'indiscriminately retrieving and incorporating a fixed number of retrieved passages, regardless of whether retrieval is necessary, or passages are relevant, diminishes LM versatility or can lead to unhelpful response generation.'
+
+    - work: structgpt
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [structured-data-reasoning, knowledge-graph-question-answering]
+      proposes: [iterative-reading-reasoning]
+      uses: [chain-of-thought-prompting]
+      evaluates_on: [graphqa]
+      reports: [result:structgpt:2]
+      evidence:
+        - quote: 'In this paper, we study how to improve the zero-shot reasoning ability of large language models~(LLMs) over structured data in a unified way.'
+    - work: structgpt
+      kind: result
+      number: 2
+      of_method: iterative-reading-reasoning
+      on_dataset: graphqa
+      with_metric: accuracy
+      value: "0.79"
+      unit: accuracy
+      setting: structured-data question answering
+      claims_sota: false
+      evidence:
+        - quote: "Extensive experiments conducted on three types of structured data demonstrate the effectiveness of our approach, which can significantly boost the performance of ChatGPT"
+
+    - work: think_on_graph
+      kind: contribution
+      number: 1
+      contribution_kind: method
+      addresses: [knowledge-graph-question-answering, hallucination-and-factuality]
+      proposes: [reasoning-on-graphs]
+      uses: [graph-rag]
+      evaluates_on: [graphqa]
+      reports: [result:think_on_graph:2]
+      evidence:
+        - quote: 'Although large language models (LLMs) have achieved significant success in various tasks, they often struggle with hallucination problems, especially in scenarios requiring deep and responsible reasoning.'
+    - work: think_on_graph
+      kind: result
+      number: 2
+      of_method: reasoning-on-graphs
+      on_dataset: graphqa
+      with_metric: accuracy
+      value: "0.85"
+      unit: accuracy
+      setting: knowledge-graph reasoning
+      claims_sota: true
+      evidence:
+        - quote: 'As a training-free method with lower computational cost and better generality, ToG achieves overall SOTA in 6 out of 9 datasets where most previous SOTAs rely on additional training.'
+
+analysis:
+  review:
+    review_id: kgqa-rag
+    seed_kind: paper
+    seed_value: "arxiv:1706.03762"
+    started_at: "2026-09-22T00:00:00+00:00"
+    ended_at: "2026-09-22T00:00:01+00:00"
+    budget_works: 19
+    budget_usd: "25.00"
+    spend_usd: "0.00"
+  protocol:
+    protocol_id: kgqa-rag-v1
+    scope_statement: Knowledge-graph question answering and retrieval-augmented generation from 2017 through 2024.
+    inclusion_criterion:
+      - Addresses KGQA, knowledge-intensive NLP, retrieval, graph reasoning, or evaluation.
+      - Has an abstract and a stable identifier in the golden corpus.
+    exclusion_criterion:
+      - General language-model architecture work without a direct corpus focus.
+      - Dataset-only work without a method or analysis relevant to the review.
+    from_year: 2017
+    to_year: 2024
+    allowed_tier: [peerReviewed, preprint, officialBlog]
+    max_works: 19
+    max_snowball_depth: 3
+
+  inclusions:
+    - work: transformer
+      decision: excluded
+      stage: fulltext
+      reason: Foundational architecture paper; it does not directly study KGQA or RAG.
+      discovered_via: seed
+      relevance: 0.42
+      roles: [foundational]
+      cluster: 1
+    - work: bert
+      decision: excluded
+      stage: screening
+      reason: General encoder baseline without a retrieval or graph-question-answering contribution.
+      discovered_via: backward
+      relevance: 0.38
+      roles: [foundational]
+      cluster: 1
+    - work: complexwebquestions
+      decision: excluded
+      stage: screening
+      reason: Benchmark construction is useful context but outside the method-focused review scope.
+      discovered_via: backward
+      relevance: 0.47
+      roles: [foundational]
+      cluster: 4
+    - work: cot
+      decision: included
+      stage: fulltext
+      discovered_via: backward
+      relevance: 0.78
+      roles: [foundational]
+      cluster: 3
+    - work: dpr
+      decision: included
+      stage: fulltext
+      discovered_via: backward
+      relevance: 0.94
+      roles: [foundational, backbone]
+      cluster: 2
+    - work: fid
+      decision: included
+      stage: fulltext
+      discovered_via: backward
+      relevance: 0.91
+      roles: [backbone]
+      cluster: 2
+    - work: g_retriever
+      decision: included
+      stage: fulltext
+      discovered_via: forward
+      relevance: 0.96
+      roles: [rising, bridge]
+      cluster: 4
+    - work: graphrag
+      decision: included
+      stage: fulltext
+      discovered_via: forward
+      relevance: 0.96
+      roles: [rising, bridge]
+      cluster: 4
+    - work: lightrag
+      decision: included
+      stage: fulltext
+      discovered_via: forward
+      relevance: 0.95
+      roles: [rising]
+      cluster: 4
+    - work: llm_kg_roadmap
+      decision: included
+      stage: fulltext
+      discovered_via: semantic
+      relevance: 0.84
+      roles: [survey, bridge]
+      cluster: 4
+    - work: lost_in_the_middle
+      decision: included
+      stage: fulltext
+      discovered_via: forward
+      relevance: 0.76
+      roles: [backbone]
+      cluster: 2
+    - work: rag
+      decision: included
+      stage: fulltext
+      discovered_via: seed
+      relevance: 0.99
+      roles: [backbone, foundational]
+      cluster: 2
+    - work: react
+      decision: included
+      stage: fulltext
+      discovered_via: forward
+      relevance: 0.88
+      roles: [bridge, rising]
+      cluster: 3
+    - work: realm
+      decision: included
+      stage: fulltext
+      discovered_via: backward
+      relevance: 0.90
+      roles: [foundational, backbone]
+      cluster: 2
+    - work: rog
+      decision: included
+      stage: fulltext
+      discovered_via: forward
+      relevance: 0.94
+      roles: [bridge, rising]
+      cluster: 3
+    - work: sciqa
+      decision: included
+      stage: fulltext
+      discovered_via: semantic
+      relevance: 0.83
+      roles: [survey, backbone]
+      cluster: 4
+    - work: self_rag
+      decision: included
+      stage: fulltext
+      discovered_via: forward
+      relevance: 0.95
+      roles: [rising, bridge]
+      cluster: 2
+    - work: structgpt
+      decision: included
+      stage: fulltext
+      discovered_via: forward
+      relevance: 0.87
+      roles: [bridge, rising]
+      cluster: 3
+    - work: think_on_graph
+      decision: included
+      stage: fulltext
+      discovered_via: forward
+      relevance: 0.96
+      roles: [rising, bridge]
+      cluster: 3
+
+  clusters:
+    - number: 1
+      level: 1
+      label: Transformer and encoder foundations
+      summary: General language-model architectures that underpin later retrieval and reasoning systems.
+      growth_rate: 0.18
+      top_concept: transformer-pretraining
+    - number: 2
+      level: 1
+      label: Retrieval-augmented language models
+      summary: Dense retrieval, latent memory, and generation over external evidence.
+      growth_rate: 0.62
+      top_concept: retrieval-augmented-generation
+    - number: 3
+      level: 1
+      label: Agentic and graph reasoning
+      summary: Interleaved reasoning, acting, and graph-grounded planning for faithful answers.
+      growth_rate: 0.71
+      top_concept: reasoning-on-graphs
+    - number: 4
+      level: 1
+      label: Graph QA systems and benchmarks
+      summary: Graph-indexed retrieval, conversational graph QA, and scholarly benchmark design.
+      growth_rate: 0.84
+      top_concept: knowledge-graph-question-answering
+
+  cluster_pairs:
+    - cluster_a: 1
+      cluster_b: 2
+      semantic_similarity: "0.81"
+      cross_citation_count: 2
+    - cluster_a: 2
+      cluster_b: 3
+      semantic_similarity: "0.78"
+      cross_citation_count: 0
+    - cluster_a: 1
+      cluster_b: 4
+      semantic_similarity: "0.86"
+      cross_citation_count: 0
+
+  gaps:
+    - number: 1
+      gap_type: statedUnaddressed
+      statement: Repeated factuality and provenance limitations remain unaddressed across retrieval papers.
+      about: [hallucination-and-factuality]
+      supported_by: [limitation:dpr:3, limitation:fid:3, limitation:rag:4]
+      confidence: 0.88
+      verification_outcome: noCounterEvidence
+      user_status: accepted
+      user_note: Keep as a review priority.
+    - number: 2
+      gap_type: evaluationGap
+      statement: Graph QA methods do not share a stable evaluation protocol across graph types.
+      about: [knowledge-graph-question-answering]
+      supported_by: [result:g_retriever:2, result:graphrag:2]
+      confidence: 0.74
+      verification_outcome: notChecked
+      user_status: proposed
+    - number: 3
+      gap_type: bridgingGap
+      statement: Retrieval benchmarks and graph-reasoning benchmarks remain weakly connected.
+      about: [retrieval-augmented-generation]
+      supported_by: [result:rag:2, result:rog:2]
+      confidence: 0.69
+      verification_outcome: partiallyAddressed
+      user_status: rejected
+      user_note: Rejected for this review because the proposed bridge is too broad to operationalize.
+    - number: 4
+      gap_type: contradiction
+      statement: Fixed retrieval and adaptive retrieval make conflicting claims about when evidence should be fetched.
+      about: [retrieval-augmented-generation]
+      supported_by: [claim:rag:3, claim:self_rag:3]
+      confidence: 0.81
+      verification_outcome: noCounterEvidence
+      user_status: accepted
+    - number: 5
+      gap_type: matrixVoid
+      statement: Long-context retrieval and graph reasoning lack a shared benchmark cell in this corpus.
+      about: [long-context-retrieval]
+      supported_by: [limitation:lost_in_the_middle:2]
+      confidence: 0.63
+      verification_outcome: notChecked
+      user_status: proposed

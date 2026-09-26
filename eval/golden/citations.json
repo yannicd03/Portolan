@@ -1,0 +1,206 @@
+[
+  {
+    "cited": "transformer",
+    "citing": "bert"
+  },
+  {
+    "cited": "bert",
+    "citing": "cot"
+  },
+  {
+    "cited": "bert",
+    "citing": "dpr"
+  },
+  {
+    "cited": "fid",
+    "citing": "dpr"
+  },
+  {
+    "cited": "rag",
+    "citing": "dpr"
+  },
+  {
+    "cited": "realm",
+    "citing": "dpr"
+  },
+  {
+    "cited": "bert",
+    "citing": "fid"
+  },
+  {
+    "cited": "dpr",
+    "citing": "fid"
+  },
+  {
+    "cited": "rag",
+    "citing": "fid"
+  },
+  {
+    "cited": "realm",
+    "citing": "fid"
+  },
+  {
+    "cited": "cot",
+    "citing": "g_retriever"
+  },
+  {
+    "cited": "rag",
+    "citing": "g_retriever"
+  },
+  {
+    "cited": "rog",
+    "citing": "g_retriever"
+  },
+  {
+    "cited": "structgpt",
+    "citing": "g_retriever"
+  },
+  {
+    "cited": "g_retriever",
+    "citing": "graphrag"
+  },
+  {
+    "cited": "lost_in_the_middle",
+    "citing": "graphrag"
+  },
+  {
+    "cited": "rag",
+    "citing": "graphrag"
+  },
+  {
+    "cited": "graphrag",
+    "citing": "lightrag"
+  },
+  {
+    "cited": "bert",
+    "citing": "llm_kg_roadmap"
+  },
+  {
+    "cited": "cot",
+    "citing": "llm_kg_roadmap"
+  },
+  {
+    "cited": "rag",
+    "citing": "llm_kg_roadmap"
+  },
+  {
+    "cited": "realm",
+    "citing": "llm_kg_roadmap"
+  },
+  {
+    "cited": "rog",
+    "citing": "llm_kg_roadmap"
+  },
+  {
+    "cited": "structgpt",
+    "citing": "llm_kg_roadmap"
+  },
+  {
+    "cited": "transformer",
+    "citing": "llm_kg_roadmap"
+  },
+  {
+    "cited": "fid",
+    "citing": "lost_in_the_middle"
+  },
+  {
+    "cited": "transformer",
+    "citing": "lost_in_the_middle"
+  },
+  {
+    "cited": "bert",
+    "citing": "rag"
+  },
+  {
+    "cited": "dpr",
+    "citing": "rag"
+  },
+  {
+    "cited": "realm",
+    "citing": "rag"
+  },
+  {
+    "cited": "transformer",
+    "citing": "rag"
+  },
+  {
+    "cited": "cot",
+    "citing": "react"
+  },
+  {
+    "cited": "rag",
+    "citing": "react"
+  },
+  {
+    "cited": "bert",
+    "citing": "realm"
+  },
+  {
+    "cited": "complexwebquestions",
+    "citing": "rog"
+  },
+  {
+    "cited": "cot",
+    "citing": "rog"
+  },
+  {
+    "cited": "dpr",
+    "citing": "rog"
+  },
+  {
+    "cited": "fid",
+    "citing": "rog"
+  },
+  {
+    "cited": "llm_kg_roadmap",
+    "citing": "rog"
+  },
+  {
+    "cited": "react",
+    "citing": "rog"
+  },
+  {
+    "cited": "bert",
+    "citing": "sciqa"
+  },
+  {
+    "cited": "complexwebquestions",
+    "citing": "sciqa"
+  },
+  {
+    "cited": "rag",
+    "citing": "self_rag"
+  },
+  {
+    "cited": "realm",
+    "citing": "self_rag"
+  },
+  {
+    "cited": "complexwebquestions",
+    "citing": "think_on_graph"
+  },
+  {
+    "cited": "cot",
+    "citing": "think_on_graph"
+  },
+  {
+    "cited": "llm_kg_roadmap",
+    "citing": "think_on_graph"
+  },
+  {
+    "cited": "rag",
+    "citing": "think_on_graph"
+  },
+  {
+    "cited": "react",
+    "citing": "think_on_graph"
+  },
+  {
+    "cited": "rog",
+    "citing": "think_on_graph"
+  },
+  {
+    "cited": "structgpt",
+    "citing": "think_on_graph"
+  }
+]

@@ -1,0 +1,32 @@
+# CQ01 — Which works are foundational / bridge / backbone / rising in review R, per cluster?
+# PARAMS: ?review (IRI, review-scoped)
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?cluster ?clusterLabel ?work ?title ?role
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  # /PARAM-BLOCK
+
+  GRAPH ?reviewGraph {
+    ?inclusion a ptl:Inclusion ;
+      ptl:ofReview ?review ;
+      ptl:ofWork ?work ;
+      ptl:role ?role ;
+      ptl:inCluster ?cluster .
+    ?cluster a ptl:Cluster ;
+      ptl:ofReview ?review .
+    VALUES ?role { "foundational" "bridge" "backbone" "rising" }
+    OPTIONAL { ?cluster rdfs:label ?clusterLabel }
+  }
+
+  GRAPH ptlg:biblio {
+    ?work a ptl:Work ;
+      dcterms:title ?title .
+  }
+}
+ORDER BY ?clusterLabel ?role ?title

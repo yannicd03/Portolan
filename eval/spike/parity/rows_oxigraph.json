@@ -1,0 +1,1093 @@
+{
+  "CQ01": {
+    "columns": [
+      "cluster",
+      "clusterLabel",
+      "role",
+      "title",
+      "work"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+    },
+    "rows": [
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/1",
+        "clusterLabel": "Transformer and encoder foundations",
+        "role": "foundational",
+        "title": "Attention is All you Need",
+        "work": "https://w3id.org/portolan/id/work/arxiv/1706.03762"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/1",
+        "clusterLabel": "Transformer and encoder foundations",
+        "role": "foundational",
+        "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+        "work": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN19-1423"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "backbone",
+        "title": "Dense Passage Retrieval for Open-Domain Question Answering",
+        "work": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2020.emnlp-main.550"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "backbone",
+        "title": "Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering",
+        "work": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2021.eacl-main.74"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "backbone",
+        "title": "Lost in the Middle: How Language Models Use Long Contexts",
+        "work": "https://w3id.org/portolan/id/work/doi/10.1162%2Ftacl_a_00638"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "backbone",
+        "title": "REALM: Retrieval-Augmented Language Model Pre-Training",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2002.08909"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "backbone",
+        "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2005.11401"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "bridge",
+        "title": "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2310.11511"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "foundational",
+        "title": "Dense Passage Retrieval for Open-Domain Question Answering",
+        "work": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2020.emnlp-main.550"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "foundational",
+        "title": "REALM: Retrieval-Augmented Language Model Pre-Training",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2002.08909"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "foundational",
+        "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2005.11401"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "role": "rising",
+        "title": "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2310.11511"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "role": "bridge",
+        "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2210.03629"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "role": "bridge",
+        "title": "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "role": "bridge",
+        "title": "StructGPT: A General Framework for Large Language Model to Reason over Structured Data",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2305.09645"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "role": "bridge",
+        "title": "Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2307.07697"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "role": "foundational",
+        "title": "Chain of Thought Prompting Elicits Reasoning in Large Language Models",
+        "work": "https://w3id.org/portolan/id/work/doi/10.52202%2F068431-1800"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "role": "rising",
+        "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2210.03629"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "role": "rising",
+        "title": "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "role": "rising",
+        "title": "StructGPT: A General Framework for Large Language Model to Reason over Structured Data",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2305.09645"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "role": "rising",
+        "title": "Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2307.07697"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterLabel": "Graph QA systems and benchmarks",
+        "role": "backbone",
+        "title": "The SciQA Scientific Question Answering Benchmark for Scholarly Knowledge",
+        "work": "https://w3id.org/portolan/id/work/doi/10.1038%2Fs41598-023-33607-z"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterLabel": "Graph QA systems and benchmarks",
+        "role": "bridge",
+        "title": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2404.16130"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterLabel": "Graph QA systems and benchmarks",
+        "role": "bridge",
+        "title": "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2402.07630"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterLabel": "Graph QA systems and benchmarks",
+        "role": "bridge",
+        "title": "Unifying Large Language Models and Knowledge Graphs: A Roadmap",
+        "work": "https://w3id.org/portolan/id/work/doi/10.1109%2FTKDE.2024.3352100"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterLabel": "Graph QA systems and benchmarks",
+        "role": "foundational",
+        "title": "The Web as a Knowledge-Base for Answering Complex Questions",
+        "work": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN18-1059"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterLabel": "Graph QA systems and benchmarks",
+        "role": "rising",
+        "title": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2404.16130"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterLabel": "Graph QA systems and benchmarks",
+        "role": "rising",
+        "title": "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2402.07630"
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterLabel": "Graph QA systems and benchmarks",
+        "role": "rising",
+        "title": "LightRAG: Simple and Fast Retrieval-Augmented Generation",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2410.05779"
+      }
+    ],
+    "source_columns": [
+      "cluster",
+      "clusterLabel",
+      "work",
+      "title",
+      "role"
+    ]
+  },
+  "CQ02": {
+    "columns": [
+      "from",
+      "fromIssued",
+      "fromTitle",
+      "to",
+      "toIssued",
+      "toTitle"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag",
+      "seed": "https://w3id.org/portolan/id/work/arxiv/1706.03762"
+    },
+    "rows": [
+      {
+        "from": "https://w3id.org/portolan/id/work/arxiv/1706.03762",
+        "fromIssued": "2017",
+        "fromTitle": "Attention is All you Need",
+        "to": "https://w3id.org/portolan/id/work/arxiv/2005.11401",
+        "toIssued": "2020",
+        "toTitle": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/arxiv/1706.03762",
+        "fromIssued": "2017",
+        "fromTitle": "Attention is All you Need",
+        "to": "https://w3id.org/portolan/id/work/doi/10.1109%2FTKDE.2024.3352100",
+        "toIssued": "2023",
+        "toTitle": "Unifying Large Language Models and Knowledge Graphs: A Roadmap"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/arxiv/1706.03762",
+        "fromIssued": "2017",
+        "fromTitle": "Attention is All you Need",
+        "to": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN19-1423",
+        "toIssued": "2019",
+        "toTitle": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/arxiv/2005.11401",
+        "fromIssued": "2020",
+        "fromTitle": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "to": "https://w3id.org/portolan/id/work/arxiv/2404.16130",
+        "toIssued": "2024",
+        "toTitle": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/arxiv/2005.11401",
+        "fromIssued": "2020",
+        "fromTitle": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "to": "https://w3id.org/portolan/id/work/doi/10.1109%2FTKDE.2024.3352100",
+        "toIssued": "2023",
+        "toTitle": "Unifying Large Language Models and Knowledge Graphs: A Roadmap"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/arxiv/2005.11401",
+        "fromIssued": "2020",
+        "fromTitle": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "to": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2020.emnlp-main.550",
+        "toIssued": "2020",
+        "toTitle": "Dense Passage Retrieval for Open-Domain Question Answering"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/arxiv/2005.11401",
+        "fromIssued": "2020",
+        "fromTitle": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "to": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2402.07630",
+        "toIssued": "2024",
+        "toTitle": "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/arxiv/2404.16130",
+        "fromIssued": "2024",
+        "fromTitle": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization",
+        "to": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2410.05779",
+        "toIssued": "2024",
+        "toTitle": "LightRAG: Simple and Fast Retrieval-Augmented Generation"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/doi/10.1109%2FTKDE.2024.3352100",
+        "fromIssued": "2023",
+        "fromTitle": "Unifying Large Language Models and Knowledge Graphs: A Roadmap",
+        "to": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061",
+        "toIssued": "2023",
+        "toTitle": "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2020.emnlp-main.550",
+        "fromIssued": "2020",
+        "fromTitle": "Dense Passage Retrieval for Open-Domain Question Answering",
+        "to": "https://w3id.org/portolan/id/work/arxiv/2005.11401",
+        "toIssued": "2020",
+        "toTitle": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2020.emnlp-main.550",
+        "fromIssued": "2020",
+        "fromTitle": "Dense Passage Retrieval for Open-Domain Question Answering",
+        "to": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061",
+        "toIssued": "2023",
+        "toTitle": "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN19-1423",
+        "fromIssued": "2019",
+        "fromTitle": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+        "to": "https://w3id.org/portolan/id/work/arxiv/2005.11401",
+        "toIssued": "2020",
+        "toTitle": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN19-1423",
+        "fromIssued": "2019",
+        "fromTitle": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+        "to": "https://w3id.org/portolan/id/work/doi/10.1109%2FTKDE.2024.3352100",
+        "toIssued": "2023",
+        "toTitle": "Unifying Large Language Models and Knowledge Graphs: A Roadmap"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN19-1423",
+        "fromIssued": "2019",
+        "fromTitle": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+        "to": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2020.emnlp-main.550",
+        "toIssued": "2020",
+        "toTitle": "Dense Passage Retrieval for Open-Domain Question Answering"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061",
+        "fromIssued": "2023",
+        "fromTitle": "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning",
+        "to": "https://w3id.org/portolan/id/work/doi/10.1109%2FTKDE.2024.3352100",
+        "toIssued": "2023",
+        "toTitle": "Unifying Large Language Models and Knowledge Graphs: A Roadmap"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061",
+        "fromIssued": "2023",
+        "fromTitle": "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning",
+        "to": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2402.07630",
+        "toIssued": "2024",
+        "toTitle": "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering"
+      },
+      {
+        "from": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2402.07630",
+        "fromIssued": "2024",
+        "fromTitle": "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering",
+        "to": "https://w3id.org/portolan/id/work/arxiv/2404.16130",
+        "toIssued": "2024",
+        "toTitle": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization"
+      }
+    ],
+    "source_columns": [
+      "from",
+      "fromTitle",
+      "fromIssued",
+      "to",
+      "toTitle",
+      "toIssued"
+    ]
+  },
+  "CQ03": {
+    "columns": [
+      "dataset",
+      "method",
+      "metric",
+      "title",
+      "work"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "problem": "https://w3id.org/portolan/id/concept/problem/knowledge-graph-question-answering"
+    },
+    "rows": [
+      {
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/complexwebquestions",
+        "method": "https://w3id.org/portolan/id/concept/method/iterative-reading-reasoning",
+        "metric": "https://w3id.org/portolan/id/concept/metric/precision-at-1",
+        "title": "The Web as a Knowledge-Base for Answering Complex Questions",
+        "work": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN18-1059"
+      },
+      {
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/complexwebquestions",
+        "method": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "title": "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061"
+      },
+      {
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/graphqa",
+        "method": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "title": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2404.16130"
+      },
+      {
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/graphqa",
+        "method": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "title": "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2402.07630"
+      },
+      {
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/graphqa",
+        "method": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "title": "LightRAG: Simple and Fast Retrieval-Augmented Generation",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2410.05779"
+      },
+      {
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/graphqa",
+        "method": "https://w3id.org/portolan/id/concept/method/iterative-reading-reasoning",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "title": "StructGPT: A General Framework for Large Language Model to Reason over Structured Data",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2305.09645"
+      },
+      {
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/graphqa",
+        "method": "https://w3id.org/portolan/id/concept/method/iterative-reading-reasoning",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "title": "The SciQA Scientific Question Answering Benchmark for Scholarly Knowledge",
+        "work": "https://w3id.org/portolan/id/work/doi/10.1038%2Fs41598-023-33607-z"
+      },
+      {
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/graphqa",
+        "method": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "title": "Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2307.07697"
+      },
+      {
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/hotpotqa",
+        "method": "https://w3id.org/portolan/id/concept/method/react-agent",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2210.03629"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/chain-of-thought-prompting",
+        "metric": null,
+        "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2210.03629"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/chain-of-thought-prompting",
+        "metric": null,
+        "title": "StructGPT: A General Framework for Large Language Model to Reason over Structured Data",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2305.09645"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/dense-passage-retrieval",
+        "metric": null,
+        "title": "The Web as a Knowledge-Base for Answering Complex Questions",
+        "work": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2FN18-1059"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "metric": null,
+        "title": "Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "metric": null,
+        "title": "The SciQA Scientific Question Answering Benchmark for Scholarly Knowledge",
+        "work": "https://w3id.org/portolan/id/work/doi/10.1038%2Fs41598-023-33607-z"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "metric": null,
+        "title": "Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2307.07697"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "metric": null,
+        "title": "Unifying Large Language Models and Knowledge Graphs: A Roadmap",
+        "work": "https://w3id.org/portolan/id/work/doi/10.1109%2FTKDE.2024.3352100"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation",
+        "metric": null,
+        "title": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2404.16130"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation",
+        "metric": null,
+        "title": "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2402.07630"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation",
+        "metric": null,
+        "title": "LightRAG: Simple and Fast Retrieval-Augmented Generation",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2410.05779"
+      },
+      {
+        "dataset": null,
+        "method": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation",
+        "metric": null,
+        "title": "Unifying Large Language Models and Knowledge Graphs: A Roadmap",
+        "work": "https://w3id.org/portolan/id/work/doi/10.1109%2FTKDE.2024.3352100"
+      }
+    ],
+    "source_columns": [
+      "method",
+      "methodLabel",
+      "dataset",
+      "datasetLabel",
+      "metric",
+      "metricLabel",
+      "work",
+      "title"
+    ]
+  },
+  "CQ04": {
+    "columns": [
+      "bestValue",
+      "dataset",
+      "method",
+      "metric",
+      "metricDirection",
+      "sourceTier",
+      "work"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+    },
+    "rows": [
+      {
+        "bestValue": 0.71,
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/hotpotqa",
+        "method": "https://w3id.org/portolan/id/concept/method/react-agent",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "metricDirection": "higherIsBetter",
+        "sourceTier": "preprint",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2210.03629"
+      },
+      {
+        "bestValue": 0.82,
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/complexwebquestions",
+        "method": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "metricDirection": "higherIsBetter",
+        "sourceTier": "preprint",
+        "work": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061"
+      },
+      {
+        "bestValue": 0.85,
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/graphqa",
+        "method": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "metricDirection": "higherIsBetter",
+        "sourceTier": "preprint",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2307.07697"
+      },
+      {
+        "bestValue": 0.86,
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/natural-questions",
+        "method": "https://w3id.org/portolan/id/concept/method/self-reflective-retrieval",
+        "metric": "https://w3id.org/portolan/id/concept/metric/exact-match",
+        "metricDirection": "higherIsBetter",
+        "sourceTier": "preprint",
+        "work": "https://w3id.org/portolan/id/work/arxiv/2310.11511"
+      },
+      {
+        "bestValue": 0.87,
+        "dataset": "https://w3id.org/portolan/id/concept/dataset/natural-questions",
+        "method": "https://w3id.org/portolan/id/concept/method/dense-passage-retrieval",
+        "metric": "https://w3id.org/portolan/id/concept/metric/accuracy",
+        "metricDirection": "higherIsBetter",
+        "sourceTier": "preprint",
+        "work": "https://w3id.org/portolan/id/work/doi/10.18653%2Fv1%2F2020.emnlp-main.550"
+      }
+    ],
+    "source_columns": [
+      "dataset",
+      "datasetLabel",
+      "metric",
+      "metricLabel",
+      "metricDirection",
+      "bestValue",
+      "method",
+      "work",
+      "sourceTier"
+    ]
+  },
+  "CQ05": {
+    "columns": [
+      "method",
+      "methodWorkCount",
+      "problem",
+      "problemWorkCount"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "n": 3,
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+    },
+    "rows": [
+      {
+        "method": "https://w3id.org/portolan/id/concept/method/chain-of-thought-prompting",
+        "methodWorkCount": 3,
+        "problem": "https://w3id.org/portolan/id/concept/problem/knowledge-intensive-nlp",
+        "problemWorkCount": 7
+      },
+      {
+        "method": "https://w3id.org/portolan/id/concept/method/chain-of-thought-prompting",
+        "methodWorkCount": 3,
+        "problem": "https://w3id.org/portolan/id/concept/problem/open-domain-question-answering",
+        "problemWorkCount": 5
+      },
+      {
+        "method": "https://w3id.org/portolan/id/concept/method/dense-passage-retrieval",
+        "methodWorkCount": 4,
+        "problem": "https://w3id.org/portolan/id/concept/problem/knowledge-graph-question-answering",
+        "problemWorkCount": 9
+      },
+      {
+        "method": "https://w3id.org/portolan/id/concept/method/dense-passage-retrieval",
+        "methodWorkCount": 4,
+        "problem": "https://w3id.org/portolan/id/concept/problem/structured-data-reasoning",
+        "problemWorkCount": 3
+      },
+      {
+        "method": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "methodWorkCount": 7,
+        "problem": "https://w3id.org/portolan/id/concept/problem/open-domain-question-answering",
+        "problemWorkCount": 5
+      },
+      {
+        "method": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation",
+        "methodWorkCount": 8,
+        "problem": "https://w3id.org/portolan/id/concept/problem/structured-data-reasoning",
+        "problemWorkCount": 3
+      },
+      {
+        "method": "https://w3id.org/portolan/id/concept/method/transformer-pretraining",
+        "methodWorkCount": 3,
+        "problem": "https://w3id.org/portolan/id/concept/problem/hallucination-and-factuality",
+        "problemWorkCount": 7
+      },
+      {
+        "method": "https://w3id.org/portolan/id/concept/method/transformer-pretraining",
+        "methodWorkCount": 3,
+        "problem": "https://w3id.org/portolan/id/concept/problem/knowledge-graph-question-answering",
+        "problemWorkCount": 9
+      }
+    ],
+    "source_columns": [
+      "problem",
+      "method",
+      "problemWorkCount",
+      "methodWorkCount"
+    ]
+  },
+  "CQ06": {
+    "columns": [
+      "about",
+      "limitationTexts",
+      "oldestStatementDate",
+      "statingWorkCount"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "n": 3,
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+    },
+    "rows": [
+      {
+        "about": "https://w3id.org/portolan/id/concept/problem/hallucination-and-factuality",
+        "limitationTexts": "Dense retrieval alone does not guarantee faithful generation or provenance. | Provenance and world-knowledge updates remain open problems for knowledge-intensive generation. | Retrieval-augmented generators remain expensive when their base models are very large.",
+        "oldestStatementDate": "2020",
+        "statingWorkCount": 3
+      }
+    ],
+    "source_columns": [
+      "about",
+      "limitationTexts",
+      "statingWorkCount",
+      "oldestStatementDate"
+    ]
+  },
+  "CQ07": {
+    "columns": [
+      "claim",
+      "claimText",
+      "claimWork",
+      "claimingWorkTitle",
+      "contradictingClaim",
+      "counterText",
+      "counterWork",
+      "counterWorkTitle"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+    },
+    "rows": [
+      {
+        "claim": "https://w3id.org/portolan/id/claim/arxiv-2005.11401/3",
+        "claimText": "RAG produces more specific, diverse, and factual language than a parametric-only baseline.",
+        "claimWork": "https://w3id.org/portolan/id/work/arxiv/2005.11401",
+        "claimingWorkTitle": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "contradictingClaim": "https://w3id.org/portolan/id/claim/arxiv-2310.11511/3",
+        "counterText": "Fixed retrieval can be harmful when retrieval is unnecessary or irrelevant.",
+        "counterWork": "https://w3id.org/portolan/id/work/arxiv/2310.11511",
+        "counterWorkTitle": "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection"
+      }
+    ],
+    "source_columns": [
+      "claim",
+      "claimText",
+      "claimWork",
+      "claimingWorkTitle",
+      "contradictingClaim",
+      "counterText",
+      "counterWork",
+      "counterWorkTitle"
+    ]
+  },
+  "CQ08": {
+    "columns": [
+      "methodA",
+      "methodB"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+    },
+    "rows": [
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/dense-passage-retrieval",
+        "methodB": "https://w3id.org/portolan/id/concept/method/graph-rag"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/dense-passage-retrieval",
+        "methodB": "https://w3id.org/portolan/id/concept/method/iterative-reading-reasoning"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/dense-passage-retrieval",
+        "methodB": "https://w3id.org/portolan/id/concept/method/react-agent"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/dense-passage-retrieval",
+        "methodB": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "methodB": "https://w3id.org/portolan/id/concept/method/latent-knowledge-retrieval"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "methodB": "https://w3id.org/portolan/id/concept/method/react-agent"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "methodB": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/graph-rag",
+        "methodB": "https://w3id.org/portolan/id/concept/method/self-reflective-retrieval"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/iterative-reading-reasoning",
+        "methodB": "https://w3id.org/portolan/id/concept/method/latent-knowledge-retrieval"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/iterative-reading-reasoning",
+        "methodB": "https://w3id.org/portolan/id/concept/method/react-agent"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/iterative-reading-reasoning",
+        "methodB": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/iterative-reading-reasoning",
+        "methodB": "https://w3id.org/portolan/id/concept/method/self-reflective-retrieval"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/latent-knowledge-retrieval",
+        "methodB": "https://w3id.org/portolan/id/concept/method/react-agent"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/latent-knowledge-retrieval",
+        "methodB": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/react-agent",
+        "methodB": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/react-agent",
+        "methodB": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/react-agent",
+        "methodB": "https://w3id.org/portolan/id/concept/method/self-reflective-retrieval"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs",
+        "methodB": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation"
+      },
+      {
+        "methodA": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs",
+        "methodB": "https://w3id.org/portolan/id/concept/method/self-reflective-retrieval"
+      }
+    ],
+    "source_columns": [
+      "methodA",
+      "methodB"
+    ]
+  },
+  "CQ09": {
+    "columns": [
+      "cluster",
+      "clusterLabel",
+      "concept",
+      "firstSeenDate",
+      "firstSeenWork",
+      "growthRate"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+    },
+    "rows": [
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/1",
+        "clusterLabel": "Transformer and encoder foundations",
+        "concept": "https://w3id.org/portolan/id/concept/method/transformer-pretraining",
+        "firstSeenDate": "2017",
+        "firstSeenWork": "https://w3id.org/portolan/id/work/arxiv/1706.03762",
+        "growthRate": 0.18
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterLabel": "Retrieval-augmented language models",
+        "concept": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation",
+        "firstSeenDate": "2020",
+        "firstSeenWork": "https://w3id.org/portolan/id/work/arxiv/2005.11401",
+        "growthRate": 0.62
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterLabel": "Agentic and graph reasoning",
+        "concept": "https://w3id.org/portolan/id/concept/method/reasoning-on-graphs",
+        "firstSeenDate": "2023",
+        "firstSeenWork": "https://w3id.org/portolan/id/work/doi/10.48550%2FarXiv.2310.01061",
+        "growthRate": 0.71
+      },
+      {
+        "cluster": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterLabel": "Graph QA systems and benchmarks",
+        "concept": "https://w3id.org/portolan/id/concept/problem/knowledge-graph-question-answering",
+        "firstSeenDate": "2023",
+        "firstSeenWork": "https://w3id.org/portolan/id/work/doi/10.1038%2Fs41598-023-33607-z",
+        "growthRate": 0.84
+      }
+    ],
+    "source_columns": [
+      "cluster",
+      "clusterLabel",
+      "growthRate",
+      "concept",
+      "firstSeenWork",
+      "firstSeenDate"
+    ]
+  },
+  "CQ10": {
+    "columns": [
+      "nonPeerReviewedShare",
+      "organization",
+      "review"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+    },
+    "rows": [
+      {
+        "nonPeerReviewedShare": 0.9375,
+        "organization": null,
+        "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+      }
+    ],
+    "source_columns": [
+      "review",
+      "nonPeerReviewedShare",
+      "organization"
+    ]
+  },
+  "CQ11": {
+    "columns": [
+      "clusterA",
+      "clusterALabel",
+      "clusterB",
+      "clusterBLabel",
+      "crossCitationCount",
+      "semanticSimilarity"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag",
+      "similarityThreshold": 0.75
+    },
+    "rows": [
+      {
+        "clusterA": "https://w3id.org/portolan/id/cluster/kgqa-rag/1",
+        "clusterALabel": "Transformer and encoder foundations",
+        "clusterB": "https://w3id.org/portolan/id/cluster/kgqa-rag/4",
+        "clusterBLabel": "Graph QA systems and benchmarks",
+        "crossCitationCount": 0,
+        "semanticSimilarity": 0.86
+      },
+      {
+        "clusterA": "https://w3id.org/portolan/id/cluster/kgqa-rag/2",
+        "clusterALabel": "Retrieval-augmented language models",
+        "clusterB": "https://w3id.org/portolan/id/cluster/kgqa-rag/3",
+        "clusterBLabel": "Agentic and graph reasoning",
+        "crossCitationCount": 0,
+        "semanticSimilarity": 0.78
+      }
+    ],
+    "source_columns": [
+      "pair",
+      "clusterA",
+      "clusterALabel",
+      "clusterB",
+      "clusterBLabel",
+      "semanticSimilarity",
+      "crossCitationCount"
+    ]
+  },
+  "CQ12": {
+    "columns": [
+      "activity",
+      "assertion",
+      "endedAt",
+      "evidence",
+      "fromSourceKind",
+      "model",
+      "promptVersion",
+      "quote",
+      "work",
+      "workTitle"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "assertion": "https://w3id.org/portolan/id/contribution/arxiv-1706.03762/1"
+    },
+    "rows": [
+      {
+        "activity": "https://w3id.org/portolan/id/extraction/golden-v02",
+        "assertion": "https://w3id.org/portolan/id/contribution/arxiv-1706.03762/1",
+        "endedAt": "2026-09-22T00:00:00Z",
+        "evidence": "https://w3id.org/portolan/id/evidence/f1823247b9a5cb615babd81a03884f9100f7ee22",
+        "fromSourceKind": "abstract",
+        "model": "golden-fixture-curator",
+        "promptVersion": "golden-fixture-2026-09-22",
+        "quote": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration.",
+        "work": "https://w3id.org/portolan/id/work/arxiv/1706.03762",
+        "workTitle": "Attention is All you Need"
+      }
+    ],
+    "source_columns": [
+      "assertion",
+      "evidence",
+      "quote",
+      "work",
+      "workTitle",
+      "fromSourceKind",
+      "activity",
+      "model",
+      "promptVersion",
+      "endedAt"
+    ]
+  },
+  "CQ13": {
+    "columns": [
+      "reason",
+      "review",
+      "stage",
+      "title",
+      "work"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag",
+      "work": "https://w3id.org/portolan/id/work/arxiv/1706.03762"
+    },
+    "rows": [
+      {
+        "reason": "Foundational architecture paper; it does not directly study KGQA or RAG.",
+        "review": "https://w3id.org/portolan/id/review/kgqa-rag",
+        "stage": "fulltext",
+        "title": "Attention is All you Need",
+        "work": "https://w3id.org/portolan/id/work/arxiv/1706.03762"
+      }
+    ],
+    "source_columns": [
+      "work",
+      "title",
+      "review",
+      "stage",
+      "reason"
+    ]
+  },
+  "CQ14": {
+    "columns": [
+      "about",
+      "confidence",
+      "gap",
+      "statement",
+      "userNote",
+      "verificationOutcome"
+    ],
+    "error": null,
+    "executed": true,
+    "parameters": {
+      "review": "https://w3id.org/portolan/id/review/kgqa-rag"
+    },
+    "rows": [
+      {
+        "about": "https://w3id.org/portolan/id/concept/method/retrieval-augmented-generation",
+        "confidence": 0.69,
+        "gap": "https://w3id.org/portolan/id/gap/kgqa-rag/3",
+        "statement": "Retrieval benchmarks and graph-reasoning benchmarks remain weakly connected.",
+        "userNote": "Rejected for this review because the proposed bridge is too broad to operationalize.",
+        "verificationOutcome": "partiallyAddressed"
+      }
+    ],
+    "source_columns": [
+      "gap",
+      "statement",
+      "about",
+      "confidence",
+      "verificationOutcome",
+      "userNote"
+    ]
+  }
+}

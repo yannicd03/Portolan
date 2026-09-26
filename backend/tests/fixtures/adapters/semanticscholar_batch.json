@@ -1,0 +1,83 @@
+{
+  "data": [
+    {
+      "paperId": "s2-transformer-001",
+      "externalIds": {
+        "ArXiv": "1706.03762",
+        "DOI": "10.48550/arXiv.1706.03762",
+        "CorpusId": "11223344"
+      },
+      "url": "https://www.semanticscholar.org/paper/s2-transformer-001",
+      "title": "Attention Is All You Need",
+      "abstract": "The Transformer is a simple network architecture based solely on attention mechanisms.",
+      "venue": "Advances in Neural Information Processing Systems",
+      "year": 2017,
+      "publicationDate": "2017-06-12",
+      "publicationTypes": ["JournalArticle", "Conference"],
+      "openAccessPdf": {
+        "url": "https://arxiv.org/pdf/1706.03762",
+        "status": "GREEN",
+        "license": "other-oa"
+      },
+      "tldr": {
+        "model": "tldr@v2.0.0",
+        "text": "Introduces the Transformer, an attention-only sequence transduction model."
+      },
+      "citationCount": 123456,
+      "referenceCount": 2,
+      "citations": [
+        {
+          "paperId": "s2-rag-001",
+          "externalIds": {"ArXiv": "2005.11401"},
+          "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+          "year": 2020,
+          "intents": ["background", "uses-method-in"],
+          "isInfluential": true,
+          "contexts": ["We use the Transformer architecture as the generator."]
+        }
+      ],
+      "references": [
+        {
+          "paperId": "s2-bert-001",
+          "externalIds": {"ArXiv": "1810.04805", "DOI": "10.48550/arXiv.1810.04805"},
+          "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+        },
+        {
+          "paperId": "s2-unmatched-001",
+          "externalIds": {"DOI": "10.5555/not-in-corpus"},
+          "title": "A Paper Outside the Golden Set"
+        }
+      ]
+    },
+    {
+      "paperId": "s2-rag-001",
+      "externalIds": {
+        "ArXiv": "2005.11401",
+        "DOI": "10.48550/arXiv.2005.11401"
+      },
+      "url": "https://www.semanticscholar.org/paper/s2-rag-001",
+      "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+      "abstract": "We explore retrieval-augmented generation models for knowledge-intensive tasks.",
+      "venue": "Advances in Neural Information Processing Systems",
+      "year": 2020,
+      "publicationDate": "2020-05-19",
+      "publicationTypes": ["Conference"],
+      "openAccessPdf": {
+        "url": "https://arxiv.org/pdf/2005.11401",
+        "status": "GREEN"
+      },
+      "tldr": {
+        "model": "tldr@v2.0.0",
+        "text": "Combines a parametric generator with a non-parametric dense retriever."
+      },
+      "citations": [],
+      "references": [
+        {
+          "paperId": "s2-transformer-001",
+          "externalIds": {"ArXiv": "1706.03762"},
+          "title": "Attention Is All You Need"
+        }
+      ]
+    }
+  ]
+}

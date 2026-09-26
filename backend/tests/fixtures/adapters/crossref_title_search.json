@@ -1,0 +1,27 @@
+{
+  "status": "ok",
+  "message-type": "work-list",
+  "message-version": "1.0.0",
+  "message": {
+    "total-results": 2,
+    "items": [
+      {
+        "DOI": "10.1038/s41598-023-33607-z",
+        "URL": "https://doi.org/10.1038/s41598-023-33607-z",
+        "title": ["SciQA: a Scientific Question Answering Benchmark for Scholarly Knowledge"],
+        "published": {"date-parts": [[2023, 5, 12]]},
+        "container-title": ["Scientific Reports"],
+        "type": "journal-article",
+        "abstract": "<jats:p>We introduce SciQA, a benchmark for scientific question answering over scholarly knowledge.</jats:p>"
+      },
+      {
+        "DOI": "10.5555/fixture-near-miss",
+        "URL": "https://doi.org/10.5555/fixture-near-miss",
+        "title": ["SciQA: a Scientific Question Answering Benchmark for Scholarly Data"],
+        "published": {"date-parts": [[2022]]},
+        "container-title": ["Fixture Proceedings"],
+        "type": "proceedings-article"
+      }
+    ]
+  }
+}

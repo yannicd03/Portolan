@@ -1,0 +1,135 @@
+@prefix ptl: <https://w3id.org/portolan/ontology#> .
+@prefix ptlr: <https://w3id.org/portolan/id/> .
+@prefix ptlg: <https://w3id.org/portolan/graph/> .
+@prefix cito: <http://purl.org/spar/cito/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/portolan/graph/biblio> {
+    # Shape 1 violation: this Work has no title, issued date, source tier,
+    # or identifier/URL.
+    <https://w3id.org/portolan/id/work/arxiv/2305.09645> a ptl:Work .
+
+    # Shape 2 violation: a blogPost publisher has no allowlisted domain.
+    # The work metadata itself is kept to seeded title/year/arXiv facts; the
+    # blogPost type is deliberately wrong for this invalid fixture.
+    <https://w3id.org/portolan/id/work/arxiv/2402.07630>
+        a ptl:Work, fabio:Work ;
+        dcterms:title "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering" ;
+        dcterms:issued "2024"^^xsd:gYear ;
+        ptl:arxivId "2402.07630" ;
+        ptl:sourceTier "preprint" ;
+        ptl:workType "blogPost" ;
+        ptl:publishedBy <https://w3id.org/portolan/id/org/domain/example.invalid> .
+
+    <https://w3id.org/portolan/id/org/domain/example.invalid>
+        a ptl:Organization ;
+        ptl:orgKind "industry" .
+
+    <https://w3id.org/portolan/id/work/arxiv/1706.03762>
+        a ptl:Work, fabio:Work ;
+        dcterms:title "Attention Is All You Need" ;
+        dcterms:issued "2017"^^xsd:gYear ;
+        ptl:arxivId "1706.03762" ;
+        ptl:sourceTier "preprint" .
+
+    <https://w3id.org/portolan/id/work/arxiv/2005.11401>
+        a ptl:Work, fabio:Work ;
+        dcterms:title "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" ;
+        dcterms:issued "2020"^^xsd:gYear ;
+        ptl:arxivId "2005.11401" ;
+        ptl:sourceTier "preprint" .
+}
+
+<https://w3id.org/portolan/graph/content/invalid> {
+    # Shape 8 violation: every Metric must declare metricDirection.
+    <https://w3id.org/portolan/id/concept/metric/exact-match>
+        a ptl:Metric .
+
+    # Shape 3 violation: the contribution's evidence comes from a different
+    # Work than the contribution's ptl:ofWork.
+    <https://w3id.org/portolan/id/contribution/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks/1>
+        a ptl:Contribution ;
+        ptl:ofWork <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:contributionKind "method" ;
+        ptl:hasEvidence <https://w3id.org/portolan/id/evidence/d488559533aa84beb5bb8f0944c9ecb58611fe4e> .
+
+    <https://w3id.org/portolan/id/evidence/d488559533aa84beb5bb8f0944c9ecb58611fe4e>
+        a ptl:Evidence ;
+        ptl:quote "Attention Is All You Need" ;
+        ptl:locator "title" ;
+        ptl:fromWork <https://w3id.org/portolan/id/work/arxiv/1706.03762> ;
+        ptl:fromSourceKind "fullText" .
+
+    # Shape 4 violation: the Result has no method, dataset, metric, or value.
+    # Its evidence is otherwise owned by the same Work, isolating this error.
+    <https://w3id.org/portolan/id/result/retrieval-augmented-generation-for-knowledge-intensive-nlp-tasks/1>
+        a ptl:Result ;
+        ptl:ofWork <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:hasEvidence <https://w3id.org/portolan/id/evidence/5070b63dff46a90164480caf173e4ab8cea53b9f> .
+
+    <https://w3id.org/portolan/id/evidence/5070b63dff46a90164480caf173e4ab8cea53b9f>
+        a ptl:Evidence ;
+        ptl:quote "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" ;
+        ptl:locator "title" ;
+        ptl:fromWork <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:fromSourceKind "fullText" .
+}
+
+<https://w3id.org/portolan/graph/review/invalid> {
+    <https://w3id.org/portolan/id/review/invalid>
+        a ptl:Review ;
+        ptl:seedKind "paper" ;
+        ptl:seedValue "1706.03762"^^xsd:string ;
+        ptl:hasProtocol <https://w3id.org/portolan/id/protocol/invalid> .
+
+    <https://w3id.org/portolan/id/protocol/invalid>
+        a ptl:ReviewProtocol ;
+        ptl:scopeStatement "Invalid fixture review" .
+
+    # Shape 9 violation: clusterA is not lexicographically smaller than
+    # clusterB, so the unordered pair is written in the forbidden direction.
+    <https://w3id.org/portolan/id/cluster/invalid/1>
+        a ptl:Cluster ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/invalid> .
+
+    <https://w3id.org/portolan/id/cluster/invalid/2>
+        a ptl:Cluster ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/invalid> .
+
+    <https://w3id.org/portolan/id/cluster-pair/invalid/1>
+        a ptl:ClusterPair ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/invalid> ;
+        ptl:clusterA <https://w3id.org/portolan/id/cluster/invalid/2> ;
+        ptl:clusterB <https://w3id.org/portolan/id/cluster/invalid/1> ;
+        ptl:semanticSimilarity "0.50"^^xsd:decimal ;
+        ptl:crossCitationCount "0"^^xsd:integer .
+
+    # Shape 5 violation: the Inclusion has two works and is excluded without
+    # the required reason.
+    <https://w3id.org/portolan/id/inclusion/invalid/attention-is-all-you-need>
+        a ptl:Inclusion ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/invalid> ;
+        ptl:ofWork <https://w3id.org/portolan/id/work/arxiv/1706.03762>,
+            <https://w3id.org/portolan/id/work/arxiv/2005.11401> ;
+        ptl:decision "excluded" ;
+        ptl:stage "screening" .
+
+    # Shape 6 violations: confidence is outside the closed [0,1] interval and
+    # supportedBy points to an Evidence node, which is outside the v0.2 range.
+    <https://w3id.org/portolan/id/gap/invalid/1>
+        a ptl:GapHypothesis ;
+        ptl:ofReview <https://w3id.org/portolan/id/review/invalid> ;
+        ptl:gapType "evaluationGap" ;
+        ptl:statement "This deliberately invalid gap has impossible confidence" ;
+        ptl:supportedBy <https://w3id.org/portolan/id/evidence/5070b63dff46a90164480caf173e4ab8cea53b9f> ;
+        ptl:confidence "1.50"^^xsd:decimal ;
+        ptl:verificationOutcome "notChecked" ;
+        ptl:userStatus "proposed" .
+
+    # Shape 7 violation: sourceTier is not one of peerReviewed, preprint, or
+    # officialBlog.
+    <https://w3id.org/portolan/id/work/arxiv/1706.03762>
+        ptl:sourceTier "inventedTier" .
+}

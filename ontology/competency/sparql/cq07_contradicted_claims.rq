@@ -1,0 +1,43 @@
+# CQ07 — Which claims are contradicted, and by whom?
+# PARAMS: ?review (IRI, review-scoped)
+
+PREFIX ptl: <https://w3id.org/portolan/ontology#>
+PREFIX ptlg: <https://w3id.org/portolan/graph/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?claim ?claimText ?claimWork ?claimingWorkTitle
+                ?contradictingClaim ?counterText ?counterWork ?counterWorkTitle
+WHERE {
+  # PARAM-BLOCK
+  VALUES ?review { <https://w3id.org/portolan/id/review/kgqa-rag> }
+  # /PARAM-BLOCK
+
+  GRAPH ?claimReviewGraph {
+    ?claimInclusion a ptl:Inclusion ;
+      ptl:ofReview ?review ;
+      ptl:ofWork ?claimWork ;
+      ptl:decision "included" .
+  }
+  GRAPH ?counterReviewGraph {
+    ?counterInclusion a ptl:Inclusion ;
+      ptl:ofReview ?review ;
+      ptl:ofWork ?counterWork ;
+      ptl:decision "included" .
+  }
+  GRAPH ?claimGraph {
+    ?claim a ptl:Claim ;
+      ptl:ofWork ?claimWork ;
+      ptl:claimText ?claimText .
+  }
+  GRAPH ?counterGraph {
+    ?contradictingClaim a ptl:Claim ;
+      ptl:ofWork ?counterWork ;
+      ptl:claimText ?counterText ;
+      ptl:contradictsClaim ?claim .
+  }
+  GRAPH ptlg:biblio {
+    ?claimWork dcterms:title ?claimingWorkTitle .
+    ?counterWork dcterms:title ?counterWorkTitle .
+  }
+}
+ORDER BY ?claimWork ?counterWork ?claim
