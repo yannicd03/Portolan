@@ -1,0 +1,19 @@
+# Allowlist: the backend image is built from the repository root, so exclude everything
+# and re-include only what it needs. This keeps .env, .git and local caches out of the
+# build context. The frontend is built from ./frontend with its own .dockerignore.
+*
+
+!backend/
+!ontology/
+!eval/golden/
+
+backend/.venv/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/.mypy_cache/
+backend/tests/
+eval/golden/cache/
+**/__pycache__/
+**/*.py[cod]
+**/.env
+**/.env.*
