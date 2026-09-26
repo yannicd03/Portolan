@@ -19,6 +19,7 @@ dependencies = [
     "scipy>=1.14",
     "fastapi>=0.141",
     "uvicorn>=0.54",
+    "pypdf>=6.19.0",
 ]
 
 [project.scripts]

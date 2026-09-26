@@ -19,11 +19,12 @@ by Neo4j. See `docs/decisions/` for the ADRs.
 | # | Decision | Choice |
 |---|---|---|
 | [0001](docs/decisions/0001-domain-scope-cs-ai.md) | Domain scope for v1 | CS/AI only |
-| [0002](docs/decisions/0002-orchestration-langgraph.md) | Orchestration | Plain LangGraph `StateGraph` |
+| [0002](docs/decisions/0002-orchestration-langgraph.md) | Orchestration | Plain LangGraph `StateGraph` (chat agents: see 0007) |
 | [0003](docs/decisions/0003-orkg-thin-adapter.md) | ORKG tool surface | Thin adapter in this repo |
 | [0004](docs/decisions/0004-llm-provider-and-budget.md) | LLM provider | API only, via OpenRouter or DeepSeek |
 | [0005](docs/decisions/0005-graph-store.md) | Graph store | Neo4j |
-| [0006](docs/decisions/0006-v1-graph-scope.md) | v1 graph | Works, citations, authors, merged keyword concepts |
+| [0006](docs/decisions/0006-v1-graph-scope.md) | v1 graph | Works, citations, authors, merged keyword concepts; the graph is the agents' map |
+| [0007](docs/decisions/0007-chat-agents-deepagents.md) | Chat agents | LangGraph Deep Agents, reading papers as files |
 
 ## Run it
 
