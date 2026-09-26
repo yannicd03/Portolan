@@ -1,44 +1,56 @@
 # Portolan
 
-Given a seed paper, a research question, or a topic, an agent runs a bounded, reproducible
-literature-research pass over openly available scholarly sources, compiles the result into a
-typed knowledge graph with provenance, and serves an interactive map answering four questions:
-**what does the landscape look like, which papers are central, where is the frontier, where are the gaps.**
+A research workspace. You create a project on a topic, and an agent researches it for you:
+in **Research mode** it searches openly available scholarly sources, downloads the papers and
+builds a local knowledge graph; in **Ask mode** it answers your questions from that graph and
+backs every claim with a citation to the passage in the paper it came from. A graph view shows
+how the papers relate: who cites whom, shared authors, and shared concepts.
 
-The full product spec, ontology, source policy, and architecture are private design notes kept
-outside this repo (`spec.md`, `ontology.md`, `data-sources.md`, `architecture.md`). Docs refer to
-their directory as `$PORTOLAN_NOTES_DIR`; set it in your local `.env` (see `.env.example`).
-`ontology/README.md` in this repo is the authoritative *in-repo* digest of the vocabulary contract.
+The full product spec, source policy, and architecture are private design notes kept outside
+this repo (`spec.md`, `ontology.md`, `data-sources.md`, `architecture.md`). Docs refer to their
+directory as `$PORTOLAN_NOTES_DIR`; set it in your local `.env` (see `.env.example`).
 
 ## Status
 
-**M0 — decisions and ontology v0.1.** See `docs/decisions/` for ADRs and the milestone table in
-`$PORTOLAN_NOTES_DIR/architecture.md`.
-
-Settled decisions (2026-09-22):
+**M0 is done; the chat and research pipeline are not built yet.** What runs today is a scaffold:
+a FastAPI backend and a React frontend showing the citation map of the golden mini-graph, backed
+by Neo4j. See `docs/decisions/` for the ADRs.
 
 | # | Decision | Choice |
 |---|---|---|
-| D1 | Domain scope for v1 | CS/AI only; domain-general expansion is a roadmap item, not a v1 goal |
-| D2 | Orchestration | Plain LangGraph `StateGraph` |
-| D3 | ORKG tool surface | Thin adapter in this repo; no shared package with AMA-KBQA |
-| D4 | LLM provider | API only, via OpenRouter or DeepSeek; no local `llama-server` |
-| D5 | Graph store | **Open** — settled by the M0 spike (Oxigraph/SPARQL vs Neo4j/Cypher), not by discussion |
+| [0001](docs/decisions/0001-domain-scope-cs-ai.md) | Domain scope for v1 | CS/AI only |
+| [0002](docs/decisions/0002-orchestration-langgraph.md) | Orchestration | Plain LangGraph `StateGraph` |
+| [0003](docs/decisions/0003-orkg-thin-adapter.md) | ORKG tool surface | Thin adapter in this repo |
+| [0004](docs/decisions/0004-llm-provider-and-budget.md) | LLM provider | API only, via OpenRouter or DeepSeek |
+| [0005](docs/decisions/0005-graph-store.md) | Graph store | Neo4j |
+| [0006](docs/decisions/0006-v1-graph-scope.md) | v1 graph | Works, citations, authors, merged keyword concepts |
+
+## Run it
+
+```bash
+cp .env.example .env     # then set NEO4J_PASSWORD (any value; it initialises the database)
+docker compose up --build
+```
+
+Open <http://localhost:8080>. On first start the backend loads the golden mini-graph into the
+empty database (`PORTOLAN_SEED_GOLDEN=true`, the compose default). The API is also reachable
+directly on <http://localhost:8000/api/health>, and Neo4j Browser on <http://localhost:7474>.
+All ports bind to localhost only.
 
 ## Layout
 
 ```
-ontology/     portolan.ttl, shapes.ttl, competency/{sparql,cypher}/ — the vocabulary contract
+compose.yaml  frontend (nginx) -> backend (FastAPI) -> neo4j
+frontend/     React + Vite + Sigma.js; nginx serves the build and proxies /api
+backend/      uv project (package `portolan`), Dockerfile
+  portolan/api/       FastAPI app
+  portolan/store/     GraphRepository interface; Neo4j backend (+ Oxigraph, kept from the spike)
+  portolan/adapters/  arxiv, crossref, semanticscholar
+  portolan/cli.py     `portolan serve`, `portolan seed-golden`
+ontology/     M0 vocabulary contract and competency questions (spike artifacts, see ADR-0006)
+eval/golden/  golden mini-graph (~20 CS/AI papers): test fixture and demo data
+eval/spike/   the ADR-0005 graph-store spike harness and results
 sources/      official_blogs.yaml — source allowlist
-backend/      uv project (package `portolan`)
-  portolan/adapters/  openalex, semanticscholar, arxiv, crossref, unpaywall, orkg, blogs
-  portolan/pipeline/  one module per stage + the StateGraph
-  portolan/extract/   schemas, versioned prompts, quote verification
-  portolan/resolve/   work dedupe, concept canonicalization
-  portolan/analyze/   clustering, centrality, main path, frontier, gaps
-  portolan/store/     GraphRepository interface + backends, validation, sqlite state, cache
-  portolan/api/       FastAPI
-eval/golden/  golden mini-graph (~20 CS/AI papers) used to test the ontology and the store spike
 docs/decisions/ ADRs
 ```
 
@@ -47,6 +59,11 @@ docs/decisions/ ADRs
 ```bash
 cd backend
 uv sync                # create .venv and install deps
-uv run pytest          # tests
+uv run pytest          # tests (Neo4j tests run when NEO4J_URI is set)
 uv run ruff check .    # lint
+uv run portolan serve  # API on :8000; needs NEO4J_URI/NEO4J_PASSWORD, or PORTOLAN_STORE=oxigraph
+
+cd frontend
+npm install
+npm run dev            # Vite dev server; proxies /api to 127.0.0.1:8000
 ```

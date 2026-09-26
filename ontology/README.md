@@ -1,5 +1,9 @@
 # `ptl:` vocabulary contract (v0.2)
 
+> **Status (2026-09-26):** this contract describes the M0 graph-store spike. The product now
+> uses Neo4j (ADR-0005) with a much smaller v1 graph — works, citations, authors and merged
+> keyword concepts (ADR-0006). The contract below stays until the v1 schema replaces it.
+
 Authoritative in-repo digest of the conceptual model defined in the design note
 `$PORTOLAN_NOTES_DIR/ontology.md`. **Every artifact in this repo — `portolan.ttl`,
 `shapes.ttl`, the SPARQL and Cypher competency questions, the Pydantic models, and both store

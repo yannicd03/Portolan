@@ -1,7 +1,8 @@
 # ADR-0005 — graph store: RDF/Oxigraph vs Neo4j
 
-- **Status:** OPEN — spike complete (run 2, 2026-09-23); awaiting the user's choice
+- **Status:** accepted — Neo4j (decided by the user 2026-09-26)
 - **Date opened:** 2026-09-22
+- **Date decided:** 2026-09-26
 - **Decides:** open decision 2 in the design-notes spec (`$PORTOLAN_NOTES_DIR/spec.md`)
 
 The user deliberately left this open on 2026-09-20. This file is the slot the spike's outcome
@@ -127,9 +128,27 @@ a live parser rejects (now guarded by a static test); CQ03/CQ04's SPARQL fanned 
 
 ## Decision
 
-*Not yet taken.* The blocker recorded after run 1 — the bindings disagreeing — is resolved, so
-the evidence above now measures the stores rather than the queries. The choice between them is
-the user's.
+**Neo4j** is the graph store (the user's decision, 2026-09-26). The slot stayed open until the
+spike's evidence was complete; run 2 showed the two stores answer identically, so the choice
+rests on fit rather than correctness:
+
+- **Agent querying.** The chat agent (Research and Ask modes, see the design notes) will query
+  the graph through tools. Cypher is shorter and closer to how the questions are asked (see
+  "Query clarity" below), and the Neo4j tooling around agents is the stronger ecosystem.
+- **Smaller ontology.** ADR-0006 narrows the v1 graph to works, citations, authors and keyword
+  concepts. A plain property graph fits that directly; the RDF strengths (named-graph
+  partitions, SHACL over the native graph) matter less without the content and analysis layers.
+- **Graph algorithms.** GDS in Community covers the centrality and community work planned for
+  the graph view.
+
+Consequences:
+
+- `docker compose` runs Neo4j by default and the backend defaults to `PORTOLAN_STORE=neo4j`.
+- The Oxigraph backend, the RDF binding (`portolan.ttl`, `shapes.ttl`) and the SPARQL
+  competency questions stay in the repo as M0 spike artifacts so the parity evidence above
+  remains reproducible. They are no longer the target schema and can be retired once the v1
+  schema (ADR-0006) is implemented.
+- Turtle export from Neo4j stays available (spec goal G6); its known losses are listed above.
 
 ## What run 2 changes about the trade-off
 

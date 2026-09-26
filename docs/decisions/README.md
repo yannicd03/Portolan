@@ -9,7 +9,8 @@ gains a `Superseded by` line.
 | [0002](0002-orchestration-langgraph.md) | Orchestration is a plain LangGraph `StateGraph` | accepted |
 | [0003](0003-orkg-thin-adapter.md) | Thin in-repo ORKG adapter, no shared package with AMA-KBQA | accepted |
 | [0004](0004-llm-provider-and-budget.md) | API-only LLM via OpenRouter, DeepSeek direct as cost fallback; $10/review ceiling | accepted |
-| [0005](0005-graph-store.md) | Graph store: RDF/Oxigraph vs Neo4j | **open — settled by the M0 spike** |
+| [0005](0005-graph-store.md) | Graph store is Neo4j (M0 spike: both stores at parity) | accepted |
+| [0006](0006-v1-graph-scope.md) | v1 graph: works, citations, authors, merged keyword concepts | accepted |
 
 Strategic and cross-project context lives in the private design notes at `$PORTOLAN_NOTES_DIR` (set in `.env`);
 these ADRs are the per-repo, implementation-level record.
