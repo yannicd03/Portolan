@@ -148,6 +148,7 @@ class AskAgent:
             return f"Reading {title}"
         labels = {
             "paper_info": "Checking paper",
+            "paper_outline": "Checking outline",
             "citation_neighbors": "Following citations",
             "papers_by_concept": "Exploring concept",
             "papers_by_author": "Exploring author",

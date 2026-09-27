@@ -14,8 +14,12 @@ from typing import Any
 from langchain_core.tools import BaseTool, tool
 
 from ..analysis.service import analyze_project
+from ..documents.models import Outline
+from ..documents.outline import outline_to_text
 from ..documents.store import DocumentStore
 from ..graph.base import ResearchGraph
+
+_OUTLINE_LINE_LIMIT = 60
 
 
 def _field(value: object | None, name: str, default: Any = None) -> Any:
@@ -248,6 +252,38 @@ def build_graph_tools(
         return "\n".join(lines)
 
     @tool
+    def paper_outline(work_id: str) -> str:
+        """Show one paper's section outline with page numbers, to navigate before reading."""
+
+        work = _find_project_work(graph, project_id, work_id)
+        if work is None:
+            return f"No paper with work_id={_string(work_id, 'unknown')} is in this project."
+
+        title = _short_text(_field(work, "title"), 240) or "untitled"
+        sha256 = _string(_field(work, "document_sha256"))
+        if not sha256:
+            return f"{title}\nNo local PDF for this paper; use its abstract from paper_info."
+
+        text_path, pages = _document_details(work, documents)
+        page_text = "unknown" if pages is None else str(pages)
+        lines = [title, f"document={text_path or 'text unavailable'} | pages={page_text}"]
+        try:
+            outline = documents.get_outline(sha256)
+        except (OSError, TypeError, ValueError):
+            outline = None
+        sections = list(outline.sections) if outline is not None else []
+        if not sections:
+            lines.append("No outline; grep the text for section headings instead.")
+            return "\n".join(lines)
+
+        shown = Outline(sections=sections[:_OUTLINE_LINE_LIMIT], source=outline.source)
+        lines.append(f"Outline (source={outline.source}):")
+        lines.extend(outline_to_text(shown).splitlines())
+        if len(sections) > _OUTLINE_LINE_LIMIT:
+            lines.append(f"… {len(sections) - _OUTLINE_LINE_LIMIT} more sections not shown")
+        return "\n".join(lines)
+
+    @tool
     def citation_neighbors(work_id: str) -> str:
         """List papers this work cites and papers in this project that cite it."""
 
@@ -390,6 +426,7 @@ def build_graph_tools(
     return [
         search_papers,
         paper_info,
+        paper_outline,
         citation_neighbors,
         papers_by_concept,
         papers_by_author,

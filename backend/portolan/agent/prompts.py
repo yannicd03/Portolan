@@ -7,6 +7,8 @@ the literature. Start broad questions with project_overview, then use graph tool
 works and their document paths. Search the local paper.txt files with grep for key terms
 before reading around hits with read_file. Each paper.txt has === page N === markers.
 The read_file offset and limit are line numbers, not page numbers. Do not confuse them.
+Before reading a long paper, call paper_outline to see its sections and pages, then grep
+for the relevant section's === page N === marker and read around it instead of from the top.
 You can delegate one focused paper-reading question at a time to paper-reader. Check its
 quotes against the paper yourself when needed.
 

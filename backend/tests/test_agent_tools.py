@@ -5,7 +5,7 @@ from __future__ import annotations
 from io import BytesIO
 from pathlib import Path
 
-from pypdf import PdfWriter
+from pypdf import PdfReader, PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
 from portolan.agent.tools import build_graph_tools
@@ -141,3 +141,101 @@ def test_tools_unknown_ids_are_friendly(tmp_path: Path) -> None:
     assert "No paper" in tools["citation_neighbors"].invoke({"work_id": "missing"})
     assert "No concept" in tools["papers_by_concept"].invoke({"concept": "missing"})
     assert "No author" in tools["papers_by_author"].invoke({"author": "missing"})
+
+
+def make_bookmarked_pdf(bookmarks: list[tuple[str, int, int]]) -> bytes:
+    """Add a nested bookmark tree (title, level, zero-based page) to a text PDF."""
+
+    writer = PdfWriter(clone_from=PdfReader(BytesIO(make_pdf("Intro text.", "Method text."))))
+    parents: dict[int, object] = {}
+    for title, level, page in bookmarks:
+        parents[level] = writer.add_outline_item(title, page, parent=parents.get(level - 1))
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+def _attach_pdf(
+    graph: InMemoryResearchGraph, documents: DocumentStore, project_id: str, pdf: bytes, title: str
+) -> str:
+    work = graph.upsert_work(WorkNode(title=title, year=2023, abstract="An abstract."))
+    graph.include_work(Inclusion(project_id=project_id, work_id=work.id, discovered_via="seed"))
+    record = documents.put_pdf(pdf, source_url="https://example.org/x.pdf", source="test")
+    graph.set_document(work.id, record.sha256, record.source_url)
+    return work.id
+
+
+def test_paper_outline_from_pdf_bookmarks(tmp_path: Path) -> None:
+    graph, documents, project_id, _primary_id, _cited_id = _fixture(tmp_path)
+    pdf = make_bookmarked_pdf(
+        [("1 Introduction", 1, 0), ("1.1 Motivation", 2, 0), ("2 Methods", 1, 1)]
+    )
+    work_id = _attach_pdf(graph, documents, project_id, pdf, "Bookmarked paper")
+    tools = {item.name: item for item in build_graph_tools(graph, project_id, documents)}
+
+    result = tools["paper_outline"].invoke({"work_id": work_id})
+    info = tools["paper_info"].invoke({"work_id": work_id})
+
+    lines = result.splitlines()
+    assert lines[0] == "Bookmarked paper"
+    text_path = lines[1].split("document=", 1)[1].split(" |", 1)[0]
+    assert text_path.endswith("/paper.txt")
+    assert f"document={text_path} | pages=2" in info
+    assert "pages=2" in lines[1]
+    assert "source=pdf_outline" in result
+    assert lines[-3:] == ["1 Introduction … p. 1", "  1.1 Motivation … p. 1", "2 Methods … p. 2"]
+
+
+def test_paper_outline_caps_long_outlines(tmp_path: Path) -> None:
+    graph, documents, project_id, _primary_id, _cited_id = _fixture(tmp_path)
+    pdf = make_bookmarked_pdf([(f"Section {index}", 1, 0) for index in range(75)])
+    work_id = _attach_pdf(graph, documents, project_id, pdf, "Long paper")
+    tools = {item.name: item for item in build_graph_tools(graph, project_id, documents)}
+
+    result = tools["paper_outline"].invoke({"work_id": work_id})
+
+    assert "Section 59 … p. 1" in result
+    assert "Section 60 …" not in result
+    assert result.splitlines()[-1] == "… 15 more sections not shown"
+
+
+def test_paper_outline_from_detected_headings(tmp_path: Path) -> None:
+    graph, documents, project_id, _primary_id, _cited_id = _fixture(tmp_path)
+    pdf = make_pdf("Abstract", "1 Introduction", "2 Methods")
+    work_id = _attach_pdf(graph, documents, project_id, pdf, "Heading paper")
+    tools = {item.name: item for item in build_graph_tools(graph, project_id, documents)}
+
+    result = tools["paper_outline"].invoke({"work_id": work_id})
+
+    assert "pages=3" in result
+    assert "source=headings" in result
+    assert result.splitlines()[-3:] == [
+        "Abstract … p. 1",
+        "1 Introduction … p. 2",
+        "2 Methods … p. 3",
+    ]
+
+
+def test_paper_outline_without_outline_or_pdf(tmp_path: Path) -> None:
+    tools, _graph, primary_id, cited_id, _project_id = _tools(tmp_path)
+
+    # The fixture PDF has plain prose on each page: no bookmarks and no headings.
+    no_outline = tools["paper_outline"].invoke({"work_id": primary_id})
+    assert no_outline.startswith("Graph networks for papers\ndocument=/")
+    assert "No outline; grep the text for section headings instead." in no_outline
+
+    no_pdf = tools["paper_outline"].invoke({"work_id": cited_id})
+    assert no_pdf.startswith("Citation networks\n")
+    assert "No local PDF" in no_pdf
+
+
+def test_paper_outline_unknown_and_out_of_project_ids(tmp_path: Path) -> None:
+    graph, documents, project_id, _primary_id, _cited_id = _fixture(tmp_path)
+    outside = graph.create_project("Another project")
+    pdf = make_bookmarked_pdf([("1 Introduction", 1, 0)])
+    hidden_id = _attach_pdf(graph, documents, outside.id, pdf, "Hidden bookmarked paper")
+    tools = {item.name: item for item in build_graph_tools(graph, project_id, documents)}
+
+    assert "No paper with work_id=missing" in tools["paper_outline"].invoke({"work_id": "missing"})
+    hidden = tools["paper_outline"].invoke({"work_id": hidden_id})
+    assert hidden == f"No paper with work_id={hidden_id} is in this project."
