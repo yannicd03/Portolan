@@ -492,7 +492,6 @@ def write_summary(
     max_works: int | str,
     snowball_depth: int,
     offline: bool,
-    cache_dir: Path,
     settings: Settings,
 ) -> None:
     """Write a compact markdown report without exposing configuration values."""
@@ -514,7 +513,6 @@ def write_summary(
         f"- snowball_depth: {snowball_depth}",
         "- acquire_pdfs: false",
         f"- offline: {str(offline).lower()}",
-        f"- cache_dir: `{cache_dir}`",
         f"- OPENALEX_API_KEY: {'set' if settings.openalex_api_key else 'unset'}",
         f"- SEMANTIC_SCHOLAR_API_KEY: {'set' if settings.semantic_scholar_api_key else 'unset'}",
         "",
@@ -593,7 +591,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         offline=args.offline,
     )
     effective_depth = int(args.snowball_depth)
-    results: list[dict[str, Any]] = []
+    results_dir = DEFAULT_RESULTS_DIR
+    results_dir.mkdir(parents=True, exist_ok=True)
+    failures: list[str] = []
     try:
         for survey in surveys:
             survey_max_works = int(
@@ -601,40 +601,48 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             if survey_max_works < 1:
                 _parser().error(f"max_works for {survey['key']} must be at least 1")
-            result = run_survey(
-                survey,
-                sources,
-                max_works=survey_max_works,
-                snowball_depth=effective_depth,
-            )
-            results.append(result)
-        print_results_table(results)
-    except OfflineCacheMissError as exc:
-        if args.offline:
-            raise RuntimeError(f"offline HTTP cache miss: {exc}") from exc
-        raise
-    except Exception as exc:
-        if args.offline:
-            raise RuntimeError(f"offline recall evaluation failed: {exc}") from exc
-        raise
+            # One survey failing (e.g. a transient 5xx that outlasts the retries) must not
+            # discard the others; rerun it with --only, the HTTP cache makes that cheap.
+            try:
+                result = run_survey(
+                    survey,
+                    sources,
+                    max_works=survey_max_works,
+                    snowball_depth=effective_depth,
+                )
+            except OfflineCacheMissError as exc:
+                if args.offline:
+                    raise RuntimeError(f"offline HTTP cache miss: {exc}") from exc
+                failures.append(f"{survey['key']}: {exc}")
+                continue
+            except Exception as exc:
+                if args.offline:
+                    raise RuntimeError(f"offline recall evaluation failed: {exc}") from exc
+                failures.append(f"{survey['key']}: {exc}")
+                continue
+            output = results_dir / f"{result['key']}.json"
+            output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     finally:
         sources.close()
 
-    results_dir = DEFAULT_RESULTS_DIR
-    results_dir.mkdir(parents=True, exist_ok=True)
-    for result in results:
-        output = results_dir / f"{result['key']}.json"
-        output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    # The summary covers every survey with a result file, so partial reruns accumulate.
+    results = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for survey in load_surveys()
+        if (path := results_dir / f"{survey['key']}.json").is_file()
+    ]
+    print_results_table(results)
     write_summary(
         results,
         results_dir / "summary.md",
         max_works=(args.max_works if args.max_works is not None else "survey value or 150"),
         snowball_depth=effective_depth,
         offline=args.offline,
-        cache_dir=cache_dir,
         settings=settings,
     )
-    return 0
+    for failure in failures:
+        print(f"survey failed: {failure}", file=sys.stderr)
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":

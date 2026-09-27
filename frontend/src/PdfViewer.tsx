@@ -120,7 +120,8 @@ function normalizedPageText(strings: string[]): { text: string; chars: SearchCha
 }
 
 function textStrings(content: TextContent): string[] {
-  return content.items.map((item) => ('str' in item && typeof item.str === 'string' ? item.str : ''))
+  // TextLayer skips marked-content records when indexing its textDivs.
+  return content.items.flatMap((item) => ('str' in item && typeof item.str === 'string' ? [item.str] : []))
 }
 
 function normalizeQuote(value: string): string {
@@ -133,9 +134,11 @@ function findPageMatch(content: TextContent, query: string): PageMatch | null {
   const start = normalized.text.indexOf(query)
   if (start < 0) return null
 
-  const end = start + query.length
+  // `indexOf` uses UTF-16 offsets, while `chars` has one entry per code point.
+  const charStart = Array.from(normalized.text.slice(0, start)).length
+  const charEnd = charStart + Array.from(query).length
   const ranges = new Map<number, SearchItemRange>()
-  for (let index = start; index < end; index += 1) {
+  for (let index = charStart; index < charEnd; index += 1) {
     const current = normalized.chars[index]
     if (!current || current.itemIndex < 0 || current.rawEnd <= current.rawStart) continue
     const existing = ranges.get(current.itemIndex)

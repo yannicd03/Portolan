@@ -61,6 +61,7 @@ class RunReport(BaseModel):
     citations: int
     authors: int
     concepts: int
+    concepts_filtered: int = 0
     pdfs_acquired: int
     pdfs_failed: int
     pdfs_skipped: int

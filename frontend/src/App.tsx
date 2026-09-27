@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { api } from './api'
 import type { Project, ProjectStats } from './api'
+import { AskThread } from './AskThread'
 import { GraphPanel } from './GraphPanel'
 import { ProjectRail } from './ProjectRail'
 import { ResearchThread } from './ResearchThread'
@@ -17,6 +18,17 @@ function savedGraphState(): boolean {
   }
 }
 
+type MainTab = 'ask' | 'research'
+
+function savedTab(projectId: string): MainTab | null {
+  try {
+    const value = window.localStorage.getItem(`portolan.tab.${projectId}`)
+    return value === 'ask' || value === 'research' ? value : null
+  } catch {
+    return null
+  }
+}
+
 export default function App() {
   const [projects, setProjects] = useState<Project[]>([])
   const [route, setRoute] = useState<HashRoute | null>(() => parseHashRoute(window.location.hash))
@@ -26,6 +38,10 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [refreshToken, setRefreshToken] = useState(0)
   const [graphCollapsed, setGraphCollapsed] = useState(savedGraphState)
+  const [tabByProject, setTabByProject] = useState<Record<string, MainTab>>({})
+  const [activatedAskProjects, setActivatedAskProjects] = useState<Record<string, boolean>>({})
+  const [highlightedWorkIds, setHighlightedWorkIds] = useState<string[]>([])
+  const [openWorkRequest, setOpenWorkRequest] = useState<{ projectId: string; workId: string; token: number } | null>(null)
 
   useEffect(() => {
     let active = true
@@ -55,6 +71,8 @@ export default function App() {
       if (id && projects.some((project) => project.id === id)) {
         if (id !== selectedId) {
           setStats(null)
+          setHighlightedWorkIds([])
+          setOpenWorkRequest(null)
           setSelectedId(id)
         }
         setRoute(nextRoute)
@@ -82,6 +100,8 @@ export default function App() {
 
   const selectProject = useCallback((id: string) => {
     setStats(null)
+    setHighlightedWorkIds([])
+    setOpenWorkRequest(null)
     setSelectedId(id)
     window.location.hash = projectHref(id)
   }, [])
@@ -99,6 +119,8 @@ export default function App() {
       const next = remaining[0]?.id ?? null
       setSelectedId(next)
       setStats(null)
+      setHighlightedWorkIds([])
+      setOpenWorkRequest(null)
       window.location.hash = next ? projectHref(next) : ''
     }
   }, [projects, selectedId])
@@ -115,7 +137,27 @@ export default function App() {
     })
   }
 
+  const selectTab = (projectId: string, tab: MainTab) => {
+    setTabByProject((current) => ({ ...current, [projectId]: tab }))
+    if (tab === 'ask') setActivatedAskProjects((current) => ({ ...current, [projectId]: true }))
+    if (tab === 'research') setHighlightedWorkIds([])
+    try {
+      window.localStorage.setItem(`portolan.tab.${projectId}`, tab)
+    } catch {
+      // The tabs remain usable when browser storage is unavailable.
+    }
+  }
+
+  const openWork = useCallback((workId: string) => {
+    if (!selectedId) return
+    setGraphCollapsed(false)
+    setOpenWorkRequest((current) => ({ projectId: selectedId, workId, token: (current?.token ?? 0) + 1 }))
+  }, [selectedId])
+
   const selectedProject = projects.find((project) => project.id === selectedId) ?? null
+  const selectedTab = selectedId
+    ? tabByProject[selectedId] ?? savedTab(selectedId) ?? (stats && stats.works > 0 ? 'ask' : 'research')
+    : 'research'
 
   return (
     <div className={`app-shell ${graphCollapsed || !selectedProject ? 'graph-is-collapsed' : ''}`}>
@@ -161,7 +203,20 @@ export default function App() {
                 />
               </Suspense>
             ) : (
-              <ResearchThread key={selectedId} projectId={selectedId} onRunFinished={() => setRefreshToken((value) => value + 1)} />
+              <>
+                <div className="main-tabs" role="tablist" aria-label="Workspace mode">
+                  <button type="button" role="tab" id="ask-tab" aria-controls="ask-panel" aria-selected={selectedTab === 'ask'} onClick={() => selectTab(selectedId, 'ask')}>Ask</button>
+                  <button type="button" role="tab" id="research-tab" aria-controls="research-panel" aria-selected={selectedTab === 'research'} onClick={() => selectTab(selectedId, 'research')}>Research</button>
+                </div>
+                {selectedTab === 'ask' || activatedAskProjects[selectedId] ? (
+                  <div className="main-tab-panel" role="tabpanel" id="ask-panel" aria-labelledby="ask-tab" hidden={selectedTab !== 'ask'}>
+                    <AskThread key={selectedId} projectId={selectedId} onHighlightedWorkIds={setHighlightedWorkIds} onOpenWork={openWork} />
+                  </div>
+                ) : null}
+                <div className="main-tab-panel" role="tabpanel" id="research-panel" aria-labelledby="research-tab" hidden={selectedTab !== 'research'}>
+                  <ResearchThread key={selectedId} projectId={selectedId} onRunFinished={() => setRefreshToken((value) => value + 1)} />
+                </div>
+              </>
             )}
           </>
         ) : (
@@ -172,7 +227,7 @@ export default function App() {
           </div>
         )}
       </main>
-      {!graphCollapsed && selectedProject && selectedId && <GraphPanel key={selectedId} projectId={selectedId} refreshToken={refreshToken} />}
+      {!graphCollapsed && selectedProject && selectedId && <GraphPanel key={selectedId} projectId={selectedId} refreshToken={refreshToken} highlightedWorkIds={selectedTab === 'ask' && route?.kind !== 'doc' ? highlightedWorkIds : []} openWorkRequest={openWorkRequest?.projectId === selectedId ? openWorkRequest : null} />}
     </div>
   )
 }

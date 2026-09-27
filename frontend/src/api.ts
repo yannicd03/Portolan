@@ -66,6 +66,38 @@ export interface ProjectGraph {
   edges: GraphEdge[]
 }
 
+export interface AnalysisCluster {
+  id: string
+  label: string
+  size: number
+  top_concepts: string[]
+  work_ids: string[]
+}
+
+export type WorkRole = 'foundational' | 'bridge' | 'hub' | 'emerging' | 'peripheral'
+
+export interface WorkAnalysis {
+  cluster: string | null
+  pagerank: number
+  betweenness: number
+  local_in: number
+  local_out: number
+  roles: WorkRole[]
+}
+
+export interface MainPath {
+  work_ids: string[]
+  edges: { source: string; target: string; spc: number }[]
+}
+
+export interface ProjectAnalysis {
+  project_id: string
+  computed_at: string
+  clusters: AnalysisCluster[]
+  works: Record<string, WorkAnalysis>
+  main_path: MainPath
+}
+
 export interface ProjectGraphOptions {
   authors?: boolean
   concepts?: boolean
@@ -167,6 +199,79 @@ export interface Run {
   finished_at: string | null
 }
 
+export interface ChatStatus {
+  available: boolean
+  model: string
+  reason: string | null
+}
+
+export type CitationSource = 'paper' | 'abstract' | null
+
+export interface VerifiedCitation {
+  marker: number
+  work_id: string
+  title: string
+  year: number | null
+  quote: string
+  page: number
+  sha256: string | null
+  offset: number | null
+  verified: boolean
+  source: CitationSource
+}
+
+export interface VerifiedAnswer {
+  answer_markdown: string
+  citations: VerifiedCitation[]
+  unsupported: string[]
+  model: string | null
+  tool_calls: number
+}
+
+export interface ChatActivityEvent {
+  text: string
+  tool: string | null
+}
+
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  answer: VerifiedAnswer | null
+  events: ChatActivityEvent[]
+  created_at: string
+  error: string | null
+}
+
+export interface ChatThread {
+  id: string
+  project_id: string
+  title: string
+  created_at: string
+  updated_at: string
+  messages: ChatMessage[]
+}
+
+export interface ChatThreadSummary {
+  id: string
+  project_id: string
+  title: string
+  created_at: string
+  updated_at: string
+  message_count: number
+}
+
+export interface LocateHit {
+  page: number
+  offset: number
+  snippet: string
+}
+
+export interface DocumentLocateResponse {
+  found: boolean
+  hits: LocateHit[]
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
@@ -247,6 +352,9 @@ export const api = {
     )
   },
 
+  analysis: (projectId: string): Promise<ProjectAnalysis> =>
+    request<ProjectAnalysis>(`/api/projects/${encodeURIComponent(projectId)}/analysis`),
+
   search: (projectId: string, query: string, limit = 20): Promise<WorkSummary[]> => {
     const params = new URLSearchParams({ q: query, limit: String(limit) })
     return request<WorkSummary[]>(
@@ -270,6 +378,39 @@ export const api = {
 
   cancelRun: (runId: string): Promise<Run | undefined> =>
     request<Run | undefined>(`/api/runs/${encodeURIComponent(runId)}/cancel`, { method: 'POST' }),
+
+  chatStatus: (): Promise<ChatStatus> => request<ChatStatus>('/api/chat/status'),
+
+  chatThreads: (projectId: string): Promise<ChatThreadSummary[]> =>
+    request<ChatThreadSummary[]>(`/api/projects/${encodeURIComponent(projectId)}/chats`),
+
+  createChat: (projectId: string, title?: string): Promise<ChatThread> =>
+    request<ChatThread>(
+      `/api/projects/${encodeURIComponent(projectId)}/chats`,
+      jsonOptions(title ? { title } : {}),
+    ),
+
+  chatThread: (threadId: string, projectId: string): Promise<ChatThread> =>
+    request<ChatThread>(
+      `/api/chats/${encodeURIComponent(threadId)}?project=${encodeURIComponent(projectId)}`,
+    ),
+
+  deleteChat: (threadId: string, projectId: string): Promise<void> =>
+    request<void>(
+      `/api/chats/${encodeURIComponent(threadId)}?project=${encodeURIComponent(projectId)}`,
+      { method: 'DELETE' },
+    ),
+
+  chatMessageUrl: (threadId: string, projectId: string): string =>
+    `/api/chats/${encodeURIComponent(threadId)}/messages?project=${encodeURIComponent(projectId)}`,
+
+  locateDocument: (sha256: string, query: string, page?: number): Promise<DocumentLocateResponse> => {
+    const params = new URLSearchParams({ q: query })
+    if (page !== undefined) params.set('page', String(page))
+    return request<DocumentLocateResponse>(
+      `/api/documents/${encodeURIComponent(sha256)}/locate?${params.toString()}`,
+    )
+  },
 
   documentPdfUrl: (sha256: string): string =>
     `/api/documents/${encodeURIComponent(sha256)}/pdf`,

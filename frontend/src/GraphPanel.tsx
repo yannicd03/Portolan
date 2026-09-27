@@ -1,13 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api'
-import type { GraphNode, ProjectGraph, WorkDetail as WorkDetailData, WorkSummary } from './api'
-import { CitationMap, type CitationMapHandle } from './CitationMap'
+import type {
+  GraphNode,
+  ProjectAnalysis,
+  ProjectGraph,
+  WorkDetail as WorkDetailData,
+  WorkSummary,
+} from './api'
+import {
+  CitationMap,
+  clusterColor,
+  type CitationMapColorMode,
+  type CitationMapHandle,
+} from './CitationMap'
 import { Timeline, type YearRange } from './Timeline'
 import { WorkDetail } from './WorkDetail'
 
 export interface GraphPanelProps {
   projectId: string
   refreshToken: number
+  highlightedWorkIds: readonly string[]
+  openWorkRequest: { projectId: string; workId: string; token: number } | null
 }
 
 function linkedWorkIds(graph: ProjectGraph | null, node: GraphNode | null): Set<string> {
@@ -27,8 +40,10 @@ function errorMessage(reason: unknown): string {
   return reason instanceof Error ? reason.message : 'The graph request failed.'
 }
 
-export function GraphPanel({ projectId, refreshToken }: GraphPanelProps) {
+export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWorkRequest }: GraphPanelProps) {
   const [graph, setGraph] = useState<ProjectGraph | null>(null)
+  const [analysis, setAnalysis] = useState<ProjectAnalysis | null>(null)
+  const [analysisUnavailable, setAnalysisUnavailable] = useState(false)
   const [graphLoading, setGraphLoading] = useState(true)
   const [graphError, setGraphError] = useState<string | null>(null)
   const [showAuthors, setShowAuthors] = useState(false)
@@ -42,7 +57,12 @@ export function GraphPanel({ projectId, refreshToken }: GraphPanelProps) {
   const [detail, setDetail] = useState<WorkDetailData | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const [colorModeOverride, setColorModeOverride] = useState<CitationMapColorMode | null>(null)
+  const [focusedClusterId, setFocusedClusterId] = useState<string | null>(null)
+  const [mainPathActive, setMainPathActive] = useState(false)
+  const [showAllClusters, setShowAllClusters] = useState(false)
   const mapRef = useRef<CitationMapHandle>(null)
+  const handledWorkRequest = useRef<number | null>(null)
 
   useEffect(() => {
     let active = true
@@ -51,9 +71,14 @@ export function GraphPanel({ projectId, refreshToken }: GraphPanelProps) {
       setGraphLoading(true)
       setGraphError(null)
       setGraph(null)
+      setAnalysis(null)
+      setAnalysisUnavailable(false)
       setSelectedId(null)
       setDetail(null)
       setDetailError(null)
+      setFocusedClusterId(null)
+      setMainPathActive(false)
+      setShowAllClusters(false)
     })
 
     api.projectGraph(projectId, { authors: showAuthors, concepts: showConcepts })
@@ -68,10 +93,36 @@ export function GraphPanel({ projectId, refreshToken }: GraphPanelProps) {
         if (active) setGraphLoading(false)
       })
 
+    api.analysis(projectId)
+      .then((nextAnalysis) => {
+        if (!active) return
+        setAnalysis(nextAnalysis)
+        setAnalysisUnavailable(false)
+      })
+      .catch(() => {
+        if (!active) return
+        setAnalysis(null)
+        setAnalysisUnavailable(true)
+      })
+
     return () => {
       active = false
     }
   }, [projectId, refreshToken, showAuthors, showConcepts])
+
+  const clusters = analysis?.clusters ?? []
+  const displayedClusters = showAllClusters ? clusters : clusters.slice(0, 6)
+  const canUseClusters = clusters.length > 0
+  const colorMode = canUseClusters && colorModeOverride === 'cluster'
+    ? 'cluster'
+    : colorModeOverride === 'year'
+      ? 'year'
+      : clusters.length >= 2 ? 'cluster' : 'year'
+  const hasMainPath = Boolean(analysis?.main_path.work_ids.length)
+
+  const toggleCluster = (clusterId: string) => {
+    setFocusedClusterId((current) => (current === clusterId ? null : clusterId))
+  }
 
   useEffect(() => {
     const normalizedQuery = query.trim()
@@ -116,8 +167,11 @@ export function GraphPanel({ projectId, refreshToken }: GraphPanelProps) {
     () => new Set(searchResults.map((result) => result.id)),
     [searchResults],
   )
-  const highlightIds = query.trim() ? searchIds : selectedLinkedWorks
-  const highlightingActive = Boolean(query.trim()) || selectedLinkedWorks.size > 0
+  const highlightIds = useMemo(
+    () => new Set([...highlightedWorkIds, ...(query.trim() ? searchIds : selectedLinkedWorks)]),
+    [highlightedWorkIds, query, searchIds, selectedLinkedWorks],
+  )
+  const highlightingActive = highlightIds.size > 0 || Boolean(query.trim())
   const hasWorks = graph?.nodes.some((node) => node.kind === 'work') ?? false
 
   useEffect(() => {
@@ -151,6 +205,20 @@ export function GraphPanel({ projectId, refreshToken }: GraphPanelProps) {
       setDetailLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!openWorkRequest || openWorkRequest.projectId !== projectId || handledWorkRequest.current === openWorkRequest.token || !graph?.nodes.some((node) => node.id === openWorkRequest.workId && node.kind === 'work')) return
+    let active = true
+    queueMicrotask(() => {
+      if (!active || handledWorkRequest.current === openWorkRequest.token) return
+      handledWorkRequest.current = openWorkRequest.token
+      setSelectedId(openWorkRequest.workId)
+      setDetail(null)
+      setDetailError(null)
+      setDetailLoading(true)
+    })
+    return () => { active = false }
+  }, [graph, openWorkRequest, projectId])
 
   const selectSearchResult = (id: string) => {
     if (graph?.nodes.some((node) => node.id === id)) {
@@ -197,6 +265,73 @@ export function GraphPanel({ projectId, refreshToken }: GraphPanelProps) {
             Fit
           </button>
         </div>
+        <div className="graph-panel__map-controls" aria-label="Map analysis controls">
+          <span className="graph-panel__map-control-label">Color by:</span>
+          <div className="graph-panel__segmented" role="group" aria-label="Map color mode">
+            <button
+              className="graph-panel__segment"
+              type="button"
+              aria-pressed={colorMode === 'cluster'}
+              disabled={!canUseClusters}
+              onClick={() => setColorModeOverride('cluster')}
+            >
+              Cluster
+            </button>
+            <button
+              className="graph-panel__segment"
+              type="button"
+              aria-pressed={colorMode === 'year'}
+              onClick={() => setColorModeOverride('year')}
+            >
+              Year
+            </button>
+          </div>
+          <button
+            className="graph-panel__control graph-panel__path-toggle"
+            type="button"
+            aria-pressed={mainPathActive}
+            disabled={!hasMainPath}
+            onClick={() => setMainPathActive((active) => !active)}
+          >
+            Main path
+          </button>
+        </div>
+        {clusters.length > 0 ? (
+          <div
+            className={`graph-panel__cluster-legend${showAllClusters ? ' graph-panel__cluster-legend--expanded' : ''}`}
+            aria-label="Citation clusters"
+          >
+            {displayedClusters.map((cluster) => (
+              <button
+                key={cluster.id}
+                className="graph-panel__cluster-chip"
+                type="button"
+                aria-pressed={focusedClusterId === cluster.id}
+                title={cluster.label}
+                onClick={() => toggleCluster(cluster.id)}
+              >
+                <span
+                  className="graph-panel__cluster-swatch"
+                  style={{ backgroundColor: clusterColor(cluster.id, clusters) }}
+                  aria-hidden="true"
+                />
+                <span className="graph-panel__cluster-label">{cluster.label}</span>
+                <span className="graph-panel__cluster-size">{cluster.size}</span>
+              </button>
+            ))}
+            {clusters.length > 6 ? (
+              <button
+                className="graph-panel__cluster-more"
+                type="button"
+                aria-expanded={showAllClusters}
+                onClick={() => setShowAllClusters((visible) => !visible)}
+              >
+                {showAllClusters ? 'Show fewer' : `+${clusters.length - 6} more`}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {analysisUnavailable ? <p className="graph-panel__analysis-hint">Analysis unavailable</p> : null}
         <label className="graph-panel__search">
           <span className="graph-panel__search-label">Search works</span>
           <input
@@ -242,6 +377,10 @@ export function GraphPanel({ projectId, refreshToken }: GraphPanelProps) {
           <CitationMap
             ref={mapRef}
             data={graph}
+            analysis={analysis}
+            colorMode={colorMode}
+            focusedClusterId={focusedClusterId}
+            mainPathActive={mainPathActive}
             selectedId={selectedId}
             highlightedIds={highlightIds}
             highlightingActive={highlightingActive}
@@ -258,7 +397,14 @@ export function GraphPanel({ projectId, refreshToken }: GraphPanelProps) {
         <section className="graph-panel__detail" aria-live="polite">
           {detailLoading ? <p className="graph-panel__detail-message">Loading work…</p> : null}
           {detailError ? <p className="graph-panel__detail-message graph-panel__error">{detailError}</p> : null}
-          {detail ? <WorkDetail detail={detail} projectId={projectId} onSelectWork={selectNode} /> : null}
+          {detail ? (
+            <WorkDetail
+              detail={detail}
+              projectId={projectId}
+              analysis={analysis}
+              onSelectWork={selectNode}
+            />
+          ) : null}
         </section>
       ) : null}
 

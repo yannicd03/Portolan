@@ -16,7 +16,7 @@ import uuid
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, overload
+from typing import Any, Literal, overload
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -67,6 +67,11 @@ class ChatMessage(BaseModel):
     events: list[AgentEvent] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=_now)
     error: str | None = None
+    mode: Literal["ask", "research"] | None = None
+    pending_plan: dict[str, Any] | None = None
+    plan_status: Literal["pending", "approved", "edited", "rejected"] | None = None
+    final_args: dict[str, Any] | None = None
+    run_id: str | None = None
 
     @field_validator("id")
     @classmethod
@@ -272,6 +277,29 @@ class ChatStore:
             thread.updated_at = _now()
             self._write_atomic(path, thread)
             return thread
+
+    def update_message(
+        self,
+        project_id: str,
+        thread_id: str,
+        message_id: str,
+        **changes: Any,
+    ) -> ChatMessage | None:
+        """Atomically update one existing message after a plan decision."""
+
+        with self._lock:
+            path = self._path(project_id, thread_id)
+            thread = self._decode(path) if path.is_file() else None
+            if thread is None:
+                return None
+            for index, message in enumerate(thread.messages):
+                if message.id == message_id:
+                    updated = message.model_copy(update=changes)
+                    thread.messages[index] = updated
+                    thread.updated_at = _now()
+                    self._write_atomic(path, thread)
+                    return updated
+        return None
 
     def delete(self, project_id: str, thread_id: str) -> bool:
         """Delete one thread, returning whether a file was removed."""

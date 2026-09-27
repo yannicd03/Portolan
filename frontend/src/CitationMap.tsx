@@ -1,3 +1,4 @@
+/* oxlint-disable react/only-export-components */
 import Graph from 'graphology'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import {
@@ -7,24 +8,28 @@ import {
   useRef,
 } from 'react'
 import Sigma from 'sigma'
-import type { GraphNode, ProjectGraph } from './api'
+import type { AnalysisCluster, GraphNode, ProjectAnalysis, ProjectGraph } from './api'
 import type { YearRange } from './Timeline'
 
 interface GraphNodeAttributes {
   color: string
+  clusterColor: string
   kind: GraphNode['kind']
   label: string
   size: number
+  yearColor: string
   x: number
   y: number
 }
 
 interface GraphEdgeAttributes {
   color: string
-  kind: ProjectGraph['edges'][number]['kind']
+  kind: ProjectGraph['edges'][number]['kind'] | 'main_path'
   size: number
   type: 'arrow' | 'line'
 }
+
+export type CitationMapColorMode = 'cluster' | 'year'
 
 export interface CitationMapHandle {
   fit: () => void
@@ -32,6 +37,10 @@ export interface CitationMapHandle {
 
 export interface CitationMapProps {
   data: ProjectGraph
+  analysis?: ProjectAnalysis | null
+  colorMode?: CitationMapColorMode
+  focusedClusterId?: string | null
+  mainPathActive?: boolean
   selectedId: string | null
   highlightedIds?: ReadonlySet<string>
   highlightingActive?: boolean
@@ -44,6 +53,24 @@ const WORK_COLOR_END = [198, 106, 77]
 const MISSING_YEAR_COLOR = '#9299a3'
 const AUTHOR_COLOR = '#8f6bc2'
 const CONCEPT_COLOR = '#c17b3c'
+
+export const CLUSTER_COLORS = [
+  '#2c7bb6',
+  '#d95f02',
+  '#1b9e77',
+  '#7570b3',
+  '#e6ab02',
+  '#66a61e',
+  '#e7298a',
+  '#a6761d',
+  '#1f78b4',
+  '#d95f0e',
+] as const
+
+export function clusterColor(clusterId: string, clusters: readonly AnalysisCluster[]): string {
+  const index = clusters.findIndex((cluster) => cluster.id === clusterId)
+  return index >= 0 ? CLUSTER_COLORS[index % CLUSTER_COLORS.length] : MISSING_YEAR_COLOR
+}
 
 function cssVar(name: string, fallback: string): string {
   if (typeof document === 'undefined') return fallback
@@ -76,6 +103,12 @@ function workColor(year: number | null, minYear: number, maxYear: number): strin
 
 function workYear(node: GraphNode): number | null {
   return numberValue(asRecord(node.data).year)
+}
+
+function workClusterColor(node: GraphNode, analysis: ProjectAnalysis | null | undefined): string {
+  if (node.kind !== 'work' || !analysis) return MISSING_YEAR_COLOR
+  const clusterId = analysis.works[node.id]?.cluster
+  return clusterId ? clusterColor(clusterId, analysis.clusters) : MISSING_YEAR_COLOR
 }
 
 function visibleNodeIds(data: ProjectGraph, yearFilter: YearRange | null): Set<string> {
@@ -123,7 +156,10 @@ function getNodeSize(node: GraphNode): number {
   return Math.min(18, 5 + Math.log1p(citedByCount(node)) * 2.2)
 }
 
-function createGraph(data: ProjectGraph): Graph<GraphNodeAttributes, GraphEdgeAttributes> {
+function createGraph(
+  data: ProjectGraph,
+  analysis: ProjectAnalysis | null | undefined,
+): Graph<GraphNodeAttributes, GraphEdgeAttributes> {
   const graph = new Graph<GraphNodeAttributes, GraphEdgeAttributes>({ type: 'directed', multi: true })
   const works = data.nodes.filter((node) => node.kind === 'work')
   const years = works
@@ -136,11 +172,17 @@ function createGraph(data: ProjectGraph): Graph<GraphNodeAttributes, GraphEdgeAt
     const year = workYear(node)
     const row = Math.floor(index / 8)
     const column = index % 8
+    const yearColor = getNodeColor(node, minYear, maxYear)
+    const clusterColorValue = node.kind === 'work'
+      ? workClusterColor(node, analysis)
+      : yearColor
     graph.addNode(node.id, {
       label: shortLabel(node.label),
       kind: node.kind,
-      color: getNodeColor(node, minYear, maxYear),
+      color: yearColor,
+      clusterColor: clusterColorValue,
       size: getNodeSize(node),
+      yearColor,
       // Seed the layout so a reload does not begin with every node at the origin.
       x: (column - 3.5) * 2 + (year === null ? 0 : (year - minYear) * 0.015),
       y: (row - Math.max(0, Math.ceil(data.nodes.length / 8) / 2)) * 2,
@@ -167,11 +209,33 @@ function createGraph(data: ProjectGraph): Graph<GraphNodeAttributes, GraphEdgeAt
       slowDown: 2,
     },
   })
+
+  // Add the overlay after layout so an inactive main path does not move the map.
+  analysis?.main_path.edges.forEach((edge) => {
+    if (!graph.hasNode(edge.source) || !graph.hasNode(edge.target)) return
+    graph.addDirectedEdge(edge.source, edge.target, {
+      kind: 'main_path',
+      type: 'arrow',
+      color: cssVar('--accent', '#216c79'),
+      size: 2.8,
+    })
+  })
   return graph
 }
 
 export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(function CitationMap(
-  { data, selectedId, highlightedIds, highlightingActive = false, yearFilter = null, onSelect },
+  {
+    data,
+    analysis = null,
+    colorMode = 'year',
+    focusedClusterId = null,
+    mainPathActive = false,
+    selectedId,
+    highlightedIds,
+    highlightingActive = false,
+    yearFilter = null,
+    onSelect,
+  },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -181,6 +245,11 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
   const highlightingActiveRef = useRef(highlightingActive)
   const yearFilterRef = useRef<YearRange | null>(yearFilter)
   const yearVisibleRef = useRef<ReadonlySet<string>>(visibleNodeIds(data, yearFilter))
+  const colorModeRef = useRef<CitationMapColorMode>(colorMode)
+  const focusedClusterIdRef = useRef<string | null>(focusedClusterId)
+  const focusedClusterWorkIdsRef = useRef<ReadonlySet<string>>(new Set<string>())
+  const mainPathActiveRef = useRef(mainPathActive)
+  const mainPathNodeIdsRef = useRef<ReadonlySet<string>>(new Set<string>())
   const onSelectRef = useRef(onSelect)
 
   useEffect(() => {
@@ -189,6 +258,17 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
     highlightingActiveRef.current = highlightingActive
     rendererRef.current?.refresh()
   }, [highlightedIds, highlightingActive, selectedId])
+
+  useEffect(() => {
+    colorModeRef.current = colorMode
+    focusedClusterIdRef.current = focusedClusterId
+    mainPathActiveRef.current = mainPathActive
+    focusedClusterWorkIdsRef.current = focusedClusterId && analysis
+      ? new Set(analysis.clusters.find((cluster) => cluster.id === focusedClusterId)?.work_ids ?? [])
+      : new Set<string>()
+    mainPathNodeIdsRef.current = new Set(analysis?.main_path.work_ids ?? [])
+    rendererRef.current?.refresh()
+  }, [analysis, colorMode, focusedClusterId, mainPathActive])
 
   useEffect(() => {
     onSelectRef.current = onSelect
@@ -211,7 +291,14 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
     const container = containerRef.current
     if (!container || data.nodes.length === 0) return
 
-    const graph = createGraph(data)
+    const graph = createGraph(data, analysis)
+    const neighbours = new Map<string, Set<string>>()
+    data.edges.forEach(({ source, target }) => {
+      if (!neighbours.has(source)) neighbours.set(source, new Set<string>())
+      if (!neighbours.has(target)) neighbours.set(target, new Set<string>())
+      neighbours.get(source)?.add(target)
+      neighbours.get(target)?.add(source)
+    })
     const renderer = new Sigma<GraphNodeAttributes, GraphEdgeAttributes>(graph, container, {
       defaultNodeType: 'circle',
       defaultEdgeType: 'line',
@@ -230,10 +317,25 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
       const focused = highlightedRef.current
       const isSelected = node === selected
       const isFocused = focused.has(node)
-      const hasFocusFilter = highlightingActiveRef.current || focused.size > 0
-      const isNeighbour = selected ? graph.areNeighbors(node, selected) : false
+      const isNeighbour = selected ? neighbours.get(selected)?.has(node) ?? false : false
       const hasYearFilter = yearFilterRef.current !== null
       const isYearVisible = yearVisibleRef.current.has(node)
+      const clusterWorkIds = focusedClusterWorkIdsRef.current
+      const hasClusterFocus = focusedClusterIdRef.current !== null
+      const isClusterFocused = clusterWorkIds.has(node)
+      const pathNodeIds = mainPathNodeIdsRef.current
+      const hasMainPathFocus = mainPathActiveRef.current
+      const isMainPathNode = hasMainPathFocus && pathNodeIds.has(node)
+      const hasSearchFocus = highlightingActiveRef.current || focused.size > 0
+      const isSearchFocused = isFocused || isNeighbour
+      const isEmphasisTarget = (
+        (!hasSearchFocus || isSearchFocused)
+        && (!hasClusterFocus || isClusterFocused)
+        && (!hasMainPathFocus || isMainPathNode)
+      )
+      const nodeColor = colorModeRef.current === 'cluster'
+        ? attributes.clusterColor
+        : attributes.yearColor
 
       if (hasYearFilter && !isYearVisible) {
         return {
@@ -243,8 +345,8 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
           zIndex: 0,
         }
       }
-      if (isSelected) return { ...attributes, highlighted: true, zIndex: 4 }
-      if (hasFocusFilter && !isFocused && !isNeighbour) {
+      if (isSelected) return { ...attributes, color: nodeColor, highlighted: true, zIndex: 4 }
+      if (!isEmphasisTarget) {
         return {
           ...attributes,
           color: cssVar('--muted-node', '#dfe1e5'),
@@ -252,28 +354,68 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
           zIndex: 0,
         }
       }
-      if (isNeighbour) return { ...attributes, highlighted: true, zIndex: 2 }
-      return { ...attributes, zIndex: isFocused ? 2 : 1 }
+      if (isNeighbour) return { ...attributes, color: nodeColor, highlighted: true, zIndex: 2 }
+      return {
+        ...attributes,
+        color: nodeColor,
+        highlighted: isMainPathNode,
+        zIndex: isMainPathNode ? 4 : isFocused || isClusterFocused ? 2 : 1,
+      }
     })
     renderer.setSetting('edgeReducer', (edge, attributes) => {
       const selected = selectedRef.current
       const focused = highlightedRef.current
-      const hasFocusFilter = highlightingActiveRef.current || focused.size > 0
       const extremitySelected = selected ? graph.hasExtremity(edge, selected) : false
       const edgeData = graph.getEdgeAttributes(edge)
-      const connectsFocused = focused.has(graph.source(edge)) || focused.has(graph.target(edge))
+      const source = graph.source(edge)
+      const target = graph.target(edge)
+      const clusterWorkIds = focusedClusterWorkIdsRef.current
+      const hasClusterFocus = focusedClusterIdRef.current !== null
+      const hasMainPathFocus = mainPathActiveRef.current
+      const hasSearchFocus = highlightingActiveRef.current || focused.size > 0
+      const connectsSearch = (
+        focused.has(source)
+        || focused.has(target)
+        || selected === source
+        || selected === target
+      )
+      const connectsCluster = clusterWorkIds.has(source) || clusterWorkIds.has(target)
       const hasYearFilter = yearFilterRef.current !== null
-      const sourceIsVisible = yearVisibleRef.current.has(graph.source(edge))
-      const targetIsVisible = yearVisibleRef.current.has(graph.target(edge))
+      const sourceIsVisible = yearVisibleRef.current.has(source)
+      const targetIsVisible = yearVisibleRef.current.has(target)
+      const isMainPathEdge = edgeData.kind === 'main_path'
 
+      if (isMainPathEdge && (!hasMainPathFocus || !sourceIsVisible || !targetIsVisible)) {
+        return { ...attributes, hidden: true }
+      }
+      if (isMainPathEdge && hasSearchFocus && !connectsSearch) {
+        return { ...attributes, hidden: true }
+      }
+      if (isMainPathEdge && hasClusterFocus && !connectsCluster) {
+        return { ...attributes, hidden: true }
+      }
+      if (isMainPathEdge) {
+        return {
+          ...attributes,
+          color: cssVar('--accent', '#216c79'),
+          size: 2.8,
+          zIndex: 5,
+        }
+      }
+      if (extremitySelected && !hasMainPathFocus) {
+        return { ...attributes, color: cssVar('--accent', '#2f6f9f'), size: 2, zIndex: 3 }
+      }
       if (hasYearFilter && !sourceIsVisible && !targetIsVisible) {
         return { ...attributes, hidden: true }
       }
-      if (extremitySelected) {
-        return { ...attributes, color: cssVar('--accent', '#2f6f9f'), size: 2, zIndex: 3 }
-      }
-      if (hasFocusFilter && !connectsFocused) {
+      if (hasSearchFocus && !connectsSearch) {
         return { ...attributes, hidden: true }
+      }
+      if (hasClusterFocus && !connectsCluster) {
+        return { ...attributes, hidden: true }
+      }
+      if (hasMainPathFocus) {
+        return { ...attributes, color: cssVar('--edge', '#c9ccd2'), size: 0.55, zIndex: 0 }
       }
       if (edgeData.kind === 'cites') {
         return { ...attributes, color: cssVar('--graph-edge-strong', '#667383') }
@@ -293,7 +435,7 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
       renderer.kill()
       if (rendererRef.current === renderer) rendererRef.current = null
     }
-  }, [data])
+  }, [analysis, data])
 
   return <div className="citation-map" ref={containerRef} aria-label="Citation graph" />
 })

@@ -190,7 +190,6 @@ export function ResearchThread({ projectId, onRunFinished }: ResearchThreadProps
           <p className="eyebrow">Research</p>
           <h2 id="research-heading">Build your literature map</h2>
         </div>
-        <p className="research-thread-notice">Ask mode (answers with citations) arrives in a later milestone.</p>
       </div>
 
       <div className="research-run-list" aria-live="polite">

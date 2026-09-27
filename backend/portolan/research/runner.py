@@ -1391,6 +1391,8 @@ class ResearchRunner:
         cancel: Event | None,
         progress: Callable[[RunProgress], None] | None = None,
     ) -> int:
+        from portolan.concepts import filter_concepts
+
         project_works = self.graph.project_works(project_id)
         occurrences: list[KeywordOccurrence] = []
         for index, work in enumerate(project_works, start=1):
@@ -1412,6 +1414,8 @@ class ResearchRunner:
                     {"candidates": len(project_works), "included": len(project_works)},
                 )
         clusters, _ = merge_keywords_with_report(occurrences, embedder=None)
+        clusters, filter_report = filter_concepts(clusters, total_works=len(project_works))
+        self._concepts_filtered = filter_report.total_dropped
         for cluster in clusters:
             self._check_cancel(cancel)
             self.graph.upsert_concept(
@@ -1694,6 +1698,7 @@ class ResearchRunner:
             citations=citations,
             authors=authors,
             concepts=concepts,
+            concepts_filtered=self._concepts_filtered,
             pdfs_acquired=pdfs_acquired,
             pdfs_failed=pdfs_failed,
             pdfs_skipped=pdfs_skipped,

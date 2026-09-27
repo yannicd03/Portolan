@@ -508,6 +508,47 @@ def test_keyword_threshold_and_project_wide_concept_rebuild() -> None:
     }
 
 
+def test_concept_filter_removes_generic_and_singleton_keywords() -> None:
+    works = [
+        record(
+            f"W{index}",
+            f"Graph paper {index}",
+            keywords=(
+                [("Library science", 0.9)]
+                + ([("Knowledge graph", 0.8)] if index <= 2 else [])
+                + ([("One-off method", 0.7)] if index == 1 else [])
+            ),
+        )
+        for index in range(1, 16)
+    ]
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Filtered concepts")
+    runner = make_runner(graph, FakeOpenAlex(works))
+
+    report = runner.run(
+        project.id,
+        ResearchRequest(
+            seeds=[work["openalex_id"] for work in works],
+            max_works=15,
+            snowball_depth=0,
+            acquire_pdfs=False,
+        ),
+    )
+
+    assert report.included == 15
+    assert report.concepts == 1
+    assert report.concepts_filtered == 2
+    assert [concept.label for concept in graph._concepts.values()] == ["Knowledge graph"]
+    project_works = graph.project_works(project.id)
+    kept_concept = next(iter(graph._concepts.values()))
+    assert len(graph.works_by_concept(kept_concept.id, project.id)) == 2
+    assert all(
+        not graph.work_neighborhood(work.id, project.id).concepts
+        for work in project_works
+        if work.openalex_id not in {"W1", "W2"}
+    )
+
+
 def test_pdf_order_cap_skip_existing_and_enrichment(tmp_path: Any) -> None:
     seed = record("W1", "Seed", pdf_url="https://example.org/seed.pdf")
     other = record("W2", "Other", doi="10.1000/other", citations=100)

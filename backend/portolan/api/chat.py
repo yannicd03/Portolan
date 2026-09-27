@@ -1,4 +1,4 @@
-"""HTTP endpoints for project chat threads and streamed Ask answers."""
+"""HTTP endpoints for project chat threads and streamed agent answers."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from ..agent.ask import AgentEvent, AskAgent
 from ..agent.chats import ChatMessage, ChatStore, Thread, ThreadSummary
 from ..agent.citations import VerifiedAnswer
+from ..agent.research import ResearchAgent
 from ..documents.store import DocumentStore
 from ..graph.base import ResearchGraph
 from ..settings import Settings
@@ -41,7 +42,7 @@ class ChatMessageRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     content: str = Field(min_length=1, max_length=4000)
-    mode: Literal["ask"] = "ask"
+    mode: Literal["ask", "research"] = "ask"
 
     @field_validator("content")
     @classmethod
@@ -57,6 +58,14 @@ class ChatStatus(BaseModel):
     available: bool
     model: str
     reason: str | None = None
+
+
+class ChatResumeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: Literal["approve", "edit", "reject"]
+    args: dict[str, Any] | None = None
+    message: str | None = None
 
 
 def _invoke_provider(provider: Callable[..., Any], project_id: str) -> Any:
@@ -97,12 +106,20 @@ def _answer_model(value: Any) -> VerifiedAnswer:
     return VerifiedAnswer.model_validate(value)
 
 
+def _value(source: Any, name: str, default: Any = None) -> Any:
+    if isinstance(source, dict):
+        return source.get(name, default)
+    return getattr(source, name, default)
+
+
 def build_chat_router(
     get_graph: Callable[..., ResearchGraph],
     get_documents: Callable[..., DocumentStore],
     settings: Settings,
     *,
     agent_factory: Callable[[ResearchGraph, DocumentStore, Settings], AskAgent] | None = None,
+    research_agent_factory: Callable[..., ResearchAgent] | None = None,
+    get_runs: Callable[..., Any] | None = None,
 ) -> APIRouter:
     """Build the chat API router around application-owned graph resources."""
 
@@ -111,6 +128,54 @@ def build_chat_router(
     factory = agent_factory or AskAgent
     active: dict[str, threading.Event] = {}
     active_lock = threading.RLock()
+
+    def research_agent(project_id: str, graph: ResearchGraph) -> ResearchAgent:
+        documents = _invoke_provider(get_documents, project_id)
+        runs = _invoke_provider(get_runs, project_id) if get_runs is not None else None
+        if research_agent_factory is None:
+            agent = ResearchAgent(graph, documents, settings, runs=runs)
+        else:
+            agent = research_agent_factory(graph, documents, settings, runs)
+        bind_project = getattr(agent, "bind_project", None)
+        if callable(bind_project):
+            bind_project(project_id)
+        return agent
+
+    def reserve(thread_id: str) -> threading.Event:
+        with active_lock:
+            if thread_id in active:
+                raise HTTPException(status_code=409, detail="chat thread has an active answer")
+            cancel = threading.Event()
+            active[thread_id] = cancel
+            return cancel
+
+    def streamed_events(
+        request: Request, events: queue.Queue[tuple[str, Any]], cancel: threading.Event
+    ) -> StreamingResponse:
+        async def stream() -> AsyncIterator[str]:
+            try:
+                while True:
+                    if await request.is_disconnected():
+                        cancel.set()
+                        break
+                    try:
+                        event, payload = await asyncio.to_thread(events.get, True, 0.1)
+                    except queue.Empty:
+                        continue
+                    if event == "done":
+                        yield _sse("done", payload)
+                        break
+                    if event == "status":
+                        payload = {"text": _event_model(payload).text}
+                    yield _sse(event, payload)
+            finally:
+                cancel.set()
+
+        return StreamingResponse(
+            stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
 
     def graph_for(project_id: str) -> ResearchGraph:
         graph = _invoke_provider(get_graph, project_id)
@@ -191,17 +256,14 @@ def build_chat_router(
         if not settings.openrouter_api_key:
             return JSONResponse(
                 status_code=503,
-                content={"detail": "Ask mode needs OPENROUTER_API_KEY"},
+                content={"detail": f"{body.mode.title()} mode needs OPENROUTER_API_KEY"},
             )
-
-        with active_lock:
-            if thread_id in active:
-                raise HTTPException(status_code=409, detail="chat thread has an active answer")
-            cancel = threading.Event()
-            active[thread_id] = cancel
+        if any(message.plan_status == "pending" for message in thread.messages):
+            raise HTTPException(status_code=409, detail="chat thread has a pending plan")
+        cancel = reserve(thread_id)
 
         history = list(thread.messages)
-        user_message = ChatMessage(role="user", content=body.content)
+        user_message = ChatMessage(role="user", content=body.content, mode=body.mode)
         try:
             appended = store.append(project, thread_id, user_message)
         except ValueError as error:
@@ -223,27 +285,66 @@ def build_chat_router(
 
         def run_agent() -> None:
             try:
-                documents = _invoke_provider(get_documents, project)
-                agent = factory(graph, documents, settings)
-                bind_project = getattr(agent, "bind_project", None)
-                if callable(bind_project):
-                    bind_project(project)
-                answer = _answer_model(agent.run(body.content, history, on_event, cancel=cancel))
-                assistant = ChatMessage(
-                    role="assistant",
-                    content=answer.answer_markdown,
-                    answer=answer,
-                    events=list(recorded_events),
-                )
-                store.append(project, thread_id, assistant)
-                events.put(("answer", answer))
+                if body.mode == "research":
+                    agent = research_agent(project, graph)
+                    turn = agent.run(
+                        body.content, history, on_event, cancel=cancel, thread_id=thread_id
+                    )
+                    if _value(turn, "status") == "awaiting_approval":
+                        plan = _value(turn, "plan")
+                        args = _value(plan, "args", {})
+                        description = _value(plan, "description", "Research plan awaiting approval")
+                        assistant = ChatMessage(
+                            role="assistant",
+                            content=description,
+                            mode="research",
+                            pending_plan=args,
+                            plan_status="pending",
+                            events=list(recorded_events),
+                        )
+                        store.append(project, thread_id, assistant)
+                        events.put(("plan", plan))
+                    else:
+                        answer_markdown = _value(turn, "answer_markdown", "")
+                        store.append(
+                            project,
+                            thread_id,
+                            ChatMessage(
+                                role="assistant",
+                                content=answer_markdown,
+                                mode="research",
+                                events=list(recorded_events),
+                            ),
+                        )
+                        events.put(
+                            ("answer", {"mode": "research", "answer_markdown": answer_markdown})
+                        )
+                else:
+                    documents = _invoke_provider(get_documents, project)
+                    agent = factory(graph, documents, settings)
+                    bind_project = getattr(agent, "bind_project", None)
+                    if callable(bind_project):
+                        bind_project(project)
+                    answer = _answer_model(
+                        agent.run(body.content, history, on_event, cancel=cancel)
+                    )
+                    assistant = ChatMessage(
+                        role="assistant",
+                        content=answer.answer_markdown,
+                        answer=answer,
+                        events=list(recorded_events),
+                        mode="ask",
+                    )
+                    store.append(project, thread_id, assistant)
+                    events.put(("answer", answer))
             except Exception as error:
-                detail = str(error).strip() or "Ask mode failed"
+                detail = str(error).strip() or f"{body.mode.title()} mode failed"
                 assistant = ChatMessage(
                     role="assistant",
                     content=detail,
                     events=list(recorded_events),
                     error=detail,
+                    mode=body.mode,
                 )
                 with suppress(Exception):
                     store.append(project, thread_id, assistant)
@@ -260,30 +361,119 @@ def build_chat_router(
         )
         worker.start()
 
-        async def stream() -> AsyncIterator[str]:
-            try:
-                while True:
-                    if await request.is_disconnected():
-                        cancel.set()
-                        break
-                    try:
-                        event, payload = await asyncio.to_thread(events.get, True, 0.1)
-                    except queue.Empty:
-                        continue
-                    if event == "done":
-                        yield _sse("done", payload)
-                        break
-                    if event == "status":
-                        payload = {"text": _event_model(payload).text}
-                    yield _sse(event, payload)
-            finally:
-                cancel.set()
+        return streamed_events(request, events, cancel)
 
-        return StreamingResponse(
-            stream(),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    @router.post("/api/chats/{thread_id}/resume", response_model=None)
+    def resume_chat(
+        thread_id: str,
+        body: ChatResumeRequest,
+        request: Request,
+        project: str = Query(...),
+    ) -> StreamingResponse | JSONResponse:
+        graph = graph_for(project)
+        thread = thread_for(project, thread_id)
+        if not settings.openrouter_api_key:
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Research mode needs OPENROUTER_API_KEY"},
+            )
+        plan_message = next(
+            (message for message in reversed(thread.messages) if message.plan_status == "pending"),
+            None,
         )
+        if plan_message is None:
+            raise HTTPException(status_code=409, detail="chat thread has no pending plan")
+        cancel = reserve(thread_id)
+        try:
+            agent = research_agent(project, graph)
+            if not agent.has_pending(thread_id):
+                store.update_message(project, thread_id, plan_message.id, error="plan expired")
+                raise HTTPException(status_code=410, detail="plan expired")
+        except Exception:
+            with active_lock:
+                active.pop(thread_id, None)
+            raise
+
+        final_args = plan_message.pending_plan
+        if body.decision == "edit":
+            final_args = {**(final_args or {}), **(body.args or {})}
+        status = {"approve": "approved", "edit": "edited", "reject": "rejected"}[body.decision]
+        store.update_message(
+            project,
+            thread_id,
+            plan_message.id,
+            plan_status=status,
+            final_args=final_args,
+        )
+        events: queue.Queue[tuple[str, Any]] = queue.Queue()
+        recorded_events: list[AgentEvent] = []
+
+        def on_event(value: Any) -> None:
+            event = _event_model(value)
+            recorded_events.append(event)
+            events.put(("status", event))
+
+        def run_resume() -> None:
+            try:
+                turn = agent.resume(
+                    thread_id,
+                    body.decision,
+                    edited_args=body.args,
+                    message=body.message,
+                    on_event=on_event,
+                    cancel=cancel,
+                )
+                if _value(turn, "status") == "awaiting_approval":
+                    plan = _value(turn, "plan")
+                    assistant = ChatMessage(
+                        role="assistant",
+                        content=_value(plan, "description", "Research plan awaiting approval"),
+                        mode="research",
+                        pending_plan=_value(plan, "args", {}),
+                        plan_status="pending",
+                        events=list(recorded_events),
+                    )
+                    store.append(project, thread_id, assistant)
+                    events.put(("plan", plan))
+                else:
+                    answer_markdown = _value(turn, "answer_markdown", "")
+                    store.append(
+                        project,
+                        thread_id,
+                        ChatMessage(
+                            role="assistant",
+                            content=answer_markdown,
+                            mode="research",
+                            events=list(recorded_events),
+                        ),
+                    )
+                    events.put(("answer", {"mode": "research", "answer_markdown": answer_markdown}))
+            except Exception as error:
+                detail = str(error).strip() or "Research mode failed"
+                with suppress(Exception):
+                    store.append(
+                        project,
+                        thread_id,
+                        ChatMessage(
+                            role="assistant", content=detail, mode="research", error=detail
+                        ),
+                    )
+                events.put(("error", {"detail": detail}))
+            finally:
+                run_id = getattr(agent, "last_run_id", None)
+                if run_id is not None:
+                    with suppress(Exception):
+                        store.update_message(project, thread_id, plan_message.id, run_id=run_id)
+                events.put(("done", {}))
+                with active_lock:
+                    active.pop(thread_id, None)
+
+        threading.Thread(
+            target=run_resume,
+            name=f"portolan-resume-{thread_id[:8]}",
+            daemon=True,
+        ).start()
+        return streamed_events(request, events, cancel)
 
     return router
 

@@ -261,6 +261,7 @@ def create_app(
             lambda: app.state.document_store,
             settings,
             agent_factory=chat_agent_factory,
+            get_runs=lambda: app.state.runs,
         )
     )
 

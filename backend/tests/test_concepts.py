@@ -7,8 +7,10 @@ from dataclasses import dataclass
 
 import pytest
 
+from portolan.concepts.filter import filter_concepts
 from portolan.concepts.merge import (
     DEFAULT_STOP_TERMS,
+    ConceptCluster,
     KeywordOccurrence,
     merge_keywords,
     merge_keywords_with_report,
@@ -355,3 +357,85 @@ def test_merge_report_lists_exact_acronym_and_embedding_reasons() -> None:
     assert len(embedding_reasons) == 1
     assert embedding_reasons[0].startswith("embedding:")
     assert float(embedding_reasons[0].split(":", 1)[1]) >= 0.9
+
+
+def _concept_cluster(
+    label: str,
+    work_ids: Sequence[str],
+    *,
+    aliases: Sequence[str] = (),
+) -> ConceptCluster:
+    return ConceptCluster(
+        id=slugify(label),
+        label=label,
+        aliases=tuple(aliases),
+        work_ids=tuple(work_ids),
+        occurrences=len(work_ids),
+        work_scores={work_id: 1.0 for work_id in work_ids},
+    )
+
+
+def test_filter_drops_generic_labels_and_aliases() -> None:
+    clusters = [
+        _concept_cluster("Computer science", ("w1",)),
+        _concept_cluster("broad topic", ("w1",), aliases=("World Wide Web",)),
+        _concept_cluster("information retrieval", ("w1",)),
+    ]
+
+    kept, report = filter_concepts(clusters, total_works=1)
+
+    assert [cluster.label for cluster in kept] == ["information retrieval"]
+    assert report.generic == ("Computer science", "broad topic")
+    assert report.counts == {"generic": 2, "too_common": 0, "too_rare": 0}
+    assert report.total_dropped == 2
+
+
+def test_filter_drops_concepts_above_document_frequency_ceiling() -> None:
+    clusters = [
+        _concept_cluster("large language model", tuple(f"w{i}" for i in range(11))),
+        _concept_cluster("information retrieval", tuple(f"w{i}" for i in range(10))),
+    ]
+
+    kept, report = filter_concepts(clusters, total_works=20)
+
+    assert [cluster.label for cluster in kept] == ["information retrieval"]
+    assert report.too_common == ("large language model",)
+
+
+def test_filter_drops_concepts_below_minimum_support() -> None:
+    clusters = [
+        _concept_cluster("singleton", ("w1",)),
+        _concept_cluster("supported", ("w1", "w2")),
+    ]
+
+    kept, report = filter_concepts(clusters, total_works=15)
+
+    assert [cluster.label for cluster in kept] == ["supported"]
+    assert report.too_rare == ("singleton",)
+
+
+def test_filter_thresholds_are_inactive_for_small_projects() -> None:
+    clusters = [
+        _concept_cluster("broad topic", tuple(f"w{i}" for i in range(14))),
+        _concept_cluster("singleton", ("w1",)),
+    ]
+
+    kept, report = filter_concepts(clusters, total_works=14)
+
+    assert kept == clusters
+    assert report.total_dropped == 0
+
+
+def test_filter_is_deterministic_and_does_not_mutate_input() -> None:
+    clusters = [
+        _concept_cluster("singleton", ("w1",)),
+        _concept_cluster("Computer science", ("w1", "w2")),
+        _concept_cluster("supported", ("w1", "w2")),
+    ]
+    original = clusters.copy()
+
+    first = filter_concepts(clusters, total_works=15)
+    second = filter_concepts(clusters, total_works=15)
+
+    assert first == second
+    assert clusters == original

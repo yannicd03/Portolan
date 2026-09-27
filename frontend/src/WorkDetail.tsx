@@ -1,11 +1,21 @@
-import type { WorkDetail as WorkDetailData, WorkSummary } from './api'
+import type { ProjectAnalysis, WorkDetail as WorkDetailData, WorkRole, WorkSummary } from './api'
 import { api } from './api'
+import { clusterColor } from './CitationMap'
 import { docHref } from './route'
 
 interface WorkDetailProps {
   detail: WorkDetailData
+  analysis?: ProjectAnalysis | null
   projectId: string
   onSelectWork: (workId: string) => void
+}
+
+const ROLE_TITLES: Record<WorkRole, string> = {
+  foundational: 'Frequently cited by other works in this project.',
+  bridge: 'Connects otherwise separate parts of the citation network.',
+  hub: 'Has many citation links within this project.',
+  emerging: 'A recent work gaining citations within this project.',
+  peripheral: 'Has few citation links within this project.',
 }
 
 function externalLink(value: string, baseUrl: string): string {
@@ -49,8 +59,10 @@ function SummaryList({
   )
 }
 
-export function WorkDetail({ detail, projectId, onSelectWork }: WorkDetailProps) {
+export function WorkDetail({ detail, analysis, projectId, onSelectWork }: WorkDetailProps) {
   const work = detail.work
+  const workAnalysis = analysis?.works[work.id]
+  const cluster = analysis?.clusters.find((item) => item.id === workAnalysis?.cluster)
   const documentSha = work.document_sha256
   const doi = work.doi
   const arxivId = work.arxiv_id
@@ -66,6 +78,28 @@ export function WorkDetail({ detail, projectId, onSelectWork }: WorkDetailProps)
           {` · ${work.cited_by_count} citations`}
         </p>
       </header>
+
+      {workAnalysis ? (
+        <section className="work-detail__section" aria-label="Network analysis">
+          <h3>Network analysis</h3>
+          <div className="work-detail__chips">
+            <span className="work-detail__chip work-detail__cluster">
+              <span
+                className="work-detail__cluster-swatch"
+                style={{ backgroundColor: cluster ? clusterColor(cluster.id, analysis?.clusters ?? []) : 'var(--muted-node)' }}
+                aria-hidden="true"
+              />
+              {cluster?.label ?? 'Unclustered'}
+            </span>
+            {workAnalysis.roles.map((role) => (
+              <span className="work-detail__chip" key={role} title={ROLE_TITLES[role]}>{role}</span>
+            ))}
+          </div>
+          <p className="work-detail__local-citations">
+            Local citations in: {workAnalysis.local_in} · out: {workAnalysis.local_out}
+          </p>
+        </section>
+      ) : null}
 
       <dl className="work-detail__facts">
         {work.doi ? (

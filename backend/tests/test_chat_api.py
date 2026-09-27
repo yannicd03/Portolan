@@ -25,6 +25,7 @@ def _app(
     agent_factory: Any,
     *,
     key: str | None = "test-key",
+    research_agent_factory: Any = None,
 ) -> FastAPI:
     settings = Settings(store="memory", data_dir=tmp_path, openrouter_api_key=key)
     app = FastAPI()
@@ -34,6 +35,7 @@ def _app(
             lambda: DocumentStore(settings.documents_dir),
             settings,
             agent_factory=agent_factory,
+            research_agent_factory=research_agent_factory,
         )
     )
     return app
@@ -160,6 +162,13 @@ def test_chat_status_and_missing_key(tmp_path: Path) -> None:
         )
         assert response.status_code == 503
         assert response.json() == {"detail": "Ask mode needs OPENROUTER_API_KEY"}
+        research = client.post(
+            f"/api/chats/{thread['id']}/messages",
+            params={"project": project.id},
+            json={"content": "map papers", "mode": "research"},
+        )
+        assert research.status_code == 503
+        assert research.json() == {"detail": "Research mode needs OPENROUTER_API_KEY"}
 
 
 def test_one_active_answer_per_thread(tmp_path: Path) -> None:
@@ -205,6 +214,119 @@ def test_one_active_answer_per_thread(tmp_path: Path) -> None:
         release.set()
         worker.join(timeout=3)
         assert first_result and first_result[0].status_code == 200
+
+
+def _sse_events(response: Any) -> list[tuple[str, Any]]:
+    events: list[tuple[str, Any]] = []
+    current: str | None = None
+    for line in response.text.splitlines():
+        if line.startswith("event: "):
+            current = line[7:]
+        elif line.startswith("data: ") and current is not None:
+            events.append((current, json.loads(line[6:])))
+    return events
+
+
+def test_research_plan_resume_and_expired_plan(tmp_path: Path) -> None:
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Research project")
+    pending: set[str] = set()
+
+    class FakeResearchAgent:
+        last_run_id: str | None = None
+
+        def bind_project(self, project_id: str) -> None:
+            self.project_id = project_id
+
+        def has_pending(self, thread_id: str) -> bool:
+            return thread_id in pending
+
+        def run(
+            self, question: str, history: list[Any], on_event: Any, *, cancel: Any, thread_id: str
+        ) -> dict[str, Any]:
+            pending.add(thread_id)
+            on_event(AgentEvent(text="Previewing results", tool="preview_search"))
+            return {
+                "status": "awaiting_approval",
+                "plan": {
+                    "tool_call_id": "call-run",
+                    "args": {"query": "graph papers", "seeds": [], "rationale": "Map the field"},
+                    "description": "Harvest graph papers to map the field.",
+                },
+            }
+
+        def resume(
+            self,
+            thread_id: str,
+            decision: str,
+            edited_args: dict[str, Any] | None,
+            message: str | None,
+            on_event: Any,
+            cancel: Any,
+        ) -> dict[str, Any]:
+            pending.remove(thread_id)
+            if decision != "reject":
+                self.last_run_id = "run-1"
+                on_event(AgentEvent(text="Harvest: search — found papers", tool="run_research"))
+            return {"status": "answered", "answer_markdown": "A concise research map."}
+
+    def research_factory(graph: Any, documents: Any, settings: Any, runs: Any) -> Any:
+        return FakeResearchAgent()
+
+    with TestClient(
+        _app(tmp_path, graph, _answer_factory, research_agent_factory=research_factory)
+    ) as client:
+        thread_id = client.post(f"/api/projects/{project.id}/chats").json()["id"]
+        assert (
+            client.post(
+                f"/api/chats/{thread_id}/resume",
+                params={"project": project.id},
+                json={"decision": "approve"},
+            ).status_code
+            == 409
+        )
+        planned = client.post(
+            f"/api/chats/{thread_id}/messages",
+            params={"project": project.id},
+            json={"content": "Map graph papers", "mode": "research"},
+        )
+        assert [event for event, _ in _sse_events(planned)] == ["status", "plan", "done"]
+        plan = _sse_events(planned)[1][1]
+        assert plan["args"]["query"] == "graph papers"
+        stored = client.get(f"/api/chats/{thread_id}", params={"project": project.id}).json()
+        assert stored["messages"][-1]["plan_status"] == "pending"
+        assert stored["messages"][-1]["mode"] == "research"
+
+        resumed = client.post(
+            f"/api/chats/{thread_id}/resume",
+            params={"project": project.id},
+            json={"decision": "edit", "args": {"query": "citation graphs"}},
+        )
+        assert [event for event, _ in _sse_events(resumed)] == ["status", "answer", "done"]
+        assert _sse_events(resumed)[1][1] == {
+            "mode": "research",
+            "answer_markdown": "A concise research map.",
+        }
+        stored = client.get(f"/api/chats/{thread_id}", params={"project": project.id}).json()
+        assert stored["messages"][1]["plan_status"] == "edited"
+        assert stored["messages"][1]["final_args"]["query"] == "citation graphs"
+        assert stored["messages"][1]["final_args"]["rationale"] == "Map the field"
+        assert stored["messages"][1]["run_id"] == "run-1"
+
+        second_thread = client.post(f"/api/projects/{project.id}/chats").json()["id"]
+        client.post(
+            f"/api/chats/{second_thread}/messages",
+            params={"project": project.id},
+            json={"content": "Another map", "mode": "research"},
+        )
+        pending.clear()  # A backend restart loses the process-local checkpointer.
+        expired = client.post(
+            f"/api/chats/{second_thread}/resume",
+            params={"project": project.id},
+            json={"decision": "approve"},
+        )
+        assert expired.status_code == 410
+        assert expired.json() == {"detail": "plan expired"}
 
 
 @pytest.mark.parametrize("path", ["../escape", "a" * 31, "g" * 32])
