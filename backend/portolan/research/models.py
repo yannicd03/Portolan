@@ -12,6 +12,7 @@ class ResearchRequest(BaseModel):
     """Options accepted by :class:`~portolan.research.ResearchRunner`."""
 
     seeds: list[str] = Field(default_factory=list)
+    exclude: list[str] = Field(default_factory=list)
     query: str | None = None
     max_works: int = Field(100, ge=1, le=2000)
     snowball_depth: int = Field(1, ge=0, le=2)
@@ -54,6 +55,7 @@ class RunReport(BaseModel):
 
     project_id: str
     candidates_found: int
+    excluded: int = 0
     screened_out: int
     included: int
     citations: int

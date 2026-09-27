@@ -13,6 +13,7 @@ from threading import Event
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
+from portolan.adapters.base import OfflineCacheMissError
 from portolan.concepts.merge import KeywordOccurrence, merge_keywords_with_report
 from portolan.documents import DocumentStore, PdfCandidate, PdfFetcher
 from portolan.graph import (
@@ -380,6 +381,31 @@ class ResearchRunner:
         if progress is not None:
             progress(RunProgress(stage=stage, message=message, counts=dict(counts)))
 
+    @staticmethod
+    def _remove_excluded_candidate(
+        candidates: dict[str, _Candidate],
+        identity_index: dict[tuple[str, str], str],
+        record: Mapping[str, Any],
+        excluded_identities: set[tuple[str, str]] | None,
+        excluded_count: list[int] | None,
+    ) -> bool:
+        if not excluded_identities:
+            return False
+        identities = _record_identifiers(record)
+        if not identities & excluded_identities:
+            return False
+        matches = {identity_index[item] for item in identities if item in identity_index}
+        if any(candidates[key].is_seed for key in matches if key in candidates):
+            raise ValueError("a seed is also excluded")
+        if excluded_count is not None:
+            excluded_count[0] += 1
+        for key in matches:
+            candidates.pop(key, None)
+            for identity, mapped_key in list(identity_index.items()):
+                if mapped_key == key:
+                    del identity_index[identity]
+        return True
+
     def _add_candidate(
         self,
         candidates: dict[str, _Candidate],
@@ -391,12 +417,22 @@ class ResearchRunner:
         is_seed: bool,
         cap: int,
         warnings: list[str],
+        excluded_identities: set[tuple[str, str]] | None = None,
+        excluded_count: list[int] | None = None,
     ) -> str | None:
         if not isinstance(record, Mapping):
             return None
         copied = copy.deepcopy(dict(record))
         identities = _record_identifiers(copied)
         matches = {identity_index[item] for item in identities if item in identity_index}
+        if self._remove_excluded_candidate(
+            candidates,
+            identity_index,
+            copied,
+            excluded_identities,
+            excluded_count,
+        ):
+            return None
         if not matches:
             if len(candidates) >= cap:
                 if "candidate cap reached; stopped expanding" not in warnings:
@@ -476,6 +512,8 @@ class ResearchRunner:
                 )
             except RunCancelled:
                 raise
+            except OfflineCacheMissError:
+                raise
             except Exception:
                 continue
             record = self._first_mapping(result)
@@ -492,6 +530,8 @@ class ResearchRunner:
             result = lookup(doi)
         except RunCancelled:
             raise
+        except OfflineCacheMissError:
+            raise
         except Exception:
             return None
         return result if isinstance(result, Mapping) else None
@@ -506,6 +546,8 @@ class ResearchRunner:
         try:
             results = search(title, limit=5)
         except RunCancelled:
+            raise
+        except OfflineCacheMissError:
             raise
         except Exception:
             return None
@@ -615,6 +657,96 @@ class ResearchRunner:
                 return openalex_record, f"via {source} title search", None
         return None
 
+    def _resolve_excludes(
+        self,
+        request: ResearchRequest,
+        warnings: list[str],
+        cancel: Event | None,
+    ) -> set[tuple[str, str]]:
+        """Resolve excluded identifiers and retain directly supplied identities."""
+
+        if not request.exclude:
+            return set()
+
+        excluded_identities: set[tuple[str, str]] = set()
+        for identifier in request.exclude:
+            excluded_identities.update(_identifier_keys_for_input(identifier))
+
+        adapter = self.sources.openalex
+        records: list[Mapping[str, Any]] = []
+        lookup_many = getattr(adapter, "lookup_many", None)
+        if callable(lookup_many):
+            try:
+                result = lookup_many(request.exclude)
+                records = [item for item in result if isinstance(item, Mapping)]
+            except RunCancelled:
+                raise
+            except OfflineCacheMissError:
+                raise
+            except ValueError:
+                # A malformed value can make a batch lookup fail.  Retry one at
+                # a time so valid exclusions still get resolved.
+                lookup = getattr(adapter, "lookup", None)
+                if callable(lookup):
+                    for identifier in request.exclude:
+                        self._check_cancel(cancel)
+                        try:
+                            item = lookup(identifier)
+                        except RunCancelled:
+                            raise
+                        except OfflineCacheMissError:
+                            raise
+                        except Exception:
+                            item = None
+                        if isinstance(item, Mapping):
+                            records.append(item)
+            except Exception:
+                # Exclusions are best effort.  The raw identity remains in the
+                # set above, while fallback adapters get a chance below.
+                records = []
+        else:
+            lookup = getattr(adapter, "lookup", None)
+            if callable(lookup):
+                for identifier in request.exclude:
+                    self._check_cancel(cancel)
+                    try:
+                        item = lookup(identifier)
+                    except RunCancelled:
+                        raise
+                    except OfflineCacheMissError:
+                        raise
+                    except Exception:
+                        item = None
+                    if isinstance(item, Mapping):
+                        records.append(item)
+
+        for identifier in request.exclude:
+            self._check_cancel(cancel)
+            requested_keys = _identifier_keys_for_input(identifier)
+            match_index = next(
+                (
+                    index
+                    for index, record in enumerate(records)
+                    if requested_keys & _record_identifiers(record)
+                ),
+                None,
+            )
+            if match_index is None and len(request.exclude) == len(records) == 1:
+                match_index = 0
+            if match_index is None:
+                fallback = self._fallback_seed(identifier, cancel)
+                if fallback is None:
+                    warnings.append(f"unresolvable exclude: {identifier}")
+                    continue
+                fallback_record, _, extra_doi = fallback
+                fallback_record = self._merge_seed_identifiers(
+                    fallback_record, identifier, extra_doi=extra_doi
+                )
+                excluded_identities.update(_record_identifiers(fallback_record))
+                continue
+            excluded_identities.update(_record_identifiers(records[match_index]))
+        return excluded_identities
+
     def _resolve_seeds(
         self,
         request: ResearchRequest,
@@ -623,6 +755,8 @@ class ResearchRunner:
         warnings: list[str],
         cancel: Event | None,
         progress: Callable[[RunProgress], None] | None = None,
+        excluded_identities: set[tuple[str, str]] | None = None,
+        excluded_count: list[int] | None = None,
     ) -> set[str]:
         if not request.seeds:
             return set()
@@ -665,6 +799,8 @@ class ResearchRunner:
         for seed in request.seeds:
             self._check_cancel(cancel)
             requested_keys = _identifier_keys_for_input(seed)
+            if excluded_identities and requested_keys & excluded_identities:
+                raise ValueError(f"seed is also excluded: {seed}")
             match_index = next(
                 (
                     index
@@ -684,6 +820,10 @@ class ResearchRunner:
                 fallback_record = self._merge_seed_identifiers(
                     fallback_record, seed, extra_doi=extra_doi
                 )
+                if excluded_identities and (
+                    _record_identifiers(fallback_record) & excluded_identities
+                ):
+                    raise ValueError(f"seed is also excluded: {seed}")
                 key = self._add_candidate(
                     candidates,
                     identity_index,
@@ -693,6 +833,8 @@ class ResearchRunner:
                     is_seed=True,
                     cap=max(1, request.max_works * 5),
                     warnings=warnings,
+                    excluded_identities=excluded_identities,
+                    excluded_count=excluded_count,
                 )
                 if key is not None:
                     seed_keys.add(key)
@@ -712,6 +854,8 @@ class ResearchRunner:
                 is_seed=True,
                 cap=max(1, request.max_works * 5),
                 warnings=warnings,
+                excluded_identities=excluded_identities,
+                excluded_count=excluded_count,
             )
             if key is not None:
                 seed_keys.add(key)
@@ -725,6 +869,8 @@ class ResearchRunner:
         warnings: list[str],
         cancel: Event | None,
         seed_keys: set[str],
+        excluded_identities: set[tuple[str, str]] | None = None,
+        excluded_count: list[int] | None = None,
     ) -> set[str]:
         if not request.query:
             return set(seed_keys)
@@ -739,7 +885,17 @@ class ResearchRunner:
         query_only = not seed_keys
         for item in results:
             self._check_cancel(cancel)
-            if not isinstance(item, Mapping) or not _year_allowed(item, request):
+            if not isinstance(item, Mapping):
+                continue
+            if self._remove_excluded_candidate(
+                candidates,
+                identity_index,
+                item,
+                excluded_identities,
+                excluded_count,
+            ):
+                continue
+            if not _year_allowed(item, request):
                 continue
             key = self._add_candidate(
                 candidates,
@@ -750,6 +906,8 @@ class ResearchRunner:
                 is_seed=False,
                 cap=max(1, request.max_works * 5),
                 warnings=warnings,
+                excluded_identities=excluded_identities,
+                excluded_count=excluded_count,
             )
             if key is not None and query_only:
                 candidates[key].frontier_seed = True
@@ -765,6 +923,8 @@ class ResearchRunner:
         cancel: Event | None,
         frontier_keys: set[str],
         progress: Callable[[RunProgress], None] | None = None,
+        excluded_identities: set[tuple[str, str]] | None = None,
+        excluded_count: list[int] | None = None,
     ) -> set[tuple[str, str]]:
         relation_pairs: set[tuple[str, str]] = set()
         expanded: set[str] = set()
@@ -793,6 +953,12 @@ class ResearchRunner:
                     for reference in refs:
                         reference_text = _text(reference)
                         if reference_text is None:
+                            continue
+                        if excluded_identities and (
+                            _identifier_keys_for_input(reference_text) & excluded_identities
+                        ):
+                            if excluded_count is not None:
+                                excluded_count[0] += 1
                             continue
                         reference_ids.append(reference_text)
                         reference_parents.setdefault(reference_text, set()).add(parent_key)
@@ -823,7 +989,17 @@ class ResearchRunner:
                             f"Processed {processed} snowball results",
                             {"candidates": len(candidates), "included": 0},
                         )
-                    if not isinstance(item, Mapping) or not _year_allowed(item, request):
+                    if not isinstance(item, Mapping):
+                        continue
+                    if self._remove_excluded_candidate(
+                        candidates,
+                        identity_index,
+                        item,
+                        excluded_identities,
+                        excluded_count,
+                    ):
+                        continue
+                    if not _year_allowed(item, request):
                         continue
                     key = self._add_candidate(
                         candidates,
@@ -834,6 +1010,8 @@ class ResearchRunner:
                         is_seed=False,
                         cap=cap,
                         warnings=warnings,
+                        excluded_identities=excluded_identities,
+                        excluded_count=excluded_count,
                     )
                     if key is None:
                         continue
@@ -873,7 +1051,17 @@ class ResearchRunner:
                                     f"Processed {processed} snowball results",
                                     {"candidates": len(candidates), "included": 0},
                                 )
-                            if not isinstance(item, Mapping) or not _year_allowed(item, request):
+                            if not isinstance(item, Mapping):
+                                continue
+                            if self._remove_excluded_candidate(
+                                candidates,
+                                identity_index,
+                                item,
+                                excluded_identities,
+                                excluded_count,
+                            ):
+                                continue
+                            if not _year_allowed(item, request):
                                 continue
                             key = self._add_candidate(
                                 candidates,
@@ -884,6 +1072,8 @@ class ResearchRunner:
                                 is_seed=False,
                                 cap=cap,
                                 warnings=warnings,
+                                excluded_identities=excluded_identities,
+                                excluded_count=excluded_count,
                             )
                             if key is not None:
                                 relation_pairs.add((key, parent_key))
@@ -999,6 +1189,8 @@ class ResearchRunner:
             return
         try:
             records = lookup_many(identifiers)
+        except OfflineCacheMissError:
+            raise
         except Exception as exc:  # best effort enrichment
             warnings.append(f"Semantic Scholar enrichment failed: {exc}")
             return
@@ -1394,11 +1586,25 @@ class ResearchRunner:
         identity_index: dict[tuple[str, str], str] = {}
         included: list[_Candidate] = []
         relations: set[tuple[str, str]] = set()
+        excluded_count = [0]
 
-        self._emit(progress, "resolve", "Resolving seeds", {"candidates": 0, "included": 0})
+        self._emit(
+            progress,
+            "resolve",
+            "Resolving seeds",
+            {"candidates": 0, "included": 0},
+        )
         self._check_cancel(cancel)
+        excluded_identities = self._resolve_excludes(request, warnings, cancel)
         seed_keys = self._resolve_seeds(
-            request, candidates, identity_index, warnings, cancel, progress
+            request,
+            candidates,
+            identity_index,
+            warnings,
+            cancel,
+            progress,
+            excluded_identities,
+            excluded_count,
         )
         if not seed_keys and not request.query:
             raise ValueError("none of the seeds could be resolved and no query was provided")
@@ -1408,7 +1614,14 @@ class ResearchRunner:
         )
         self._check_cancel(cancel)
         frontier_keys = self._search(
-            request, candidates, identity_index, warnings, cancel, seed_keys
+            request,
+            candidates,
+            identity_index,
+            warnings,
+            cancel,
+            seed_keys,
+            excluded_identities,
+            excluded_count,
         )
 
         self._emit(
@@ -1426,6 +1639,8 @@ class ResearchRunner:
             cancel,
             frontier_keys,
             progress,
+            excluded_identities,
+            excluded_count,
         )
 
         self._emit(
@@ -1473,6 +1688,7 @@ class ResearchRunner:
         report = RunReport(
             project_id=project_id,
             candidates_found=len(candidates),
+            excluded=excluded_count[0],
             screened_out=screened_out,
             included=len(included),
             citations=citations,

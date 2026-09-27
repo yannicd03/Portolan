@@ -1,0 +1,27 @@
+surveys:
+  - key: speculative-decoding
+    survey: arxiv:2401.07851
+    title: "Unlocking Efficiency in Large Language Model Inference: A Comprehensive Survey of Speculative Decoding"
+    query: "speculative decoding for faster large language model inference"
+    seeds:
+      - arxiv:2211.17192
+      - arxiv:2302.01318
+    to_year: 2024
+
+  - key: efficient-transformers
+    survey: arxiv:2009.06732
+    title: "Efficient Transformers: A Survey"
+    query: "efficient transformer attention for long sequences"
+    seeds:
+      - arxiv:2001.04451
+      - arxiv:2004.05150
+    to_year: 2020
+
+  - key: rag
+    survey: arxiv:2312.10997
+    title: "Retrieval-Augmented Generation for Large Language Models: A Survey"
+    query: "retrieval-augmented generation with large language models"
+    seeds:
+      - arxiv:2005.11401
+      - arxiv:2002.08909
+    to_year: 2023

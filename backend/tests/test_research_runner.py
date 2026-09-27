@@ -306,6 +306,117 @@ def test_query_only_search_frontier_and_year_filter() -> None:
     assert report.candidates_found == 2
 
 
+def test_excluded_forward_snowball_work_is_not_a_hub() -> None:
+    seed = record("W1", "Seed")
+    survey = record("W2", "Excluded survey", refs=["W3"])
+    reference = record("W3", "Survey reference")
+    source = FakeOpenAlex(
+        [seed, survey, reference],
+        citing={"W1": ["W2"], "W2": ["W3"]},
+    )
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Excluded hub")
+
+    report = make_runner(graph, source).run(
+        project.id,
+        ResearchRequest(
+            seeds=["W1"],
+            exclude=["W2"],
+            max_works=10,
+            snowball_depth=2,
+            acquire_pdfs=False,
+        ),
+    )
+
+    assert report.excluded == 1
+    assert report.candidates_found == 1
+    assert {work.openalex_id for work in graph.project_works(project.id)} == {"W1"}
+    assert [identifier for identifier, _ in source.forward_calls] == ["W1"]
+
+
+def test_excluded_search_hit_is_dropped_and_counted() -> None:
+    included = record("W1", "Included result")
+    excluded = record("W2", "Excluded result")
+    source = FakeOpenAlex([included, excluded], search=["W1", "W2"])
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Excluded search hit")
+
+    report = make_runner(graph, source).run(
+        project.id,
+        ResearchRequest(
+            query="results",
+            exclude=["W2"],
+            snowball_depth=0,
+            acquire_pdfs=False,
+        ),
+    )
+
+    assert report.excluded == 1
+    assert report.candidates_found == 1
+    assert report.included == 1
+    assert {work.openalex_id for work in graph.project_works(project.id)} == {"W1"}
+
+
+def test_excluded_doi_drops_arxiv_only_candidate_after_identity_merge() -> None:
+    resolved = record(
+        "W2",
+        "Excluded survey",
+        doi="10.1000/excluded",
+        arxiv="2401.00001",
+    )
+    arxiv_only = deepcopy(resolved)
+    arxiv_only["openalex_id"] = None
+    arxiv_only["identifiers"] = {"openalex": None, "doi": None, "arxiv": "2401.00001"}
+    source = FakeOpenAlex([resolved])
+
+    def search(
+        query: str,
+        *,
+        limit: int = 25,
+        from_year: int | None = None,
+        to_year: int | None = None,
+    ) -> list[dict[str, Any]]:
+        return [deepcopy(arxiv_only)]
+
+    source.search = search
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Excluded DOI")
+
+    report = make_runner(graph, source).run(
+        project.id,
+        ResearchRequest(
+            query="survey",
+            exclude=["doi:10.1000/excluded"],
+            snowball_depth=0,
+            acquire_pdfs=False,
+        ),
+    )
+
+    assert report.excluded == 1
+    assert report.candidates_found == 0
+    assert graph.project_works(project.id) == []
+
+
+def test_seed_and_exclude_overlap_is_an_error() -> None:
+    seed = record("W1", "Seed", doi="10.1000/seed")
+    source = FakeOpenAlex([seed])
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Seed overlap")
+
+    with pytest.raises(ValueError, match="excluded"):
+        make_runner(graph, source).run(
+            project.id,
+            ResearchRequest(
+                seeds=["W1"],
+                exclude=["doi:10.1000/seed"],
+                snowball_depth=0,
+                acquire_pdfs=False,
+            ),
+        )
+
+    assert graph.project_works(project.id) == []
+
+
 def test_seed_priority_deterministic_cut_and_identity_dedupe() -> None:
     seed = record("W9", "Seed", doi="10.1000/seed")
     one = record("W1", "Same topic", doi="10.1000/one")
