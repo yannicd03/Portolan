@@ -132,13 +132,25 @@ the held-out survey. The average and (if any) majority of the three fold choices
 are the robust candidates for the defaults; the best in-sample point is not
 used.
 
-Results: pending. The pools of the three surveys have not been dumped yet
-(the local HTTP cache does not cover the live harvest), so the current defaults
-(`semantic 0.40, cocitation 0.25, link 0.15, coupling 0.15, citation 0.05`) are
-provisional and not yet backed by the held-out table below.
+Results (2026-09-27; pools dumped from the live harvest with the defaults below,
+max_works 150, snowball depth 2, keyless OpenAlex):
 
 | Held out | Weights chosen on the other two | Held-out recall | Held-out precision | Default recall | Legacy recall |
 | --- | --- | ---: | ---: | ---: | ---: |
-| speculative-decoding | pending | | | | |
-| efficient-transformers | pending | | | | |
-| rag | pending | | | | |
+| efficient-transformers | semantic 0.67, coupling 0.17, citation 0.17 | 0.266 | 0.187 | 0.319 | 0.223 |
+| rag | semantic 0.80, citation 0.20 | 0.134 | 0.187 | 0.149 | 0.124 |
+| speculative-decoding | semantic 0.36, cocitation 0.36, coupling 0.18, citation 0.09 | 0.109 | 0.045 | 0.239 | 0.152 |
+| mean | | 0.169 | 0.140 | 0.236 | 0.166 |
+
+With three surveys the weight search overfits: the weights chosen on two surveys
+do worse on the third than the defaults, which were set before any real pool
+existed and are therefore also out-of-sample. The defaults stay
+(`semantic 0.40, cocitation 0.25, link 0.15, coupling 0.15, citation 0.05`): they
+raise macro included recall from 0.166 (legacy screener) to 0.236 and precision
+from 0.124 to 0.173. The average of the fold choices scores 0.246 on all three
+surveys, but it was tuned on them, so it is not adopted. More surveys are needed
+before tuning weights is meaningful.
+
+Caveat: the depth-2 chase round ranks the pool with the active screener, so a pool
+reflects the screener it was dumped with; replaying other weights on it measures
+selection, not the harvest those weights would have produced.

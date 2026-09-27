@@ -12,14 +12,14 @@ Settings used:
 
 | Survey | R | Candidates | Included | Candidate recall | Included recall | Included precision |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| speculative-decoding | 46 | 714 | 150 | 0.652 | 0.304 | 0.093 |
-| efficient-transformers | 94 | 736 | 148 | 0.415 | 0.223 | 0.149 |
-| rag | 202 | 708 | 149 | 0.267 | 0.124 | 0.168 |
+| speculative-decoding | 46 | 660 | 150 | 0.435 | 0.239 | 0.073 |
+| efficient-transformers | 94 | 736 | 146 | 0.415 | 0.319 | 0.212 |
+| rag | 202 | 706 | 150 | 0.272 | 0.149 | 0.213 |
 
 Macro averages:
 
-- Candidate recall: 0.445
-- Included recall: 0.217
-- Included precision: 0.137
+- Candidate recall: 0.374
+- Included recall: 0.236
+- Included precision: 0.166
 
 `R` is the survey's identity-resolved reference set. Missed reference titles are listed in each per-survey JSON file, capped at 50.
