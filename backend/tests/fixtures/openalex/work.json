@@ -1,0 +1,106 @@
+{
+  "id": "https://openalex.org/W123456789",
+  "doi": "https://doi.org/10.5555/EXAMPLE.1",
+  "ids": {
+    "openalex": "https://openalex.org/W123456789",
+    "doi": "https://doi.org/10.5555/EXAMPLE.1",
+    "mag": "999999999",
+    "pmid": "https://pubmed.ncbi.nlm.nih.gov/12345678",
+    "pmcid": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1234567"
+  },
+  "display_name": "A small example of open metadata",
+  "title": "A small example of open metadata",
+  "publication_year": 2024,
+  "abstract_inverted_index": {
+    "Open": [0],
+    "metadata": [1],
+    "makes": [2],
+    "research": [3],
+    "portable": [4]
+  },
+  "type": "journal-article",
+  "primary_location": {
+    "landing_page_url": "https://publisher.example/articles/example-1",
+    "source": {
+      "display_name": "Journal of Open Research",
+      "type": "journal"
+    }
+  },
+  "authorships": [
+    {
+      "author_position": "first",
+      "author": {
+        "id": "https://openalex.org/A111",
+        "display_name": "Ada Lovelace",
+        "orcid": "https://orcid.org/0000-0001-2345-6789"
+      },
+      "raw_author_name": "Ada Lovelace"
+    },
+    {
+      "author_position": "last",
+      "author": {
+        "id": "https://openalex.org/A222",
+        "display_name": "Grace Hopper",
+        "orcid": "https://orcid.org/0000-0002-9876-5432"
+      },
+      "raw_author_name": "Grace Hopper"
+    }
+  ],
+  "keywords": [
+    {"id": "https://openalex.org/keywords/example", "display_name": "open data", "score": 0.91}
+  ],
+  "topics": [
+    {"id": "https://openalex.org/T123", "display_name": "Research metadata", "score": 0.82}
+  ],
+  "primary_topic": {
+    "id": "https://openalex.org/T123",
+    "display_name": "Research metadata",
+    "score": 0.82
+  },
+  "referenced_works": [
+    "https://openalex.org/W456",
+    "https://openalex.org/W789"
+  ],
+  "cited_by_count": 42,
+  "best_oa_location": {
+    "pdf_url": "https://arxiv.org/pdf/2401.12345v2.pdf",
+    "landing_page_url": "https://arxiv.org/abs/2401.12345v2",
+    "is_oa": true,
+    "version": "publishedVersion",
+    "license": "cc-by",
+    "source": {
+      "display_name": "arXiv",
+      "type": "repository"
+    }
+  },
+  "locations": [
+    {
+      "pdf_url": "https://arxiv.org/pdf/2401.12345v2.pdf",
+      "landing_page_url": "https://arxiv.org/abs/2401.12345v2",
+      "is_oa": true,
+      "version": "publishedVersion",
+      "license": "cc-by",
+      "source": {"display_name": "arXiv", "type": "repository"}
+    },
+    {
+      "pdf_url": "https://repository.example/accepted/example-1.pdf",
+      "landing_page_url": "https://repository.example/accepted/example-1",
+      "is_oa": true,
+      "version": "acceptedVersion",
+      "license": "cc-by-nc",
+      "source": {"display_name": "Example Repository", "type": "repository"}
+    },
+    {
+      "pdf_url": "https://publisher.example/paywalled/example-1.pdf",
+      "landing_page_url": "https://publisher.example/articles/example-1",
+      "is_oa": false,
+      "version": "publishedVersion",
+      "license": null,
+      "source": {"display_name": "Journal of Open Research", "type": "journal"}
+    }
+  ],
+  "open_access": {
+    "is_oa": true,
+    "oa_url": "https://arxiv.org/abs/2401.12345v2"
+  }
+}

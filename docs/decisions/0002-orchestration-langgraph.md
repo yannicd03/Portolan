@@ -1,6 +1,7 @@
 # ADR-0002 — orchestration is a plain LangGraph `StateGraph`
 
-- **Status:** accepted
+- **Status:** accepted; superseded in part by ADR-0007 (2026-09-26) — the chat agents run on
+  Deep Agents. Superseded by: `0007-chat-agents-deepagents.md` (chat agents only)
 - **Date:** 2026-09-22
 - **Decides:** open decision 3 in the design-notes spec (`$PORTOLAN_NOTES_DIR/spec.md`)
 

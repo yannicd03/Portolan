@@ -45,6 +45,9 @@ DEFAULT_SOURCE_INTERVALS: dict[str, float] = {
     "arxiv": 5.0,
     "semanticscholar": 1.0,
     "crossref": 1.0,
+    # Conservative floors for the OpenAlex and Unpaywall APIs.
+    "openalex": 0.1,
+    "unpaywall": 0.1,
 }
 
 #: Statuses that mean "back off and try again" rather than "this request is wrong".

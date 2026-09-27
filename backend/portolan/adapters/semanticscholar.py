@@ -77,8 +77,9 @@ class SemanticScholarAdapter:
         "paperId,externalIds,title,year,abstract,tldr,venue,publicationTypes,"
         "openAccessPdf,url,references.externalIds,references.title"
     )
+    # The references/citations endpoints reject nested `tldr` with a 400.
     default_relationship_fields = (
-        "paperId,externalIds,title,year,abstract,tldr,venue,publicationTypes,openAccessPdf,url"
+        "paperId,externalIds,title,year,abstract,venue,publicationTypes,openAccessPdf,url"
     )
 
     def __init__(
@@ -438,7 +439,8 @@ class SemanticScholarAdapter:
             for field in self.relationship_fields.split(",")
             if field.strip()
         )
-        fields = f"{related_fields},contexts,intents,isInfluential,citationContexts"
+        # `citationContexts` is not a valid field (400); the contexts arrive as `contexts`.
+        fields = f"{related_fields},contexts,intents,isInfluential"
         params = {
             "fields": fields,
             "limit": max(1, int(limit)),

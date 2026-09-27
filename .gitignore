@@ -14,6 +14,7 @@ __pycache__/
 # Data: caches, raw payloads, stores
 data/
 cache/
+.cache/
 *.db
 *.sqlite3
 store/oxigraph/
@@ -25,3 +26,6 @@ frontend/dist/
 
 # OS
 .DS_Store
+
+# Eval: frozen candidate pools (contain third-party abstracts)
+eval/recall/pools/
