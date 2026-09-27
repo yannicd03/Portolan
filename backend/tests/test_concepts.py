@@ -9,7 +9,7 @@ import pytest
 
 from portolan.concepts.filter import filter_concepts
 from portolan.concepts.grounding import is_grounded
-from portolan.concepts.keyphrases import extract_keyphrases, strip_boilerplate
+from portolan.concepts.keyphrases import extract_keyphrases, strip_boilerplate, strip_links
 from portolan.concepts.merge import (
     DEFAULT_STOP_TERMS,
     ConceptCluster,
@@ -743,3 +743,140 @@ def test_keyphrases_drop_word_mostly_used_inside_one_phrase() -> None:
 
     assert "branch predictor" in terms
     assert "branch" not in terms
+
+
+def test_keyphrases_drop_glasgow_stop_words_as_phrase_edges() -> None:
+    works = [
+        (
+            "a",
+            "Speculative decoding latency",
+            "Due to memory bandwidth limits, decoding is slow. We find that draft "
+            "tokens help, and a 7 billion parameter model keeps its accuracy.",
+        ),
+        (
+            "b",
+            "Speculative decoding at scale",
+            "Due to sequential decoding, latency is high. We find draft tokens cut the "
+            "cost of a 70 billion parameter model.",
+        ),
+    ]
+
+    terms = _terms(works)
+
+    assert {"speculative decoding", "draft token"} <= terms
+    assert not {"due", "find", "billion", "billion parameter", "billion parameter model"} & terms
+
+
+def test_strip_links_removes_urls_emails_dois_and_code_hosts() -> None:
+    text = (
+        "Code is available at https://github.com/org/spec-decode and www.example.org/x. "
+        "Contact first.last@cs.example.edu, see doi:10.1145/3600006.3613165 or "
+        "10.48550/arXiv.2302.01318; weights on huggingface.co/org/model and GitHub."
+    )
+
+    stripped = strip_links(text)
+
+    for fragment in ("http", "github", "GitHub", "www", "example", "@", "10.", "huggingface"):
+        assert fragment not in stripped
+    assert stripped.startswith("Code is available at")
+    assert strip_links("") == ""
+
+
+def test_keyphrases_never_emit_url_fragments() -> None:
+    works = [
+        (
+            "a",
+            "Speculative decoding",
+            "Draft tokens are verified in parallel. Code: https://github.com/a/specdec.",
+        ),
+        (
+            "b",
+            "Speculative decoding for serving",
+            "Our draft tokens are verified in one pass; see github.com/b/serve or "
+            "https://b.github.io/serve for details.",
+        ),
+        ("c", "Other", "Released at www.lab.com/tool and lab.com."),
+    ]
+
+    terms = _terms(works)
+
+    assert "speculative decoding" in terms
+    assert not {"com", "github", "github com", "http", "https", "io", "www"} & terms
+
+
+def test_keyphrases_drop_standalone_hyphenated_modifiers() -> None:
+    compounds = [
+        "real-world",
+        "large-scale",
+        "high-quality",
+        "state-of-the-art",
+        "well-known",
+        "fine-grained",
+        "tree-based",
+        "self-supervised",
+    ]
+    # One compound per sentence, so no multi-word phrase subsumes it.
+    abstract = " ".join(f"{word.capitalize()}." for word in [*compounds, "self-attention"])
+    works = [(f"w{index}", "Attention", abstract) for index in range(3)]
+
+    terms = {
+        occurrence.term for occurrence in extract_keyphrases(works, max_per_work=len(compounds) + 2)
+    }
+
+    # "real world": "real" is an academic stop word, but "real-world" is a single
+    # token and used to slip past the per-token edge check.
+    assert terms == {"self attention"}
+
+
+def test_keyphrases_keep_hyphenated_modifiers_inside_phrases() -> None:
+    works = [
+        ("a", "Real-world workloads", "Batching real-world workloads on GPUs."),
+        ("b", "Serving real-world workloads", "Traces of real-world workloads."),
+    ]
+
+    terms = _terms(works)
+
+    assert "real world workload" in terms
+    assert "real world" not in terms
+
+
+def test_keyphrases_drop_three_word_prefixes_truncated_by_the_ngram_cap() -> None:
+    works = [
+        (
+            "a",
+            "Accelerating large language models with speculative decoding",
+            "Accelerating large language models is costly. We use a draft model.",
+        ),
+        (
+            "b",
+            "Accelerating large language models via early exiting",
+            "Early exiting skips layers of the draft model.",
+        ),
+        (
+            "c",
+            "Accelerating large language model inference",
+            "Accelerating large language models needs a draft model.",
+        ),
+    ]
+
+    terms = _terms(works)
+
+    assert "accelerating large language" not in terms
+    assert "draft model" in terms
+
+
+def test_keyphrases_keep_three_word_phrases_with_varied_continuations() -> None:
+    works = [
+        (
+            "a",
+            "Mixture of experts inference",
+            "Mixture of experts (MoE) layers route tokens. Mixture of experts routing.",
+        ),
+        (
+            "b",
+            "Serving mixture of experts",
+            "A mixture of experts is sparse. Offloading mixture of experts weights.",
+        ),
+    ]
+
+    assert "mixture of expert" in _terms(works)

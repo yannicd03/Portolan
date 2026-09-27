@@ -8,9 +8,14 @@ model, or third-party dependency is involved, so the output is fully reproducibl
 
 Before extraction, venue and licence boilerplate ("(c) 2023 Association for
 Computational Linguistics", "Published as a conference paper at ...") is cut from
-the abstracts.  Single words are held to a stricter standard than phrases: an
-uppercase acronym (GPU, LLM) is kept in its canonical form; any other word must be
-a noun-like domain term that is not generic and not redundant with a kept phrase.
+the abstracts, and URLs, e-mail addresses, DOIs and code-hosting references are
+removed from titles and abstracts.  A hyphenated compound modifier ("real-world",
+"fine-grained") is not a concept on its own, and a three-word phrase that is nearly
+always followed by the same word ("accelerating large language" -> "models") is a
+truncated fragment of a longer unit and is dropped.  Single words are held to a
+stricter standard than phrases: an uppercase acronym (GPU, LLM) is kept in its
+canonical form; any other word must be a noun-like domain term that is not generic
+and not redundant with a kept phrase.
 """
 
 from __future__ import annotations
@@ -32,6 +37,9 @@ MIN_WORK_SUPPORT: Final[int] = 2
 # A shorter phrase is dropped in favour of a qualifying longer phrase containing it
 # when the longer one appears in at least this share of the shorter one's works.
 SIMILAR_DF_RATIO: Final[float] = 0.8
+# A MAX_NGRAM-word phrase followed by one fixed content word in at least this share
+# of its occurrences is a truncated prefix of a longer unit and is dropped.
+TRUNCATION_RATIO: Final[float] = 0.8
 
 
 def _words(block: str) -> list[str]:
@@ -40,26 +48,50 @@ def _words(block: str) -> list[str]:
     return block.split()
 
 
-# Words that may not start or end a phrase.  Compact English function words plus
-# generic academic vocabulary; phrases may still contain them in the middle
-# ("mixture of experts").
-_ENGLISH_STOP_WORDS: Final[frozenset[str]] = frozenset(
+# The classic Glasgow IR English stop-word list (318 words, the list scikit-learn
+# ships as ``ENGLISH_STOP_WORDS``), embedded as data to avoid a dependency.
+_GLASGOW_STOP_WORDS: Final[frozenset[str]] = frozenset(
     _words(
         """
-    a about above after again against all almost also although always am among an and
-    another any are as at be because been before being below between both but by can
-    cannot could did do does doing done down during each either else even ever every
-    few for from further had has have having he her here hers him his how however i if
-    in into is it its itself just less like many may me might more most much must my
-    neither no nor not now of off often on once one only onto or other others otherwise
-    our ours out over own per quite rather same several she should since so some such
-    than that the their theirs them then there therefore these they this those though
-    through thus to too toward towards under until up upon us very via was we well were
-    what when where whether which while who whom whose why will with within without
-    would yet you your
+    a about above across after afterwards again against all almost alone along already
+    also although always am among amongst amoungst amount an and another any anyhow
+    anyone anything anyway anywhere are around as at back be became because become
+    becomes becoming been before beforehand behind being below beside besides between
+    beyond bill both bottom but by call can cannot cant co con could couldnt cry de
+    describe detail do done down due during each eg eight either eleven else elsewhere
+    empty enough etc even ever every everyone everything everywhere except few fifteen
+    fifty fill find fire first five for former formerly forty found four from front full
+    further get give go had has hasnt have he hence her here hereafter hereby herein
+    hereupon hers herself him himself his how however hundred i ie if in inc indeed
+    interest into is it its itself keep last latter latterly least less ltd made many may
+    me meanwhile might mill mine more moreover most mostly move much must my myself name
+    namely neither never nevertheless next nine no nobody none noone nor not nothing now
+    nowhere of off often on once one only onto or other others otherwise our ours
+    ourselves out over own part per perhaps please put rather re same see seem seemed
+    seeming seems serious several she should show side since sincere six sixty so some
+    somehow someone something sometime sometimes somewhere still such system take ten
+    than that the their them themselves then thence there thereafter thereby therefore
+    therein thereupon these they thick thin third this those though three through
+    throughout thru thus to together too top toward towards twelve twenty two un under
+    until up upon us very via was we well were what whatever when whence whenever where
+    whereafter whereas whereby wherein whereupon wherever whether which while whither who
+    whoever whole whom whose why will with within without would yet you your yours
+    yourself yourselves
     """
     )
 )
+# Content nouns of the Glasgow list that head or modify technical phrases
+# ("recommender system", "side channel", "full attention", "fire detection").  They
+# stay usable as phrase edges; "system" is still barred as a single word below.
+_GLASGOW_CONTENT_WORDS: Final[frozenset[str]] = frozenset(
+    _words("bill detail fire front full interest mill side system thick thin")
+)
+# Words that may not start or end a phrase: English function words plus generic
+# academic vocabulary; phrases may still contain them in the middle ("mixture of
+# experts").
+_ENGLISH_STOP_WORDS: Final[frozenset[str]] = (
+    _GLASGOW_STOP_WORDS - _GLASGOW_CONTENT_WORDS
+) | frozenset(_words("did does doing having just like quite theirs"))
 _ACADEMIC_STOP_WORDS: Final[frozenset[str]] = frozenset(
     _words(
         """
@@ -78,7 +110,7 @@ _ACADEMIC_STOP_WORDS: Final[frozenset[str]] = frozenset(
     up to while leading lead leads provide provides provided enable enables enabling
     address addresses addressing problem problems challenge challenges way ways number
     numbers range order aim goal ability abilities alleviate alleviates current
-    currently exploit exploits exploiting original real
+    currently exploit exploits exploiting original real thousand million billion trillion
     """
     )
 )
@@ -153,6 +185,21 @@ _BOILERPLATE_PHRASES: Final[tuple[str, ...]] = (
     "all rights reserved",
 )
 
+# URLs, e-mail addresses, DOIs and code-hosting references ("github.com/org/repo",
+# "available on GitHub").  They are replaced by a segment break, so their pieces
+# ("com", "github") never form phrases and no phrase spans the removed reference.
+_LINK_RE: Final[re.Pattern[str]] = re.compile(
+    r"\b(?:https?|ftp)://\S+"
+    r"|\bwww\.\S+"
+    r"|[\w.+-]+@[\w-]+(?:\.[\w-]+)+"
+    r"|\bdoi:\s*\S+"
+    r"|\b10\.\d{4,9}/\S+"
+    r"|\b(?:[\w-]+\.)+(?:com|org|net|io|ai|edu|gov|dev|html?)\b(?:/\S*)?"
+    r"|\b(?:github|gitlab|bitbucket|huggingface)\b(?:/\S*)?",
+    flags=re.IGNORECASE,
+)
+_LINK_REPLACEMENT: Final[str] = " ; "
+
 # Split into segments at any character that is not a word character, whitespace, or
 # an intra-word hyphen/apostrophe.  Phrases never cross segment boundaries.
 _SEGMENT_SPLIT_RE: Final[re.Pattern[str]] = re.compile(r"[^\w\s\-']+|_+", flags=re.UNICODE)
@@ -182,6 +229,18 @@ def strip_boilerplate(text: str) -> str:
         if sentence:
             kept.append(sentence)
     return " ".join(kept)
+
+
+def strip_links(text: str) -> str:
+    """Replace URLs, e-mail addresses, DOIs and code-hosting references by a break.
+
+    "Code is at https://github.com/org/repo." becomes "Code is at  ; " so that
+    neither "com" nor "github" can become a keyphrase.
+    """
+
+    if not text:
+        return ""
+    return _LINK_RE.sub(_LINK_REPLACEMENT, text)
 
 
 _NORMALIZED_BOILERPLATE: Final[tuple[str, ...]] = tuple(
@@ -222,10 +281,30 @@ def _is_edge_stop(token: str) -> bool:
     return token in STOP_WORDS or len(token) < 2 or token.isdigit()
 
 
+def _is_modifier_compound(token: str) -> bool:
+    """Return whether a hyphenated token is a compound modifier, not a concept.
+
+    "real-world", "large-scale", "high-quality", "top-k", "in-context" and "low-rank"
+    start with a stop word; "tree-based" ends with one; "fine-grained",
+    "self-supervised" and "pre-trained" end in a verb/adjective-shaped part.  Such a
+    compound qualifies a head noun ("real-world data", "low-rank adaptation") but
+    names nothing on its own.  Requiring *every* part to be a stop word would be too
+    weak: "world", "scale" and "grained" are not stop words.  Noun compounds
+    ("self-attention", "k-means", "mixture-of-experts") pass.
+    """
+
+    parts = token.split("-")
+    return parts[0] in STOP_WORDS or parts[-1] in STOP_WORDS or _has_non_noun_suffix(parts[-1])
+
+
 def _phrase_key(tokens: Sequence[str]) -> str | None:
     """Return the normalised phrase for an n-gram, or ``None`` when it is not a candidate."""
 
     if _is_edge_stop(tokens[0]) or _is_edge_stop(tokens[-1]):
+        return None
+    # A hyphenated token alone is judged as a compound; inside a longer phrase it
+    # is an ordinary modifier ("real-world data" stays a candidate).
+    if len(tokens) == 1 and "-" in tokens[0] and _is_modifier_compound(tokens[0]):
         return None
     if all(any(character.isdigit() for character in token) for token in tokens):
         return None
@@ -239,15 +318,58 @@ def _phrase_key(tokens: Sequence[str]) -> str | None:
     return key
 
 
-def _phrase_counts(text: str) -> Counter[str]:
+def _phrase_counts(
+    text: str, followers: dict[str, Counter[str | None]] | None = None
+) -> Counter[str]:
+    """Count the candidate n-grams of *text*.
+
+    When *followers* is given, the word that follows each :data:`MAX_NGRAM`-word
+    candidate is tallied under its key: the normalised next token when it is a
+    content word, else ``None`` (end of segment or a stop word).
+    """
+
     counts: Counter[str] = Counter()
     for tokens in _segments(text):
         for size in range(1, MAX_NGRAM + 1):
             for start in range(len(tokens) - size + 1):
                 key = _phrase_key(tokens[start : start + size])
-                if key is not None:
-                    counts[key] += 1
+                if key is None:
+                    continue
+                counts[key] += 1
+                if followers is not None and size == MAX_NGRAM:
+                    end = start + size
+                    follower = (
+                        normalize_keyword(tokens[end])
+                        if end < len(tokens) and not _is_edge_stop(tokens[end])
+                        else None
+                    )
+                    followers.setdefault(key, Counter())[follower or None] += 1
     return counts
+
+
+def _truncated_phrases(followers: dict[str, Counter[str | None]], candidates: set[str]) -> set[str]:
+    """Return :data:`MAX_NGRAM`-word candidates that are cut-off prefixes of a longer unit.
+
+    "accelerating large language" is followed by "models" nearly every time: it is
+    the start of a four-word unit that the n-gram cap truncated.  A candidate is
+    dropped when one content word follows at least :data:`TRUNCATION_RATIO` of its
+    occurrences.  A phrase that also ends a clause or precedes varied words
+    ("mixture of experts (MoE)", "... experts routing") is kept.
+    """
+
+    truncated: set[str] = set()
+    for phrase in candidates:
+        tally = followers.get(phrase)
+        if not tally:
+            continue
+        total = sum(tally.values())
+        top = max(
+            (count for follower, count in tally.items() if follower is not None),
+            default=0,
+        )
+        if top >= TRUNCATION_RATIO * total:
+            truncated.add(phrase)
+    return truncated
 
 
 def _contains(longer: str, shorter: str) -> bool:
@@ -358,7 +480,10 @@ def extract_keyphrases(
     the phrase occurs in the title, and ``idf = log((N + 1) / (df + 1)) + 1`` over the
     project's ``N`` works.  Scores are divided by the work's best score, so each work's
     top phrase has score 1.0.  A shorter phrase is dropped when a longer phrase that
-    contains it qualifies with a similar document frequency.  Output is ordered by
+    contains it qualifies with a similar document frequency, and a three-word phrase
+    almost always followed by the same word is dropped as a truncated prefix of a
+    longer unit.  URLs, e-mail addresses, DOIs and code-hosting references are
+    removed before tokenising, as is venue boilerplate.  Output is ordered by
     input work order, then descending score, then phrase.  A single-word acronym
     is emitted in uppercase ("GPU"); every other term is the normalised phrase.
     """
@@ -366,7 +491,7 @@ def extract_keyphrases(
     if max_per_work <= 0:
         return []
     texts = [
-        (work_id, title or "", strip_boilerplate(abstract or ""))
+        (work_id, strip_links(title or ""), strip_links(strip_boilerplate(abstract or "")))
         for work_id, title, abstract in works
     ]
     acronym_forms: dict[str, str] = {}
@@ -379,10 +504,13 @@ def extract_keyphrases(
     document_frequency: Counter[str] = Counter()
     total_counts: Counter[str] = Counter()
     title_frequency: Counter[str] = Counter()
+    followers: dict[str, Counter[str | None]] = {}
     for work_id, title_text, abstract_text in texts:
-        title_counts = _merge_plural_acronyms(_phrase_counts(title_text), plural_acronyms)
+        title_counts = _merge_plural_acronyms(
+            _phrase_counts(title_text, followers), plural_acronyms
+        )
         counts = title_counts + _merge_plural_acronyms(
-            _phrase_counts(abstract_text), plural_acronyms
+            _phrase_counts(abstract_text, followers), plural_acronyms
         )
         title_phrases = set(title_counts)
         per_work.append((work_id, counts, title_phrases))
@@ -395,6 +523,11 @@ def extract_keyphrases(
         for phrase, df in document_frequency.items()
         if df >= MIN_WORK_SUPPORT and not _is_boilerplate_phrase(phrase)
     }
+    merged_followers: dict[str, Counter[str | None]] = {}
+    for phrase, tally in followers.items():
+        (merged,) = _merge_plural_acronyms(Counter([phrase]), plural_acronyms)
+        merged_followers.setdefault(merged, Counter()).update(tally)
+    qualifying -= _truncated_phrases(merged_followers, qualifying)
     qualifying -= _subsumed_phrases(document_frequency, qualifying)
     single_words = {phrase for phrase in qualifying if " " not in phrase}
     qualifying -= _rejected_single_words(
@@ -437,4 +570,5 @@ __all__ = [
     "WorkText",
     "extract_keyphrases",
     "strip_boilerplate",
+    "strip_links",
 ]
