@@ -69,7 +69,7 @@ class ChatMessage(BaseModel):
     error: str | None = None
     mode: Literal["ask", "research"] | None = None
     pending_plan: dict[str, Any] | None = None
-    plan_status: Literal["pending", "approved", "edited", "rejected"] | None = None
+    plan_status: Literal["pending", "approved", "edited", "rejected", "expired"] | None = None
     final_args: dict[str, Any] | None = None
     run_id: str | None = None
 

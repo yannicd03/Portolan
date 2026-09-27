@@ -387,7 +387,14 @@ def build_chat_router(
         try:
             agent = research_agent(project, graph)
             if not agent.has_pending(thread_id):
-                store.update_message(project, thread_id, plan_message.id, error="plan expired")
+                # Resolve the plan so the thread accepts new messages again.
+                store.update_message(
+                    project,
+                    thread_id,
+                    plan_message.id,
+                    plan_status="expired",
+                    error="plan expired",
+                )
                 raise HTTPException(status_code=410, detail="plan expired")
         except Exception:
             with active_lock:

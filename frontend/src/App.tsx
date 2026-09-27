@@ -37,6 +37,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshToken, setRefreshToken] = useState(0)
+  const [openRunRequest, setOpenRunRequest] = useState<{ projectId: string; runId: string; token: number } | null>(null)
   const [graphCollapsed, setGraphCollapsed] = useState(savedGraphState)
   const [tabByProject, setTabByProject] = useState<Record<string, MainTab>>({})
   const [activatedAskProjects, setActivatedAskProjects] = useState<Record<string, boolean>>({})
@@ -73,6 +74,7 @@ export default function App() {
           setStats(null)
           setHighlightedWorkIds([])
           setOpenWorkRequest(null)
+          setOpenRunRequest(null)
           setSelectedId(id)
         }
         setRoute(nextRoute)
@@ -102,6 +104,7 @@ export default function App() {
     setStats(null)
     setHighlightedWorkIds([])
     setOpenWorkRequest(null)
+    setOpenRunRequest(null)
     setSelectedId(id)
     window.location.hash = projectHref(id)
   }, [])
@@ -121,6 +124,7 @@ export default function App() {
       setStats(null)
       setHighlightedWorkIds([])
       setOpenWorkRequest(null)
+      setOpenRunRequest(null)
       window.location.hash = next ? projectHref(next) : ''
     }
   }, [projects, selectedId])
@@ -153,6 +157,12 @@ export default function App() {
     setGraphCollapsed(false)
     setOpenWorkRequest((current) => ({ projectId: selectedId, workId, token: (current?.token ?? 0) + 1 }))
   }, [selectedId])
+
+  const openRun = (runId: string) => {
+    if (!selectedId) return
+    setOpenRunRequest((current) => ({ projectId: selectedId, runId, token: (current?.token ?? 0) + 1 }))
+    selectTab(selectedId, 'research')
+  }
 
   const selectedProject = projects.find((project) => project.id === selectedId) ?? null
   const selectedTab = selectedId
@@ -210,11 +220,11 @@ export default function App() {
                 </div>
                 {selectedTab === 'ask' || activatedAskProjects[selectedId] ? (
                   <div className="main-tab-panel" role="tabpanel" id="ask-panel" aria-labelledby="ask-tab" hidden={selectedTab !== 'ask'}>
-                    <AskThread key={selectedId} projectId={selectedId} onHighlightedWorkIds={setHighlightedWorkIds} onOpenWork={openWork} />
+                    <AskThread key={selectedId} projectId={selectedId} worksCount={stats?.works ?? null} onHighlightedWorkIds={setHighlightedWorkIds} onOpenWork={openWork} onOpenRun={openRun} onRunFinished={() => setRefreshToken((value) => value + 1)} />
                   </div>
                 ) : null}
                 <div className="main-tab-panel" role="tabpanel" id="research-panel" aria-labelledby="research-tab" hidden={selectedTab !== 'research'}>
-                  <ResearchThread key={selectedId} projectId={selectedId} onRunFinished={() => setRefreshToken((value) => value + 1)} />
+                  <ResearchThread key={selectedId} projectId={selectedId} refreshToken={refreshToken} openRunRequest={openRunRequest?.projectId === selectedId ? openRunRequest : null} onRunFinished={() => setRefreshToken((value) => value + 1)} />
                 </div>
               </>
             )}

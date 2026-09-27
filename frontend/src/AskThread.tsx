@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { AnswerContent } from './AnswerContent'
 import { api } from './api'
+import { PlanCard } from './PlanCard'
 import type {
   ChatActivityEvent,
   ChatMessage,
   ChatStatus,
   ChatThread,
   ChatThreadSummary,
+  ResearchPlanArgs,
+  ResearchPlanPayload,
   VerifiedAnswer,
 } from './api'
 import {
@@ -20,8 +23,11 @@ import {
 
 export interface AskThreadProps {
   projectId: string
+  worksCount: number | null
   onHighlightedWorkIds: (workIds: string[]) => void
   onOpenWork: (workId: string) => void
+  onOpenRun: (runId: string) => void
+  onRunFinished: () => void
 }
 
 interface ChatError extends Error {
@@ -78,6 +84,22 @@ function verifiedAnswer(value: unknown): VerifiedAnswer | null {
   return value as unknown as VerifiedAnswer
 }
 
+function researchAnswer(value: unknown): string | null {
+  return isRecord(value) && value.mode === 'research' && typeof value.answer_markdown === 'string'
+    ? value.answer_markdown
+    : null
+}
+
+function researchPlan(value: unknown): ResearchPlanPayload | null {
+  if (!isRecord(value) || typeof value.tool_call_id !== 'string' || !isRecord(value.args)
+    || typeof value.description !== 'string') return null
+  return value as unknown as ResearchPlanPayload
+}
+
+function markdownAnswer(markdown: string): VerifiedAnswer {
+  return { answer_markdown: markdown, citations: [], unsupported: [], model: null, tool_calls: 0 }
+}
+
 function eventText(value: unknown): string | null {
   if (!isRecord(value) || typeof value.text !== 'string') return null
   return value.text
@@ -113,7 +135,7 @@ function ActivityTrail({ events, live = false }: ActivityTrailProps) {
         <span aria-hidden="true">{isExpanded ? '▴' : '▾'}</span>
       </button>
       {isExpanded ? (
-        <ol className="ask-activity-list" aria-label="Ask activity">
+        <ol className="ask-activity-list" aria-label="Chat activity">
           {events.map((event, index) => <li key={`${event.text}-${index}`}>{event.text}</li>)}
           {live && events.length === 0 ? <li>Preparing an answer…</li> : null}
         </ol>
@@ -128,12 +150,22 @@ function ChatMessageView({
   onOpenWork,
   onHoverAnswer,
   onSelectAnswer,
+  onDecision,
+  planBusy,
+  planError,
+  onRetryPlan,
+  onOpenRun,
 }: {
   message: ChatMessage
   projectId: string
   onOpenWork: (workId: string) => void
   onHoverAnswer: (messageId: string | null) => void
   onSelectAnswer: (messageId: string) => void
+  onDecision: (decision: 'approve' | 'edit' | 'reject', args?: ResearchPlanArgs, message?: string) => void
+  planBusy: boolean
+  planError: string | null
+  onRetryPlan?: () => void
+  onOpenRun: (runId: string) => void
 }) {
   if (message.role === 'user') {
     return (
@@ -144,6 +176,7 @@ function ChatMessageView({
   }
 
   const answer = message.answer
+  const research = message.mode === 'research'
   return (
     <article
       className={`ask-message ask-message-assistant${message.error ? ' ask-message-error' : ''}`}
@@ -159,16 +192,46 @@ function ChatMessageView({
       onClick={answer ? () => onSelectAnswer(message.id) : undefined}
       aria-label={answer ? 'Assistant answer' : 'Assistant message'}
     >
+      <span className="ask-message-meta">{research ? 'Research' : 'Ask'}</span>
       <ActivityTrail events={activityEvents(message)} />
       <div className="ask-message-content">
-        {answer ? (
+        {message.pending_plan ? (
+          <PlanCard message={message} busy={planBusy} error={planError} retry={onRetryPlan} onDecision={onDecision} onOpenRun={onOpenRun} />
+        ) : answer ? (
           <AnswerContent projectId={projectId} answer={answer} onOpenWork={onOpenWork} />
+        ) : research && !message.error ? (
+          <AnswerContent projectId={projectId} answer={markdownAnswer(message.content)} onOpenWork={onOpenWork} />
         ) : (
           <p>{message.content}</p>
         )}
       </div>
     </article>
   )
+}
+
+async function readSseResponse(
+  response: Response,
+  handleEvent: (event: SseEvent) => void,
+): Promise<void> {
+  if (!response.ok) throw await responseError(response)
+  if (!response.body) throw new Error('Chat mode returned no stream.')
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let parser: SseParserState = createSseParserState()
+  while (true) {
+    const result = await reader.read()
+    if (result.done) break
+    const parsed = parseSseChunk(parser, decoder.decode(result.value, { stream: true }))
+    parser = parsed.state
+    parsed.events.forEach(handleEvent)
+  }
+  const finalChunk = decoder.decode()
+  if (finalChunk) {
+    const parsed = parseSseChunk(parser, finalChunk)
+    parser = parsed.state
+    parsed.events.forEach(handleEvent)
+  }
+  finishSseParser(parser).events.forEach(handleEvent)
 }
 
 async function responseError(response: Response): Promise<ChatError> {
@@ -187,7 +250,7 @@ async function responseError(response: Response): Promise<ChatError> {
   return error
 }
 
-export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskThreadProps) {
+export function AskThread({ projectId, worksCount, onHighlightedWorkIds, onOpenWork, onOpenRun, onRunFinished }: AskThreadProps) {
   const [status, setStatus] = useState<ChatStatus | null>(null)
   const [statusLoading, setStatusLoading] = useState(true)
   const [statusError, setStatusError] = useState<string | null>(null)
@@ -197,11 +260,16 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
   const [threadsLoading, setThreadsLoading] = useState(true)
   const [threadLoading, setThreadLoading] = useState(false)
   const [composerValue, setComposerValue] = useState('')
+  const [composerMode, setComposerMode] = useState<'ask' | 'research'>(worksCount === 0 ? 'research' : 'ask')
   const [error, setError] = useState<string | null>(null)
   const [streaming, setStreaming] = useState(false)
   const [stopping, setStopping] = useState(false)
   const [streamEvents, setStreamEvents] = useState<ChatActivityEvent[]>([])
   const [streamingAnswer, setStreamingAnswer] = useState<VerifiedAnswer | null>(null)
+  const [streamingResearchAnswer, setStreamingResearchAnswer] = useState<string | null>(null)
+  const [streamingPlan, setStreamingPlan] = useState<ResearchPlanPayload | null>(null)
+  const [planError, setPlanError] = useState<{ id: string; message: string; retry: boolean } | null>(null)
+  const [resumingPlanId, setResumingPlanId] = useState<string | null>(null)
   const [streamError, setStreamError] = useState<string | null>(null)
   const [hoveredAnswerId, setHoveredAnswerId] = useState<string | null>(null)
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null)
@@ -214,10 +282,18 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const initialThreadRef = useRef<{ projectId: string; promise: Promise<ChatThread> } | null>(null)
   const highlightCallbackRef = useRef(onHighlightedWorkIds)
+  const modeTouchedRef = useRef(false)
+  const lastDecisionRef = useRef<{ id: string; decision: 'approve' | 'edit' | 'reject'; args?: ResearchPlanArgs; message?: string } | null>(null)
 
   useEffect(() => {
     highlightCallbackRef.current = onHighlightedWorkIds
   }, [onHighlightedWorkIds])
+
+  useEffect(() => {
+    if (!modeTouchedRef.current && worksCount !== null) {
+      setComposerMode(worksCount === 0 ? 'research' : 'ask')
+    }
+  }, [worksCount])
 
   const currentProject = useCallback(
     (generation: number, threadId?: string, streamGeneration?: number): boolean => (
@@ -281,6 +357,10 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
       setStopping(false)
       setStreamEvents([])
       setStreamingAnswer(null)
+      setStreamingResearchAnswer(null)
+      setStreamingPlan(null)
+      setPlanError(null)
+      setResumingPlanId(null)
       setStreamError(null)
       setHoveredAnswerId(null)
       setSelectedAnswerId(null)
@@ -344,7 +424,7 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'nearest' })
-  }, [thread?.messages.length, streaming, streamingAnswer, streamEvents.length])
+  }, [thread?.messages.length, streaming, streamingAnswer, streamingResearchAnswer, streamingPlan, streamEvents.length])
 
   const createThread = async () => {
     if (streaming) return
@@ -360,6 +440,7 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
       setSelectedAnswerId(null)
       setHoveredAnswerId(null)
       setComposerValue('')
+      setPlanError(null)
     } catch (reason: unknown) {
       if (currentProject(generation)) setError(errorMessage(reason, 'Unable to create a chat thread.'))
     }
@@ -375,6 +456,9 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
     setStreamError(null)
     setStreamEvents([])
     setStreamingAnswer(null)
+    setStreamingResearchAnswer(null)
+    setStreamingPlan(null)
+    setPlanError(null)
     loadThread(threadId, generation)
   }
 
@@ -438,6 +522,7 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
     delays: number[],
     streamGeneration?: number,
     waitForAssistant = false,
+    afterMessageId?: string,
   ): Promise<void> => {
     for (const [index, delay] of delays.entries()) {
       if (delay > 0) await new Promise<void>((resolve) => window.setTimeout(resolve, delay))
@@ -452,8 +537,10 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
         ])
         const lastMessage = loaded.messages.at(-1)
         const lastAttempt = index === delays.length - 1
-        if (!waitForAssistant || lastMessage?.role === 'assistant' || lastAttempt) {
+        if (!waitForAssistant || (lastMessage?.role === 'assistant' && lastMessage.id !== afterMessageId) || lastAttempt) {
           setStreamingAnswer(null)
+          setStreamingResearchAnswer(null)
+          setStreamingPlan(null)
           setStreamEvents([])
           return
         }
@@ -468,7 +555,9 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
   const sendMessage = async () => {
     const content = composerValue.trim()
     const threadId = selectedThreadRef.current
-    if (!content || !threadId || !status?.available || streaming || threadLoading) return
+    if (!content || !threadId || !status?.available || streaming || threadLoading
+      || thread?.messages.some((message) => message.plan_status === 'pending') || streamingPlan) return
+    const mode = composerMode
 
     const generation = projectGenerationRef.current
     const streamGeneration = streamGenerationRef.current + 1
@@ -479,6 +568,7 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
       id: `pending-${streamGeneration}`,
       role: 'user',
       content,
+      mode,
       answer: null,
       events: [],
       created_at: new Date().toISOString(),
@@ -493,11 +583,12 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
     setStreamError(null)
     setStreamEvents([])
     setStreamingAnswer(null)
+    setStreamingResearchAnswer(null)
+    setStreamingPlan(null)
     setStreaming(true)
     setStopping(false)
 
     const stillCurrent = () => currentProject(generation, threadId, streamGeneration)
-    let parser: SseParserState = createSseParserState()
     const handleEvent = (event: SseEvent) => {
       if (!stillCurrent()) return
       const payload = parseJson(event.data)
@@ -507,14 +598,23 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
           setStreamEvents((current) => [...current, { text, tool: null }])
         }
       } else if (event.event === 'answer') {
+        const markdown = researchAnswer(payload)
+        if (markdown !== null) {
+          setStreamingResearchAnswer(markdown)
+          return
+        }
         const answer = verifiedAnswer(payload)
         if (!answer) {
-          setStreamError('Ask mode returned an invalid answer.')
+          setStreamError(`${mode === 'ask' ? 'Ask' : 'Research'} mode returned an invalid answer.`)
           return
         }
         setStreamingAnswer(answer)
+      } else if (event.event === 'plan') {
+        const plan = researchPlan(payload)
+        if (plan) setStreamingPlan(plan)
+        else setStreamError('Research mode returned an invalid plan.')
       } else if (event.event === 'error') {
-        setStreamError(responseDetail(payload, 'Ask mode failed.'))
+        setStreamError(responseDetail(payload, `${mode === 'ask' ? 'Ask' : 'Research'} mode failed.`))
       }
     }
 
@@ -522,30 +622,10 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
       const response = await fetch(api.chatMessageUrl(threadId, projectId), {
         method: 'POST',
         headers: { Accept: 'text/event-stream', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, mode: 'ask' }),
+        body: JSON.stringify({ content, mode }),
         signal: controller.signal,
       })
-      if (!response.ok) throw await responseError(response)
-      if (!response.body) throw new Error('Ask mode returned no stream.')
-
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      while (true) {
-        const result = await reader.read()
-        if (result.done) break
-        const chunk = decoder.decode(result.value, { stream: true })
-        const parsed = parseSseChunk(parser, chunk)
-        parser = parsed.state
-        parsed.events.forEach(handleEvent)
-      }
-      const finalChunk = decoder.decode()
-      if (finalChunk) {
-        const parsed = parseSseChunk(parser, finalChunk)
-        parser = parsed.state
-        parsed.events.forEach(handleEvent)
-      }
-      const finalEvents = finishSseParser(parser)
-      finalEvents.events.forEach(handleEvent)
+      await readSseResponse(response, handleEvent)
       if (!stillCurrent()) return
       setStreaming(false)
       setStopping(false)
@@ -573,9 +653,9 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
           reason: chatError.message,
         }))
       } else if (chatError.status === 409) {
-        setStreamError('This thread already has an active answer. Stop it before sending another question.')
+        setStreamError('This thread already has an active answer or a pending plan. Review the plan before sending another message.')
       } else {
-        setStreamError(errorMessage(reason, 'Ask mode failed.'))
+        setStreamError(errorMessage(reason, `${mode === 'ask' ? 'Ask' : 'Research'} mode failed.`))
       }
       await reloadThread(threadId, generation, [0], streamGeneration)
     } finally {
@@ -586,6 +666,107 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
         setStopping(false)
       }
     }
+  }
+
+  const resumePlan = async (
+    messageId: string,
+    decision: 'approve' | 'edit' | 'reject',
+    args?: ResearchPlanArgs,
+    message?: string,
+  ) => {
+    const threadId = selectedThreadRef.current
+    if (!threadId || !status?.available || streaming || threadLoading
+      || !thread?.messages.some((item) => item.id === messageId && item.plan_status === 'pending')) return
+
+    lastDecisionRef.current = { id: messageId, decision, args, message }
+    const generation = projectGenerationRef.current
+    const streamGeneration = streamGenerationRef.current + 1
+    streamGenerationRef.current = streamGeneration
+    const controller = new AbortController()
+    abortRef.current = controller
+    setResumingPlanId(messageId)
+    setPlanError(null)
+    setStreamError(null)
+    setStreamEvents([])
+    setStreamingAnswer(null)
+    setStreamingResearchAnswer(null)
+    setStreamingPlan(null)
+    setStreaming(true)
+    setStopping(false)
+
+    const stillCurrent = () => currentProject(generation, threadId, streamGeneration)
+    const handleEvent = (event: SseEvent) => {
+      if (!stillCurrent()) return
+      const payload = parseJson(event.data)
+      if (event.event === 'status') {
+        const text = eventText(payload)
+        if (text) setStreamEvents((current) => [...current, { text, tool: null }])
+      } else if (event.event === 'answer') {
+        const markdown = researchAnswer(payload)
+        if (markdown !== null) {
+          setStreamingResearchAnswer(markdown)
+          onRunFinished()
+        } else {
+          setStreamError('Research mode returned an invalid answer.')
+        }
+      } else if (event.event === 'plan') {
+        const plan = researchPlan(payload)
+        if (plan) setStreamingPlan(plan)
+        else setStreamError('Research mode returned an invalid plan.')
+      } else if (event.event === 'error') {
+        setStreamError(responseDetail(payload, 'Research mode failed.'))
+      }
+    }
+
+    try {
+      const response = await fetch(api.chatResumeUrl(threadId, projectId), {
+        method: 'POST',
+        headers: { Accept: 'text/event-stream', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision, ...(args ? { args } : {}), ...(message ? { message } : {}) }),
+        signal: controller.signal,
+      })
+      await readSseResponse(response, handleEvent)
+      if (!stillCurrent()) return
+      setStreaming(false)
+      setStopping(false)
+      setResumingPlanId(null)
+      abortRef.current = null
+      await reloadThread(threadId, generation, [0], streamGeneration)
+    } catch (reason: unknown) {
+      if (!stillCurrent()) return
+      if (controller.signal.aborted) {
+        // The plan message is the thread's last assistant message, so wait
+        // for a newer one before treating the reload as settled.
+        await reloadThread(threadId, generation, [100, 350, 800], streamGeneration, true, messageId)
+        return
+      }
+      setStreaming(false)
+      setStopping(false)
+      setResumingPlanId(null)
+      abortRef.current = null
+      const chatError = reason as ChatError
+      if (chatError.status === 409 || chatError.status === 410) {
+        setPlanError({ id: messageId, message: 'This plan expired after a server restart — ask again', retry: false })
+      } else {
+        setPlanError({ id: messageId, message: errorMessage(reason, 'Unable to resume research.'), retry: true })
+      }
+      if (chatError.status === 503) {
+        setStatus((current) => ({ available: false, model: current?.model ?? '', reason: chatError.message }))
+      }
+      // Refresh either way: a 410 persists the expiry on the plan message.
+      await reloadThread(threadId, generation, [0], streamGeneration)
+    } finally {
+      if (stillCurrent()) {
+        setStreaming(false)
+        setStopping(false)
+        setResumingPlanId(null)
+      }
+    }
+  }
+
+  const retryPlan = (messageId: string) => {
+    const last = lastDecisionRef.current
+    if (last?.id === messageId) void resumePlan(messageId, last.decision, last.args, last.message)
   }
 
   const submitMessage = (event: FormEvent<HTMLFormElement>) => {
@@ -600,6 +781,9 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
   }
 
   const displayMessages = thread?.messages ?? []
+  const pendingPlan = displayMessages.some((message) => message.plan_status === 'pending') || streamingPlan !== null
+  const expiredPlan = displayMessages.some((message) => message.plan_status === 'pending' && message.error === 'plan expired')
+    || planError?.message.includes('expired') === true
   const unavailable = status !== null && !status.available
   const canCompose = Boolean(status?.available && thread && !threadLoading)
 
@@ -608,7 +792,7 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
       <div className="ask-heading">
         <div>
           <p className="eyebrow">Ask</p>
-          <h2 id="ask-heading">Ask about this project</h2>
+          <h2 id="ask-heading">Chat about this project</h2>
         </div>
         <div className="ask-thread-controls" aria-label="Chat thread controls">
           <label className="ask-thread-label" htmlFor="ask-thread-select">Thread</label>
@@ -656,7 +840,7 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
       <div className="ask-messages" aria-live="polite" aria-label="Chat messages">
         {threadsLoading || threadLoading ? <p className="ask-status">Loading conversation…</p> : null}
         {!threadsLoading && !threadLoading && thread && displayMessages.length === 0 && !streaming ? (
-          <p className="ask-empty">Ask a question about the papers in this project.</p>
+          <p className="ask-empty">Ask about the project or plan a research harvest.</p>
         ) : null}
         {displayMessages.map((message) => (
           <ChatMessageView
@@ -666,8 +850,30 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
             onOpenWork={onOpenWork}
             onHoverAnswer={setHoveredAnswerId}
             onSelectAnswer={setSelectedAnswerId}
+            onDecision={(decision, args, messageText) => void resumePlan(message.id, decision, args, messageText)}
+            planBusy={resumingPlanId === message.id}
+            planError={planError?.id === message.id ? planError.message : null}
+            onRetryPlan={planError?.id === message.id && planError.retry ? () => retryPlan(message.id) : undefined}
+            onOpenRun={onOpenRun}
           />
         ))}
+        {streamingPlan ? (
+          <ChatMessageView
+            message={{
+              id: 'streaming-plan', role: 'assistant', mode: 'research', content: streamingPlan.description,
+              answer: null, events: [], created_at: new Date().toISOString(), error: null,
+              pending_plan: streamingPlan.args, plan_status: 'pending', final_args: null, run_id: null,
+            }}
+            projectId={projectId}
+            onOpenWork={onOpenWork}
+            onHoverAnswer={setHoveredAnswerId}
+            onSelectAnswer={setSelectedAnswerId}
+            onDecision={() => {}}
+            planBusy
+            planError={null}
+            onOpenRun={onOpenRun}
+          />
+        ) : null}
         {streamingAnswer ? (
           <article
             className="ask-message ask-message-assistant ask-message-streaming"
@@ -684,12 +890,22 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
             onClick={() => setSelectedAnswerId('streaming-answer')}
           >
             <ActivityTrail events={streamEvents} live={false} />
+            <span className="ask-message-meta">Ask</span>
             <div className="ask-message-content">
               <AnswerContent projectId={projectId} answer={streamingAnswer} onOpenWork={onOpenWork} />
             </div>
           </article>
         ) : null}
-        {streaming && !streamingAnswer ? (
+        {streamingResearchAnswer !== null ? (
+          <article className="ask-message ask-message-assistant ask-message-streaming" aria-label="Research answer">
+            <span className="ask-message-meta">Research</span>
+            <ActivityTrail events={streamEvents} />
+            <div className="ask-message-content">
+              <AnswerContent projectId={projectId} answer={markdownAnswer(streamingResearchAnswer)} onOpenWork={onOpenWork} />
+            </div>
+          </article>
+        ) : null}
+        {streaming && !streamingAnswer && streamingResearchAnswer === null && !streamingPlan ? (
           <div className="ask-stream-status" aria-live="polite">
             <ActivityTrail events={streamEvents} live />
           </div>
@@ -700,30 +916,34 @@ export function AskThread({ projectId, onHighlightedWorkIds, onOpenWork }: AskTh
 
       {canCompose ? (
         <form className="ask-composer" onSubmit={submitMessage}>
+          <div className="ask-mode-switch" role="group" aria-label="Message mode">
+            <button className="ask-mode-option" type="button" aria-pressed={composerMode === 'ask'} disabled={streaming || pendingPlan} onClick={() => { modeTouchedRef.current = true; setComposerMode('ask') }}>Ask</button>
+            <button className="ask-mode-option" type="button" aria-pressed={composerMode === 'research'} disabled={streaming || pendingPlan} onClick={() => { modeTouchedRef.current = true; setComposerMode('research') }}>Plan research</button>
+          </div>
           <label className="ask-composer-label" htmlFor="ask-composer-input">Question</label>
           <textarea
             className="ask-composer-input"
             id="ask-composer-input"
             rows={3}
             value={composerValue}
-            disabled={streaming}
-            placeholder="Ask what the project’s papers say…"
+            disabled={streaming || pendingPlan}
+            placeholder={composerMode === 'ask' ? 'Ask what the project’s papers say…' : 'Describe the literature you want to find…'}
             onChange={(event) => setComposerValue(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault()
-                void sendMessage()
+                if (!pendingPlan) void sendMessage()
               }
             }}
           />
           <div className="ask-composer-actions">
-            <span className="ask-composer-hint">Enter sends · Shift+Enter adds a line</span>
+            <span className="ask-composer-hint">{expiredPlan ? 'This plan expired. Start a new thread to ask again.' : pendingPlan ? 'Approve, edit or reject the plan first' : 'Enter sends · Shift+Enter adds a line'}</span>
             {streaming ? (
               <button className="ask-stop" type="button" onClick={stopMessage} disabled={stopping}>
                 {stopping ? 'Stopping…' : 'Stop'}
               </button>
             ) : (
-              <button className="ask-send" type="submit" disabled={!composerValue.trim()}>
+              <button className="ask-send" type="submit" disabled={!composerValue.trim() || pendingPlan}>
                 Send
               </button>
             )}

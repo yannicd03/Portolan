@@ -233,6 +233,24 @@ export interface ChatActivityEvent {
   tool: string | null
 }
 
+export interface ResearchPlanArgs {
+  query?: string | null
+  seeds?: string[]
+  from_year?: number | null
+  to_year?: number | null
+  max_works?: number
+  snowball_depth?: number
+  acquire_pdfs?: boolean
+  rationale?: string
+  [key: string]: unknown
+}
+
+export interface ResearchPlanPayload {
+  tool_call_id: string
+  args: ResearchPlanArgs
+  description: string
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -241,6 +259,11 @@ export interface ChatMessage {
   events: ChatActivityEvent[]
   created_at: string
   error: string | null
+  mode?: 'ask' | 'research' | null
+  pending_plan?: ResearchPlanArgs | null
+  plan_status?: 'pending' | 'approved' | 'edited' | 'rejected' | 'expired' | null
+  final_args?: ResearchPlanArgs | null
+  run_id?: string | null
 }
 
 export interface ChatThread {
@@ -403,6 +426,9 @@ export const api = {
 
   chatMessageUrl: (threadId: string, projectId: string): string =>
     `/api/chats/${encodeURIComponent(threadId)}/messages?project=${encodeURIComponent(projectId)}`,
+
+  chatResumeUrl: (threadId: string, projectId: string): string =>
+    `/api/chats/${encodeURIComponent(threadId)}/resume?project=${encodeURIComponent(projectId)}`,
 
   locateDocument: (sha256: string, query: string, page?: number): Promise<DocumentLocateResponse> => {
     const params = new URLSearchParams({ q: query })

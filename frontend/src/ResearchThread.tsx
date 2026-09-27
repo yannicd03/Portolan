@@ -6,6 +6,8 @@ import { RunCard } from './RunCard'
 
 interface ResearchThreadProps {
   projectId: string
+  refreshToken: number
+  openRunRequest: { runId: string; token: number } | null
   onRunFinished: () => void
 }
 
@@ -22,7 +24,7 @@ function readNumber(value: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-export function ResearchThread({ projectId, onRunFinished }: ResearchThreadProps) {
+export function ResearchThread({ projectId, refreshToken, openRunRequest, onRunFinished }: ResearchThreadProps) {
   const [runs, setRuns] = useState<Run[]>([])
   const [topic, setTopic] = useState('')
   const [seeds, setSeeds] = useState('')
@@ -39,6 +41,7 @@ export function ResearchThread({ projectId, onRunFinished }: ResearchThreadProps
   const statusSnapshot = useRef(new Map<string, Run['status']>())
   const activeRunIdsRef = useRef<string[]>([])
   const pollInFlight = useRef(false)
+  const scrolledRunToken = useRef<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -64,12 +67,21 @@ export function ResearchThread({ projectId, onRunFinished }: ResearchThreadProps
     return () => {
       cancelled = true
     }
-  }, [projectId])
+  }, [projectId, refreshToken, openRunRequest?.token])
 
   const projectRuns = useMemo(
     () => (runsProjectId === projectId ? runs : []),
     [projectId, runs, runsProjectId],
   )
+
+  useEffect(() => {
+    if (!openRunRequest || scrolledRunToken.current === openRunRequest.token
+      || !projectRuns.some((run) => run.id === openRunRequest.runId)) return
+    const card = document.getElementById(`research-run-${openRunRequest.runId}`)
+    card?.scrollIntoView({ block: 'center' })
+    card?.focus({ preventScroll: true })
+    scrolledRunToken.current = openRunRequest.token
+  }, [openRunRequest, projectRuns])
 
   useEffect(() => {
     const previousStatuses = statusSnapshot.current
@@ -198,12 +210,13 @@ export function ResearchThread({ projectId, onRunFinished }: ResearchThreadProps
           <p className="research-empty">Start with a topic or a seed paper to begin researching.</p>
         ) : null}
         {projectRuns.map((run) => (
-          <RunCard
-            key={run.id}
-            run={run}
-            cancelling={cancellingRunId === run.id}
-            onCancel={handleCancel}
-          />
+          <div key={run.id} id={`research-run-${run.id}`} tabIndex={-1}>
+            <RunCard
+              run={run}
+              cancelling={cancellingRunId === run.id}
+              onCancel={handleCancel}
+            />
+          </div>
         ))}
       </div>
 

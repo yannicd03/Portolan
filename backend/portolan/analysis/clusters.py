@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import math
+import re
+import unicodedata
 from collections.abc import Mapping
 from typing import Any
 
@@ -17,6 +19,211 @@ _CONCEPT_WEIGHT = 0.5
 _BIBLIOGRAPHIC_COUPLING_WEIGHT = 0.5
 _BIBLIOGRAPHIC_COUPLING_CAP = 2.0
 _FALLBACK_TITLE_LENGTH = 60
+_CONCEPT_MIN_SUPPORT = 2
+_CONCEPT_MIN_SHARE = 0.25
+_CONCEPT_LARGE_CLUSTER_SIZE = 8
+_CONCEPT_LARGE_CLUSTER_MIN_SHARE = 0.20
+_MAX_LABEL_TERMS = 3
+_MIN_LABEL_TERMS = 2
+
+# Keep title extraction local to the analysis module so cluster labels do not
+# depend on an optional NLP package.  These are deliberately conservative: a
+# title word only disappears when it is common English or a generic paper
+# descriptor.
+_ENGLISH_STOPWORDS = frozenset(
+    {
+        "a",
+        "about",
+        "above",
+        "after",
+        "again",
+        "against",
+        "all",
+        "am",
+        "an",
+        "and",
+        "any",
+        "are",
+        "as",
+        "at",
+        "be",
+        "because",
+        "been",
+        "before",
+        "being",
+        "below",
+        "between",
+        "both",
+        "but",
+        "by",
+        "can",
+        "could",
+        "did",
+        "do",
+        "does",
+        "doing",
+        "down",
+        "during",
+        "each",
+        "few",
+        "for",
+        "from",
+        "further",
+        "had",
+        "has",
+        "have",
+        "having",
+        "he",
+        "her",
+        "here",
+        "hers",
+        "herself",
+        "him",
+        "himself",
+        "his",
+        "how",
+        "i",
+        "if",
+        "in",
+        "into",
+        "is",
+        "it",
+        "its",
+        "itself",
+        "just",
+        "me",
+        "more",
+        "most",
+        "my",
+        "myself",
+        "no",
+        "nor",
+        "not",
+        "now",
+        "of",
+        "off",
+        "on",
+        "once",
+        "only",
+        "or",
+        "other",
+        "our",
+        "ours",
+        "ourselves",
+        "out",
+        "over",
+        "own",
+        "same",
+        "she",
+        "should",
+        "so",
+        "some",
+        "such",
+        "than",
+        "that",
+        "the",
+        "their",
+        "theirs",
+        "them",
+        "themselves",
+        "then",
+        "there",
+        "these",
+        "they",
+        "this",
+        "those",
+        "through",
+        "to",
+        "too",
+        "under",
+        "until",
+        "up",
+        "very",
+        "was",
+        "we",
+        "were",
+        "what",
+        "when",
+        "where",
+        "which",
+        "while",
+        "who",
+        "whom",
+        "why",
+        "will",
+        "with",
+        "you",
+        "your",
+        "yours",
+        "yourself",
+        "yourselves",
+    }
+)
+_GENERIC_PAPER_STOPWORDS = frozenset(
+    {
+        "analysis",
+        "application",
+        "applications",
+        "approach",
+        "approaches",
+        "based",
+        "benchmark",
+        "benchmarks",
+        "case",
+        "cases",
+        "comparative",
+        "dataset",
+        "datasets",
+        "evaluation",
+        "evaluations",
+        "evaluating",
+        "efficient",
+        "fast",
+        "framework",
+        "frameworks",
+        "investigation",
+        "investigating",
+        "improving",
+        "language",
+        "large",
+        "learning",
+        "method",
+        "methods",
+        "methodology",
+        "model",
+        "models",
+        "new",
+        "novel",
+        "paper",
+        "papers",
+        "performance",
+        "problem",
+        "problems",
+        "proposed",
+        "proposal",
+        "result",
+        "results",
+        "review",
+        "reviews",
+        "study",
+        "studies",
+        "system",
+        "systems",
+        "task",
+        "tasks",
+        "technique",
+        "techniques",
+        "title",
+        "toward",
+        "towards",
+        "using",
+        "via",
+        "work",
+        "works",
+    }
+)
+_TITLE_STOPWORDS = _ENGLISH_STOPWORDS | _GENERIC_PAPER_STOPWORDS
+_TITLE_TOKEN_RE = re.compile(r"[^\W_]+", re.UNICODE)
 
 
 def _node_data(node: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -96,38 +303,191 @@ def _concept_scores(
     concept_labels: Mapping[str, str],
     project_size: int,
 ) -> list[tuple[float, str, str]]:
-    """Return ``(score, label, concept_id)`` rows ordered by distinctiveness."""
+    """Return eligible ``(score, label, concept_id)`` rows.
+
+    A concept needs to occur in at least two cluster works and in a meaningful
+    share of the cluster.  The share threshold is relaxed for larger clusters,
+    where a fixed 25 percent would otherwise discard useful recurring topics.
+    """
 
     if not cluster_work_ids or project_size <= 0:
         return []
     cluster_size = len(cluster_work_ids)
+    minimum_share = (
+        _CONCEPT_LARGE_CLUSTER_MIN_SHARE
+        if cluster_size >= _CONCEPT_LARGE_CLUSTER_SIZE
+        else _CONCEPT_MIN_SHARE
+    )
     cluster_concepts = set().union(*(work_concepts[work_id] for work_id in cluster_work_ids))
     rows: list[tuple[float, str, str]] = []
-    for concept_id in cluster_concepts:
+    for concept_id in sorted(cluster_concepts):
         cluster_count = sum(concept_id in work_concepts[work_id] for work_id in cluster_work_ids)
+        if cluster_count < _CONCEPT_MIN_SUPPORT or cluster_count / cluster_size < minimum_share:
+            continue
         project_count = sum(concept_id in concepts for concepts in work_concepts.values())
         if project_count == 0:
             continue
-        score = (cluster_count / cluster_size) * math.log(1.0 + project_size / project_count)
+        support_share = cluster_count / cluster_size
+        distinctiveness = math.log(1.0 + project_size / project_count)
+        score = support_share * distinctiveness
         label = concept_labels.get(concept_id, concept_id)
         rows.append((score, label, concept_id))
     rows.sort(key=lambda row: (-row[0], row[1].casefold(), row[1], row[2]))
     return rows
 
 
+def _normalized_phrase(value: str) -> tuple[str, ...]:
+    """Return punctuation and case independent tokens for label comparisons."""
+
+    if not isinstance(value, str):
+        return ()
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    return tuple(_TITLE_TOKEN_RE.findall(normalized))
+
+
+def _is_title_content_token(token: str) -> bool:
+    return (
+        len(token) > 1
+        and token not in _TITLE_STOPWORDS
+        and not any(character.isdigit() for character in token)
+    )
+
+
+def _title_phrases(title: str) -> set[tuple[str, ...]]:
+    """Return title unigrams and bigrams after removing generic words.
+
+    Bigrams only join words that are adjacent in the original title, so a
+    removed stopword breaks the phrase instead of being bridged.
+    """
+
+    tokens = _normalized_phrase(title)
+    phrases: set[tuple[str, ...]] = set()
+    for index, token in enumerate(tokens):
+        if not _is_title_content_token(token):
+            continue
+        phrases.add((token,))
+        if index + 1 < len(tokens) and _is_title_content_token(tokens[index + 1]):
+            phrases.add((token, tokens[index + 1]))
+    return phrases
+
+
+def _phrase_contains(longer: tuple[str, ...], shorter: tuple[str, ...]) -> bool:
+    if not shorter or len(shorter) > len(longer):
+        return False
+    width = len(shorter)
+    return any(longer[index : index + width] == shorter for index in range(len(longer) - width + 1))
+
+
+def _near_duplicate_phrase(candidate: tuple[str, ...], selected: list[tuple[str, ...]]) -> bool:
+    return any(
+        _phrase_contains(candidate, previous) or _phrase_contains(previous, candidate)
+        for previous in selected
+    )
+
+
+def _title_phrase_scores(
+    cluster_work_ids: list[str], works: Mapping[str, Mapping[str, Any]], project_size: int
+) -> list[tuple[float, int, int, int, str, tuple[str, ...]]]:
+    """Score title phrases using cluster support and project-wide rarity.
+
+    Rows contain score, n-gram length, cluster support, project support, display
+    label, and normalized tokens.  One phrase is counted at most once per work,
+    so repeated words in one title do not inflate its support.
+    """
+
+    if not cluster_work_ids or project_size <= 0:
+        return []
+
+    work_phrases: dict[str, set[tuple[str, ...]]] = {}
+    for work_id, node in works.items():
+        title = str(node.get("label") or work_id)
+        work_phrases[work_id] = _title_phrases(title)
+
+    cluster_phrases = set().union(*(work_phrases[work_id] for work_id in cluster_work_ids))
+    rows: list[tuple[float, int, int, int, str, tuple[str, ...]]] = []
+    for phrase in sorted(cluster_phrases):
+        cluster_count = sum(phrase in work_phrases[work_id] for work_id in cluster_work_ids)
+        project_count = sum(phrase in phrases for phrases in work_phrases.values())
+        if cluster_count == 0 or project_count == 0:
+            continue
+        support_share = cluster_count / len(cluster_work_ids)
+        distinctiveness = math.log(1.0 + project_size / project_count)
+        score = support_share * distinctiveness
+        display = " ".join(token.title() for token in phrase)
+        rows.append((score, len(phrase), cluster_count, project_count, display, phrase))
+
+    # A phrase repeated by multiple cluster works is more useful than a phrase
+    # unique to one title.  Single-work phrases remain available only when no
+    # repeated candidate exists at all.
+    if any(row[2] >= _CONCEPT_MIN_SUPPORT for row in rows):
+        rows = [row for row in rows if row[2] >= _CONCEPT_MIN_SUPPORT]
+    # Prefer a surviving bigram over its constituent unigrams, which always have
+    # at least the same support and would otherwise suppress the bigram.
+    bigram_tokens = {token for row in rows if row[1] == 2 for token in row[5]}
+    rows = [row for row in rows if row[1] != 1 or row[5][0] not in bigram_tokens]
+    rows.sort(
+        key=lambda row: (
+            -row[0],
+            -row[1],
+            -row[2],
+            row[3],
+            row[4].casefold(),
+            row[4],
+            row[5],
+        )
+    )
+    return rows
+
+
+def _label_terms(
+    concept_scores: list[tuple[float, str, str]],
+    title_scores: list[tuple[float, int, int, int, str, tuple[str, ...]]],
+) -> tuple[list[str], list[str]]:
+    """Return ``(label_terms, top_concepts)`` with stable containment deduping."""
+
+    top_concepts: list[str] = []
+    concept_phrases: list[tuple[str, ...]] = []
+    for _, concept_label, _ in concept_scores:
+        label = str(concept_label).strip()
+        phrase = _normalized_phrase(label)
+        if not label or _near_duplicate_phrase(phrase, concept_phrases):
+            continue
+        top_concepts.append(label)
+        concept_phrases.append(phrase)
+        if len(top_concepts) == 5:
+            break
+
+    label_terms = top_concepts[:_MAX_LABEL_TERMS]
+    selected_phrases = [_normalized_phrase(term) for term in label_terms]
+    target_count = min(_MAX_LABEL_TERMS, len(label_terms))
+    if len(label_terms) < _MIN_LABEL_TERMS:
+        target_count = _MIN_LABEL_TERMS
+
+    for _, _, _, _, title_label, phrase in title_scores:
+        if len(label_terms) >= target_count:
+            break
+        if not title_label or _near_duplicate_phrase(phrase, selected_phrases):
+            continue
+        label_terms.append(title_label)
+        selected_phrases.append(phrase)
+
+    return label_terms[:_MAX_LABEL_TERMS], top_concepts
+
+
 def _fallback_label(cluster_work_ids: list[str], works: Mapping[str, Mapping[str, Any]]) -> str:
+    """Return a non-empty title when every title token is filtered."""
+
     def key(work_id: str) -> tuple[float, str, str]:
         node = works[work_id]
         data = _node_data(node)
         title = str(node.get("label") or work_id)
-        # Highest cited-by count wins.  Titles and ids provide stable tie breaks.
         citation_count = data.get("cited_by_count")
         if citation_count is None:
             citation_count = data.get("in_degree")
         return (-_as_float(citation_count), title.casefold(), work_id)
 
-    title = min(cluster_work_ids, key=key)
-    return str(works[title].get("label") or title)[:_FALLBACK_TITLE_LENGTH]
+    work_id = min(cluster_work_ids, key=key)
+    return str(works[work_id].get("label") or work_id)[:_FALLBACK_TITLE_LENGTH]
 
 
 def cluster_works(view: GraphView) -> tuple[list[dict[str, Any]], dict[str, str | None]]:
@@ -219,20 +579,9 @@ def cluster_works(view: GraphView) -> tuple[list[dict[str, Any]], dict[str, str 
             concept_labels,
             project_size,
         )
-        top_concepts: list[str] = []
-        seen_labels: set[str] = set()
-        for _, concept_label, _ in scores:
-            label_key = concept_label.casefold()
-            if label_key not in seen_labels:
-                top_concepts.append(concept_label)
-                seen_labels.add(label_key)
-            if len(top_concepts) == 5:
-                break
-        label = (
-            " · ".join(top_concepts[:3])
-            if top_concepts
-            else _fallback_label(cluster_work_ids, works)
-        )
+        title_scores = _title_phrase_scores(cluster_work_ids, works, project_size)
+        label_terms, top_concepts = _label_terms(scores, title_scores)
+        label = " · ".join(label_terms) if label_terms else _fallback_label(cluster_work_ids, works)
         clusters.append(
             {
                 "id": cluster_id,

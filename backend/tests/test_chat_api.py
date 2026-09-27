@@ -327,6 +327,15 @@ def test_research_plan_resume_and_expired_plan(tmp_path: Path) -> None:
         )
         assert expired.status_code == 410
         assert expired.json() == {"detail": "plan expired"}
+        stored = client.get(f"/api/chats/{second_thread}", params={"project": project.id}).json()
+        assert stored["messages"][1]["plan_status"] == "expired"
+        # An expired plan must not lock the thread: a new message is accepted again.
+        again = client.post(
+            f"/api/chats/{second_thread}/messages",
+            params={"project": project.id},
+            json={"content": "Another map, again", "mode": "research"},
+        )
+        assert again.status_code == 200
 
 
 @pytest.mark.parametrize("path", ["../escape", "a" * 31, "g" * 32])

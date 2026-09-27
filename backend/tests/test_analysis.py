@@ -19,6 +19,11 @@ def _work(graph: InMemoryResearchGraph, project_id: str, work_id: str, year: int
     graph.include_work(Inclusion(project_id=project_id, work_id=work_id, discovered_via="seed"))
 
 
+def _titled_work(graph: InMemoryResearchGraph, project_id: str, work_id: str, title: str) -> None:
+    graph.upsert_work(WorkNode(id=work_id, title=title))
+    graph.include_work(Inclusion(project_id=project_id, work_id=work_id, discovered_via="seed"))
+
+
 def _cite(graph: InMemoryResearchGraph, citing: str, cited: str) -> None:
     graph.add_citation(citing, cited)
 
@@ -159,6 +164,65 @@ def test_concept_overlap_clusters_works_without_citations() -> None:
     assert result.main_path.work_ids == []
 
 
+def test_cluster_labels_drop_single_work_concepts_and_use_title_phrases() -> None:
+    graph = InMemoryResearchGraph()
+    project_id = _project(graph, "Title fallback")
+    title = "A Study of Graph Retrieval for Neural Networks"
+    for work_id in ("a", "b", "c"):
+        _titled_work(graph, project_id, work_id, title)
+    _cite(graph, "b", "a")
+    _cite(graph, "c", "b")
+
+    for concept_id, work_id in (("junk-a", "a"), ("junk-b", "b"), ("junk-c", "c")):
+        graph.upsert_concept(ConceptNode(id=concept_id, label=concept_id))
+        graph.set_concepts(work_id, [(concept_id, 1.0)])
+
+    result = analyze_project(graph, project_id)
+
+    assert len(result.clusters) == 1
+    cluster = result.clusters[0]
+    assert cluster.top_concepts == []
+    assert cluster.label == "Graph Retrieval · Neural Networks"
+
+
+def test_cluster_title_phrases_prefer_bigrams_over_more_frequent_unigrams() -> None:
+    graph = InMemoryResearchGraph()
+    project_id = _project(graph, "Bigram preference")
+    titles = {
+        "a": "Speculative Decoding with Draft Trees",
+        "b": "Speculative Decoding for Transformers",
+        "c": "Decoding Draft Heads",
+    }
+    for work_id, title in titles.items():
+        _titled_work(graph, project_id, work_id, title)
+    _cite(graph, "b", "a")
+    _cite(graph, "c", "b")
+
+    result = analyze_project(graph, project_id)
+
+    assert len(result.clusters) == 1
+    assert result.clusters[0].top_concepts == []
+    assert result.clusters[0].label == "Speculative Decoding · Draft"
+
+
+def test_cluster_labels_use_title_phrase_as_complement_without_polluting_top_concepts() -> None:
+    graph = InMemoryResearchGraph()
+    project_id = _project(graph, "Title complement")
+    title = "A Study of Graph Retrieval for Neural Networks"
+    for work_id in ("a", "b", "c"):
+        _titled_work(graph, project_id, work_id, title)
+    _cite(graph, "b", "a")
+    _cite(graph, "c", "b")
+    graph.upsert_concept(ConceptNode(id="field", label="Field"))
+    for work_id in ("a", "b"):
+        graph.set_concepts(work_id, [("field", 1.0)])
+
+    result = analyze_project(graph, project_id)
+
+    assert result.clusters[0].top_concepts == ["Field"]
+    assert result.clusters[0].label == "Field · Graph Retrieval"
+
+
 def test_deterministic_algorithms_and_cache_invalidation() -> None:
     graph = InMemoryResearchGraph()
     project_id = _project(graph, "Cache")
@@ -170,6 +234,10 @@ def test_deterministic_algorithms_and_cache_invalidation() -> None:
     clusters_a, membership_a = cluster_works(view)
     clusters_b, membership_b = cluster_works(view)
     assert (clusters_a, membership_a) == (clusters_b, membership_b)
+    reversed_view = view.model_copy(
+        update={"nodes": list(reversed(view.nodes)), "edges": list(reversed(view.edges))}
+    )
+    assert cluster_works(reversed_view) == (clusters_a, membership_a)
     assert analyze_centrality(view, membership_a) == analyze_centrality(view, membership_b)
     assert find_main_path(view) == find_main_path(view)
 
