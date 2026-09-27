@@ -25,7 +25,7 @@ from portolan.graph import (
 )
 
 from .models import ResearchRequest, RunCancelled, RunProgress, RunReport
-from .screening import HeuristicScreener, Screener
+from .screening import HeuristicScreener, Screener, ScreeningSelection
 from .sources import ResearchSources
 
 _LOG = logging.getLogger(__name__)
@@ -401,14 +401,50 @@ def build_screening_context(
     }
 
 
-def _clamped_score(
-    screener: Screener, record: Mapping[str, Any], context: Mapping[str, Any]
-) -> float:
-    raw_score = screener.score(record, context)
+def _clamp_score(raw_score: Any) -> float:
     try:
         return max(0.0, min(1.0, float(raw_score)))
     except (TypeError, ValueError):
         return 0.0
+
+
+def _clamped_score(
+    screener: Screener, record: Mapping[str, Any], context: Mapping[str, Any]
+) -> float:
+    return _clamp_score(screener.score(record, context))
+
+
+def _step_context(
+    context: Mapping[str, Any], selected: Sequence[_Candidate], selected_ids: set[str]
+) -> dict[str, Any]:
+    """``context`` plus the works included so far, as the screener sees them."""
+
+    included_ids: set[Any] = set(selected_ids)
+    for candidate in selected:
+        included_ids.update(_record_identifiers(candidate.record))
+    return {
+        **context,
+        "included_records": [candidate.record for candidate in selected],
+        "included_ids": included_ids,
+    }
+
+
+def _incremental_selection(
+    screener: Screener, context: Mapping[str, Any]
+) -> ScreeningSelection | None:
+    """An incremental scorer when ``screener`` scores like :class:`HeuristicScreener`.
+
+    Subclasses that override how a score or the link component is computed
+    (or other screeners) are scored through ``score`` at every step instead.
+    """
+
+    if not isinstance(screener, HeuristicScreener):
+        return None
+    kind = type(screener)
+    for name in ("score", "combine", "_link_score", "selection"):
+        if getattr(kind, name) is not getattr(HeuristicScreener, name):
+            return None
+    return screener.selection(context)
 
 
 def select_candidates(
@@ -431,6 +467,10 @@ def select_candidates(
     ``min_score``.  ``check`` runs before every step (cancellation) and
     ``on_select`` after every inclusion.  Candidate ``score`` fields are updated
     in place.
+
+    A :class:`HeuristicScreener` that does not override its scoring is scored
+    incrementally through :meth:`HeuristicScreener.selection`, with the same
+    results; other screeners get the full step context at every step.
     """
 
     pool = list(candidates)
@@ -442,23 +482,21 @@ def select_candidates(
 
     remaining = [candidate for candidate in pool if candidate.key not in seed_keys]
     target_count = max(max_works - len(selected), 0)
+    selection = _incremental_selection(screener, _step_context(context, selected, selected_ids))
+    sort_ids = {id(candidate): _candidate_sort_id(candidate) for candidate in remaining}
     while remaining and len(selected) < len(explicit_seeds) + target_count:
         if check is not None:
             check()
-        included_records = [candidate.record for candidate in selected]
-        included_ids: set[Any] = set(selected_ids)
-        for candidate in selected:
-            included_ids.update(_record_identifiers(candidate.record))
-        step_context = {
-            **context,
-            "included_records": included_records,
-            "included_ids": included_ids,
-        }
-        for candidate in remaining:
-            candidate.score = _clamped_score(screener, candidate.record, step_context)
+        if selection is not None:
+            for candidate in remaining:
+                candidate.score = _clamp_score(selection.score(candidate.record))
+        else:
+            step_context = _step_context(context, selected, selected_ids)
+            for candidate in remaining:
+                candidate.score = _clamped_score(screener, candidate.record, step_context)
         best = min(
             remaining,
-            key=lambda candidate: (-(candidate.score or 0.0), _candidate_sort_id(candidate)),
+            key=lambda candidate: (-(candidate.score or 0.0), sort_ids[id(candidate)]),
         )
         if (best.score or 0.0) < min_score:
             # Every remaining candidate scores below the threshold: leave
@@ -467,6 +505,8 @@ def select_candidates(
         selected.append(best)
         selected_ids.add(best.key)
         remaining.remove(best)
+        if selection is not None:
+            selection.include(best.record, {best.key, *_record_identifiers(best.record)})
         if on_select is not None:
             on_select(selected)
     return selected

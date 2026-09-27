@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import time
 from collections.abc import Mapping
 from copy import deepcopy
 from datetime import UTC, datetime
@@ -1435,6 +1437,172 @@ def test_select_candidates_runs_check_and_on_select_hooks() -> None:
         select_candidates(
             candidates.values(), context, HeuristicScreener(), 5, 0.0, seed_keys, check=cancel
         )
+
+
+def _original_link_score(candidate: Mapping[str, Any], context: Mapping[str, Any]) -> float:
+    """The pre-incremental HeuristicScreener._link_score, kept verbatim as the reference."""
+
+    from collections.abc import Sequence
+
+    from portolan.research.screening import _identifier_keys, _keys_from_value, _records
+
+    known_keys: set[tuple[str, str]] = set()
+    known_keys.update(_keys_from_value(context.get("seed_ids")))
+    known_keys.update(_keys_from_value(context.get("included_ids")))
+    source_records = [
+        *_records(context.get("seed_records")),
+        *_records(context.get("included_records")),
+    ]
+    for record in source_records:
+        known_keys.update(_identifier_keys(record))
+    if not known_keys:
+        return 0.0
+
+    candidate_keys = _identifier_keys(candidate)
+    referenced = set()
+    values = candidate.get("referenced_works")
+    if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
+        for value in values:
+            referenced.update(_keys_from_value(value))
+    if referenced & known_keys:
+        return 1.0
+    for record in source_records:
+        values = record.get("referenced_works")
+        if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
+            continue
+        source_references: set[tuple[str, str]] = set()
+        for value in values:
+            source_references.update(_keys_from_value(value))
+        if source_references & candidate_keys:
+            return 1.0
+    return 0.0
+
+
+class _ReferenceScreener(HeuristicScreener):
+    """Scores with the verbatim original link component (and is never incremental)."""
+
+    def _link_score(self, candidate: Mapping[str, Any], context: Mapping[str, Any]) -> float:
+        return _original_link_score(candidate, context)
+
+
+def _mixed_identity_candidates(size: int) -> tuple[dict[str, _Candidate], set[str]]:
+    """Synthetic pool where some works carry DOIs and some references are DOI URLs."""
+
+    candidates, seed_keys = _synthetic_candidates(size)
+    for candidate in candidates.values():
+        work = candidate.record
+        number = int(work["openalex_id"][1:])
+        if number % 5 == 0:
+            work["identifiers"]["doi"] = f"10.1234/w{number}"
+        if number % 7 == 0:
+            work["identifiers"]["arxiv"] = f"2401.{number:05d}"
+        work["referenced_works"] = [
+            f"https://doi.org/10.1234/w{int(ref[1:])}"
+            if int(ref[1:]) % 5 == 0 and int(ref[1:]) % 2 == 0
+            else f"arxiv:2401.{int(ref[1:]):05d}"
+            if int(ref[1:]) % 7 == 0 and int(ref[1:]) % 3 == 0
+            else ref
+            for ref in work["referenced_works"]
+        ]
+    return candidates, seed_keys
+
+
+def test_link_component_matches_original_for_plain_contexts() -> None:
+    candidates, seed_keys = _mixed_identity_candidates(120)
+    request = ResearchRequest(seeds=["W1", "W2"], query="graph retrieval attention")
+    base = build_screening_context(request, candidates, seed_keys, set())
+    records = [candidate.record for candidate in candidates.values()]
+    contexts = [
+        base,
+        {**base, "seed_ids": set(), "included_ids": set(), "seed_records": []},
+        {**base, "included_records": records[10:40:3], "included_ids": {"openalex:W77"}},
+        {**base, "included_records": records[50], "included_ids": ["https://doi.org/10.1234/w5"]},
+    ]
+    screener = HeuristicScreener()
+    linked = 0
+    for context in contexts:
+        for work in records:
+            expected = _original_link_score(work, context)
+            assert screener._link_score(work, context) == expected
+            linked += int(expected)
+    assert linked > 0
+
+
+@pytest.mark.parametrize(
+    ("weights", "max_works", "min_score"),
+    [
+        ({}, 60, 0.0),
+        ({}, 60, 0.3),
+        ({"token_weight": 0.45, "link_weight": 0.2, "citation_weight": 0.1}, 60, 0.0),
+        (
+            {
+                "token_weight": 0.45,
+                "link_weight": 0.2,
+                "citation_weight": 0.1,
+                "cocitation_weight": 0.25,
+            },
+            60,
+            0.0,
+        ),
+    ],
+)
+def test_incremental_selection_matches_original_on_large_pool(
+    weights: dict[str, float], max_works: int, min_score: float
+) -> None:
+    candidates, seed_keys = _mixed_identity_candidates(320)
+    request = ResearchRequest(seeds=["W1", "W2"], query="graph retrieval attention")
+    context = build_screening_context(request, candidates, seed_keys, set())
+
+    expected = _original_greedy(
+        deepcopy(candidates),
+        context,
+        _ReferenceScreener(**weights),
+        max_works,
+        min_score,
+        seed_keys,
+    )
+    selected = select_candidates(
+        candidates.values(), context, HeuristicScreener(**weights), max_works, min_score, seed_keys
+    )
+
+    assert [(candidate.key, candidate.score) for candidate in selected] == expected
+    assert len(selected) > 2
+
+
+def test_incremental_selection_without_seed_candidates_matches_original() -> None:
+    candidates, _ = _mixed_identity_candidates(120)
+    seed_keys = {"openalex:W999"}  # A seed outside the pool: nothing included up front.
+    request = ResearchRequest(seeds=["W999"], query="graph retrieval attention")
+    context = build_screening_context(request, candidates, seed_keys, set())
+
+    expected = _original_greedy(
+        deepcopy(candidates), context, _ReferenceScreener(), 40, 0.0, seed_keys
+    )
+    selected = select_candidates(
+        candidates.values(), context, HeuristicScreener(), 40, 0.0, seed_keys
+    )
+
+    assert [(candidate.key, candidate.score) for candidate in selected] == expected
+
+
+@pytest.mark.skipif(
+    bool(os.environ.get("PORTOLAN_SKIP_TIMING_TESTS")),
+    reason="timing assertions disabled by PORTOLAN_SKIP_TIMING_TESTS",
+)
+def test_select_candidates_is_fast_on_a_large_pool() -> None:
+    candidates, seed_keys = _mixed_identity_candidates(700)
+    request = ResearchRequest(seeds=["W1", "W2"], query="graph retrieval attention")
+    context = build_screening_context(request, candidates, seed_keys, set())
+
+    started = time.perf_counter()
+    selected = select_candidates(
+        candidates.values(), context, HeuristicScreener(), 150, 0.0, seed_keys
+    )
+    elapsed = time.perf_counter() - started
+
+    assert len(selected) == 150
+    # The per-step rebuild of the link sources took about 30 s here.
+    assert elapsed < 3.0
 
 
 def test_screening_context_carries_core_records_and_year_bounds() -> None:

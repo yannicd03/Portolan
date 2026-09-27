@@ -218,6 +218,54 @@ def _year(record: Mapping[str, Any]) -> int | None:
         return None
 
 
+def _reference_keys(record: Mapping[str, Any]) -> set[tuple[str, str]]:
+    """Every identity key of every reference of ``record``."""
+
+    result: set[tuple[str, str]] = set()
+    values = record.get("referenced_works")
+    if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
+        for value in values:
+            result.update(_keys_from_value(value))
+    return result
+
+
+class _LinkSources:
+    """Identity and reference keys of the seed and included works (``link``).
+
+    Both sets only grow as works are included, so a greedy selection can keep
+    one instance and add each inclusion instead of rebuilding it per score.
+    """
+
+    def __init__(self, context: Mapping[str, Any]) -> None:
+        self.known: set[tuple[str, str]] = set()
+        self.references: set[tuple[str, str]] = set()
+        self.add_ids(context.get("seed_ids"))
+        self.add_ids(context.get("included_ids"))
+        for record in [
+            *_records(context.get("seed_records")),
+            *_records(context.get("included_records")),
+        ]:
+            self.add_record(record)
+
+    def add_ids(self, value: Any) -> None:
+        self.known.update(_keys_from_value(value))
+
+    def add_record(self, record: Mapping[str, Any]) -> None:
+        self.known.update(_identifier_keys(record))
+        self.references.update(_reference_keys(record))
+
+    def link(self, candidate_keys: set[tuple[str, str]], referenced: set[tuple[str, str]]) -> float:
+        """1.0 if the candidate cites, or is cited by, a known work."""
+
+        if not self.known:
+            return 0.0
+        if not referenced.isdisjoint(self.known):
+            return 1.0
+        if not self.references.isdisjoint(candidate_keys):
+            return 1.0
+        return 0.0
+
+
 class _PoolState:
     """Per-context values that do not change while one pool is screened.
 
@@ -514,36 +562,7 @@ class HeuristicScreener:
         return max(0.0, min(1.0, similarity))
 
     def _link_score(self, candidate: Mapping[str, Any], context: Mapping[str, Any]) -> float:
-        known_keys: set[tuple[str, str]] = set()
-        known_keys.update(_keys_from_value(context.get("seed_ids")))
-        known_keys.update(_keys_from_value(context.get("included_ids")))
-        source_records = [
-            *_records(context.get("seed_records")),
-            *_records(context.get("included_records")),
-        ]
-        for record in source_records:
-            known_keys.update(_identifier_keys(record))
-        if not known_keys:
-            return 0.0
-
-        candidate_keys = _identifier_keys(candidate)
-        referenced = set()
-        values = candidate.get("referenced_works")
-        if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
-            for value in values:
-                referenced.update(_keys_from_value(value))
-        if referenced & known_keys:
-            return 1.0
-        for record in source_records:
-            values = record.get("referenced_works")
-            if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
-                continue
-            source_references: set[tuple[str, str]] = set()
-            for value in values:
-                source_references.update(_keys_from_value(value))
-            if source_references & candidate_keys:
-                return 1.0
-        return 0.0
+        return _LinkSources(context).link(_identifier_keys(candidate), _reference_keys(candidate))
 
     def _citation_score(self, candidate: Mapping[str, Any], context: Mapping[str, Any]) -> float:
         value = candidate.get("cited_by_count")
@@ -622,6 +641,11 @@ class HeuristicScreener:
         method = getattr(self, "_recency_penalty" if name == "recency" else f"_{name}_score")
         return float(method(candidate, context))
 
+    def selection(self, context: Mapping[str, Any]) -> ScreeningSelection:
+        """Return an incremental scorer for one greedy selection from ``context``."""
+
+        return ScreeningSelection(self, context)
+
     def components(
         self, candidate: Mapping[str, Any], context: Mapping[str, Any]
     ) -> dict[str, float]:
@@ -661,4 +685,71 @@ class HeuristicScreener:
         )
 
 
-__all__ = ["COMPONENTS", "DEFAULT_WEIGHTS", "HeuristicScreener", "Screener"]
+class ScreeningSelection:
+    """Incremental scorer for one greedy selection over a fixed candidate pool.
+
+    ``score(record)`` equals ``screener.score(record, step_context)`` where
+    ``step_context`` is the starting context with every work passed to
+    :meth:`include` added to ``included_records`` and its identifiers to
+    ``included_ids``.  Only ``link`` depends on the included works; every
+    other component is computed once per candidate, and the link sources grow
+    with each inclusion instead of being rebuilt per score.
+    """
+
+    def __init__(self, screener: HeuristicScreener, context: Mapping[str, Any]) -> None:
+        self._screener = screener
+        self._context = context
+        self._links = _LinkSources(context)
+        weights = screener.weights
+        self._static_names = tuple(
+            name for name in (*COMPONENTS, "recency") if name != "link" and weights[name] > 0
+        )
+        self._use_link = weights["link"] > 0
+        self._static: dict[int, tuple[Mapping[str, Any], dict[str, float]]] = {}
+        self._keys: dict[
+            int, tuple[Mapping[str, Any], set[tuple[str, str]], set[tuple[str, str]]]
+        ] = {}
+
+    def include(self, record: Mapping[str, Any], ids: Any = None) -> None:
+        """Add one included work and its extra identifiers (``included_ids``)."""
+
+        self._links.add_ids(ids)
+        self._links.add_record(record)
+
+    def _static_components(self, record: Mapping[str, Any]) -> dict[str, float]:
+        cached = self._static.get(id(record))
+        if cached is not None and cached[0] is record:
+            return cached[1]
+        values = {
+            name: self._screener._component(name, record, self._context)
+            for name in self._static_names
+        }
+        self._static[id(record)] = (record, values)
+        return values
+
+    def _link_keys(
+        self, record: Mapping[str, Any]
+    ) -> tuple[set[tuple[str, str]], set[tuple[str, str]]]:
+        cached = self._keys.get(id(record))
+        if cached is not None and cached[0] is record:
+            return cached[1], cached[2]
+        keys, references = _identifier_keys(record), _reference_keys(record)
+        self._keys[id(record)] = (record, keys, references)
+        return keys, references
+
+    def score(self, record: Mapping[str, Any]) -> float:
+        """Return the candidate's score against the works included so far."""
+
+        components = dict(self._static_components(record))
+        if self._use_link:
+            components["link"] = self._links.link(*self._link_keys(record))
+        return self._screener.combine(components)
+
+
+__all__ = [
+    "COMPONENTS",
+    "DEFAULT_WEIGHTS",
+    "HeuristicScreener",
+    "Screener",
+    "ScreeningSelection",
+]
