@@ -6,7 +6,7 @@ import copy
 import logging
 import math
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from threading import Event
@@ -357,6 +357,119 @@ class _Candidate:
     score: float | None = None
     citation_pairs: set[tuple[str, str]] = field(default_factory=set)
     work_id: str | None = None
+
+
+def build_screening_context(
+    request: ResearchRequest,
+    candidates: Mapping[str, _Candidate],
+    seed_keys: set[str],
+    relation_pairs: set[tuple[str, str]],
+) -> dict[str, Any]:
+    """Build the base screening context for one candidate pool.
+
+    ``core_records`` holds the core set (seeds plus top search hits) in key
+    order; ``to_year`` and ``from_year`` repeat the request's year bounds.
+    """
+
+    records = [candidate.record for candidate in candidates.values()]
+    counts: list[float] = []
+    for record in records:
+        try:
+            counts.append(max(0.0, float(record.get("cited_by_count") or 0)))
+        except (TypeError, ValueError):
+            continue
+    core_counts, core_size = ResearchRunner._core_reference_counts(candidates)
+    return {
+        "query": request.query,
+        "profile": request.query or "",
+        "candidates": records,
+        "candidate_pool": records,
+        "seed_records": [candidates[key].record for key in sorted(seed_keys) if key in candidates],
+        "core_records": [
+            candidates[key].record
+            for key in sorted(candidates)
+            if candidates[key].is_seed or candidates[key].core
+        ],
+        "seed_ids": set(seed_keys),
+        "included_ids": set(seed_keys),
+        "max_cited_by_count": max(counts, default=0.0),
+        "citation_pairs": relation_pairs,
+        "core_reference_counts": core_counts,
+        "core_size": core_size,
+        "from_year": request.from_year,
+        "to_year": request.to_year,
+    }
+
+
+def _clamped_score(
+    screener: Screener, record: Mapping[str, Any], context: Mapping[str, Any]
+) -> float:
+    raw_score = screener.score(record, context)
+    try:
+        return max(0.0, min(1.0, float(raw_score)))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def select_candidates(
+    candidates: Iterable[_Candidate],
+    context: Mapping[str, Any],
+    screener: Screener,
+    max_works: int,
+    min_score: float,
+    seed_keys: set[str],
+    *,
+    check: Callable[[], None] | None = None,
+    on_select: Callable[[Sequence[_Candidate]], None] | None = None,
+) -> list[_Candidate]:
+    """Greedily select up to ``max_works`` candidates, seeds first.
+
+    Seeds are always included (score 1.0).  Each step rescores the remaining
+    candidates against the works included so far (``included_records`` and
+    ``included_ids`` are added to ``context``) and takes the best one, ties
+    broken by identifier; selection stops early once the best score is below
+    ``min_score``.  ``check`` runs before every step (cancellation) and
+    ``on_select`` after every inclusion.  Candidate ``score`` fields are updated
+    in place.
+    """
+
+    pool = list(candidates)
+    explicit_seeds = [candidate for candidate in pool if candidate.key in seed_keys]
+    selected: list[_Candidate] = sorted(explicit_seeds, key=_candidate_sort_id)
+    for candidate in selected:
+        candidate.score = 1.0
+    selected_ids = set(seed_keys) if selected else set()
+
+    remaining = [candidate for candidate in pool if candidate.key not in seed_keys]
+    target_count = max(max_works - len(selected), 0)
+    while remaining and len(selected) < len(explicit_seeds) + target_count:
+        if check is not None:
+            check()
+        included_records = [candidate.record for candidate in selected]
+        included_ids: set[Any] = set(selected_ids)
+        for candidate in selected:
+            included_ids.update(_record_identifiers(candidate.record))
+        step_context = {
+            **context,
+            "included_records": included_records,
+            "included_ids": included_ids,
+        }
+        for candidate in remaining:
+            candidate.score = _clamped_score(screener, candidate.record, step_context)
+        best = min(
+            remaining,
+            key=lambda candidate: (-(candidate.score or 0.0), _candidate_sort_id(candidate)),
+        )
+        if (best.score or 0.0) < min_score:
+            # Every remaining candidate scores below the threshold: leave
+            # the remaining slots empty rather than filling them.
+            break
+        selected.append(best)
+        selected_ids.add(best.key)
+        remaining.remove(best)
+        if on_select is not None:
+            on_select(selected)
+    return selected
 
 
 @dataclass(frozen=True, slots=True)
@@ -1383,36 +1496,10 @@ class ResearchRunner:
         seed_keys: set[str],
         relation_pairs: set[tuple[str, str]],
     ) -> dict[str, Any]:
-        records = [candidate.record for candidate in candidates.values()]
-        counts: list[float] = []
-        for record in records:
-            try:
-                counts.append(max(0.0, float(record.get("cited_by_count") or 0)))
-            except (TypeError, ValueError):
-                continue
-        core_counts, core_size = self._core_reference_counts(candidates)
-        return {
-            "query": request.query,
-            "profile": request.query or "",
-            "candidates": records,
-            "candidate_pool": records,
-            "seed_records": [
-                candidates[key].record for key in sorted(seed_keys) if key in candidates
-            ],
-            "seed_ids": set(seed_keys),
-            "included_ids": set(seed_keys),
-            "max_cited_by_count": max(counts, default=0.0),
-            "citation_pairs": relation_pairs,
-            "core_reference_counts": core_counts,
-            "core_size": core_size,
-        }
+        return build_screening_context(request, candidates, seed_keys, relation_pairs)
 
     def _score(self, candidate: _Candidate, context: Mapping[str, Any]) -> float:
-        raw_score = self.screener.score(candidate.record, context)
-        try:
-            return max(0.0, min(1.0, float(raw_score)))
-        except (TypeError, ValueError):
-            return 0.0
+        return _clamped_score(self.screener, candidate.record, context)
 
     def _rank_pool(
         self,
@@ -1446,42 +1533,8 @@ class ResearchRunner:
         progress: Callable[[RunProgress], None] | None = None,
     ) -> list[_Candidate]:
         base_context = self._screening_context(request, candidates, seed_keys, relation_pairs)
-        explicit_seeds = [
-            candidate for candidate in candidates.values() if candidate.key in seed_keys
-        ]
-        selected: list[_Candidate] = sorted(explicit_seeds, key=_candidate_sort_id)
-        for candidate in selected:
-            candidate.score = 1.0
-        selected_ids = set(seed_keys) if selected else set()
 
-        remaining = [
-            candidate for candidate in candidates.values() if candidate.key not in seed_keys
-        ]
-        target_count = max(request.max_works - len(selected), 0)
-        while remaining and len(selected) < len(explicit_seeds) + target_count:
-            self._check_cancel(cancel)
-            included_records = [candidate.record for candidate in selected]
-            included_ids: set[Any] = set(selected_ids)
-            for candidate in selected:
-                included_ids.update(_record_identifiers(candidate.record))
-            context = {
-                **base_context,
-                "included_records": included_records,
-                "included_ids": included_ids,
-            }
-            for candidate in remaining:
-                candidate.score = self._score(candidate, context)
-            best = min(
-                remaining,
-                key=lambda candidate: (-(candidate.score or 0.0), _candidate_sort_id(candidate)),
-            )
-            if (best.score or 0.0) < request.min_score:
-                # Every remaining candidate scores below the threshold: leave
-                # the remaining slots empty rather than filling them.
-                break
-            selected.append(best)
-            selected_ids.add(best.key)
-            remaining.remove(best)
+        def on_select(selected: Sequence[_Candidate]) -> None:
             if progress is not None and len(selected) % 25 == 0:
                 self._emit(
                     progress,
@@ -1489,7 +1542,17 @@ class ResearchRunner:
                     f"Screened {len(selected)} works",
                     {"candidates": len(candidates), "included": len(selected)},
                 )
-        return selected
+
+        return select_candidates(
+            candidates.values(),
+            base_context,
+            self.screener,
+            request.max_works,
+            request.min_score,
+            seed_keys,
+            check=lambda: self._check_cancel(cancel),
+            on_select=on_select,
+        )
 
     def _enrich(
         self,
@@ -2014,6 +2077,8 @@ class ResearchRunner:
 __all__ = [
     "ConceptRebuildReport",
     "ResearchRunner",
+    "build_screening_context",
     "rebuild_project_concepts",
     "rebuild_project_concepts_with_report",
+    "select_candidates",
 ]

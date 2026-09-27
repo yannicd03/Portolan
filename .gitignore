@@ -26,3 +26,6 @@ frontend/dist/
 
 # OS
 .DS_Store
+
+# Eval: frozen candidate pools (contain third-party abstracts)
+eval/recall/pools/

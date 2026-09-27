@@ -8,6 +8,7 @@ from .runner import (
     ResearchRunner,
     rebuild_project_concepts,
     rebuild_project_concepts_with_report,
+    select_candidates,
 )
 from .screening import HeuristicScreener, Screener
 from .sources import ResearchSources
@@ -24,4 +25,5 @@ __all__ = [
     "RunProgress",
     "RunReport",
     "Screener",
+    "select_candidates",
 ]

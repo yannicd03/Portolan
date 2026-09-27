@@ -23,7 +23,10 @@ from portolan.research import (
     RunCancelled,
     rebuild_project_concepts,
     rebuild_project_concepts_with_report,
+    select_candidates,
 )
+from portolan.research.runner import _Candidate, _candidate_sort_id, build_screening_context
+from portolan.research.screening import COMPONENTS, DEFAULT_WEIGHTS
 
 
 def record(
@@ -1203,7 +1206,10 @@ def test_min_score_leaves_slots_empty_but_keeps_seeds() -> None:
 
 
 def test_cocitation_by_core_set_raises_candidate_score() -> None:
-    screener = HeuristicScreener()
+    # The pre-W25 default weights, passed explicitly, keep the original score.
+    screener = HeuristicScreener(
+        token_weight=0.45, link_weight=0.2, citation_weight=0.10, cocitation_weight=0.25
+    )
     candidate = record("W5", "Unrelated title")
     context = {"profile": "graph retrieval", "max_cited_by_count": 10}
     baseline = screener.score(candidate, context)
@@ -1276,14 +1282,277 @@ def test_new_request_fields_default_for_existing_callers() -> None:
         ResearchRequest(seeds=["W1"], min_score=1.5)
 
     default = HeuristicScreener()
+    total = sum(DEFAULT_WEIGHTS.values())
+    assert {name: default.weights[name] for name in DEFAULT_WEIGHTS} == pytest.approx(
+        {name: value / total for name, value in DEFAULT_WEIGHTS.items()}
+    )
+    assert default.recency_weight == 0
+    assert default.cocitation_norm == "pool_max"
+    original = HeuristicScreener(
+        token_weight=0.45, link_weight=0.2, citation_weight=0.10, cocitation_weight=0.25
+    )
     assert (
-        default.token_weight,
-        default.link_weight,
-        default.cocitation_weight,
-        default.citation_weight,
-    ) == pytest.approx((0.45, 0.2, 0.25, 0.10))
+        original.token_weight,
+        original.link_weight,
+        original.cocitation_weight,
+        original.citation_weight,
+        original.semantic_weight,
+        original.coupling_weight,
+    ) == pytest.approx((0.45, 0.2, 0.25, 0.10, 0, 0))
+    assert original.cocitation_norm == "core_size"
     legacy = HeuristicScreener(token_weight=0.6, link_weight=0.25, citation_weight=0.15)
     assert legacy.cocitation_weight == 0
     assert (legacy.token_weight, legacy.link_weight, legacy.citation_weight) == pytest.approx(
         (0.6, 0.25, 0.15)
     )
+
+
+_TOPIC_WORDS = ["graph", "retrieval", "neural", "attention", "sparse", "decoding", "memory"]
+_OTHER_WORDS = ["chemistry", "soil", "protein", "market", "poetry", "climate", "vision"]
+
+
+def _synthetic_candidates(size: int = 40, seed: int = 7) -> tuple[dict[str, _Candidate], set[str]]:
+    import random
+
+    rng = random.Random(seed)
+    ids = [f"W{index}" for index in range(1, size + 1)]
+    candidates: dict[str, _Candidate] = {}
+    for index, wid in enumerate(ids):
+        words = rng.sample(_TOPIC_WORDS if index % 3 else _OTHER_WORDS, 3)
+        refs = rng.sample(ids + [f"W9{n}" for n in range(10)], rng.randint(0, 6))
+        work = record(
+            wid,
+            " ".join(words).title(),
+            refs=[ref for ref in refs if ref != wid],
+            citations=rng.choice([0, 1, 5, 40, 300]),
+            year=rng.choice([2018, 2020, 2022]),
+        )
+        key = f"openalex:{wid}"
+        candidates[key] = _Candidate(
+            key=key,
+            record=work,
+            discovered_via="seed" if index < 2 else "search",
+            depth=0,
+            is_seed=index < 2,
+            core=2 <= index < 6,
+        )
+    return candidates, {"openalex:W1", "openalex:W2"}
+
+
+def _original_greedy(
+    candidates: dict[str, _Candidate],
+    context: Mapping[str, Any],
+    screener: HeuristicScreener,
+    max_works: int,
+    min_score: float,
+    seed_keys: set[str],
+) -> list[tuple[str, float | None]]:
+    """The pre-refactor ResearchRunner._screen loop, kept as the reference."""
+
+    from portolan.research.runner import _record_identifiers
+
+    explicit_seeds = [candidate for candidate in candidates.values() if candidate.key in seed_keys]
+    selected = sorted(explicit_seeds, key=_candidate_sort_id)
+    for candidate in selected:
+        candidate.score = 1.0
+    selected_ids = set(seed_keys) if selected else set()
+    remaining = [candidate for candidate in candidates.values() if candidate.key not in seed_keys]
+    target_count = max(max_works - len(selected), 0)
+    while remaining and len(selected) < len(explicit_seeds) + target_count:
+        included_ids: set[Any] = set(selected_ids)
+        for candidate in selected:
+            included_ids.update(_record_identifiers(candidate.record))
+        step = {
+            **context,
+            "included_records": [candidate.record for candidate in selected],
+            "included_ids": included_ids,
+        }
+        for candidate in remaining:
+            candidate.score = max(0.0, min(1.0, float(screener.score(candidate.record, step))))
+        best = min(remaining, key=lambda item: (-(item.score or 0.0), _candidate_sort_id(item)))
+        if (best.score or 0.0) < min_score:
+            break
+        selected.append(best)
+        selected_ids.add(best.key)
+        remaining.remove(best)
+    return [(candidate.key, candidate.score) for candidate in selected]
+
+
+@pytest.mark.parametrize(
+    ("weights", "max_works", "min_score"),
+    [
+        ({}, 12, 0.15),
+        ({"token_weight": 0.45, "link_weight": 0.2, "citation_weight": 0.1}, 30, 0.0),
+        ({"token_weight": 0.6, "link_weight": 0.25, "citation_weight": 0.15}, 8, 0.2),
+        ({"semantic_weight": 1.0, "link_weight": 0.0}, 50, 0.3),
+    ],
+)
+def test_select_candidates_matches_original_greedy_selection(
+    weights: dict[str, float], max_works: int, min_score: float
+) -> None:
+    candidates, seed_keys = _synthetic_candidates()
+    request = ResearchRequest(seeds=["W1", "W2"], query="graph retrieval attention")
+    context = build_screening_context(request, candidates, seed_keys, set())
+    screener = HeuristicScreener(**weights)
+
+    expected = _original_greedy(
+        deepcopy(candidates), context, screener, max_works, min_score, seed_keys
+    )
+    selected = select_candidates(
+        candidates.values(), context, screener, max_works, min_score, seed_keys
+    )
+
+    assert [(candidate.key, candidate.score) for candidate in selected] == expected
+    assert selected[:2] == [candidates["openalex:W1"], candidates["openalex:W2"]]
+
+
+def test_select_candidates_runs_check_and_on_select_hooks() -> None:
+    candidates, seed_keys = _synthetic_candidates()
+    request = ResearchRequest(seeds=["W1", "W2"], query="graph retrieval")
+    context = build_screening_context(request, candidates, seed_keys, set())
+    checks: list[int] = []
+    counts: list[int] = []
+
+    selected = select_candidates(
+        candidates.values(),
+        context,
+        HeuristicScreener(),
+        5,
+        0.0,
+        seed_keys,
+        check=lambda: checks.append(1),
+        on_select=lambda chosen: counts.append(len(chosen)),
+    )
+
+    assert len(selected) == 5
+    assert counts == [3, 4, 5]
+    assert len(checks) == 3
+
+    def cancel() -> None:
+        raise RunCancelled()
+
+    with pytest.raises(RunCancelled):
+        select_candidates(
+            candidates.values(), context, HeuristicScreener(), 5, 0.0, seed_keys, check=cancel
+        )
+
+
+def test_screening_context_carries_core_records_and_year_bounds() -> None:
+    candidates, seed_keys = _synthetic_candidates()
+    request = ResearchRequest(seeds=["W1"], query="graph", from_year=2019, to_year=2021)
+    context = build_screening_context(request, candidates, seed_keys, set())
+
+    core_ids = {item["openalex_id"] for item in context["core_records"]}
+    assert core_ids == {"W1", "W2", "W3", "W4", "W5", "W6"}
+    assert context["from_year"] == 2019
+    assert context["to_year"] == 2021
+
+
+def _only(component: str) -> HeuristicScreener:
+    return HeuristicScreener(**{f"{name}_weight": float(name == component) for name in COMPONENTS})
+
+
+def test_semantic_component_is_tfidf_cosine_with_profile() -> None:
+    screener = _only("semantic")
+    seed = record("W1", "Speculative decoding for language models")
+    on_topic = record("W2", "Faster speculative decoding with draft models")
+    off_topic = record("W3", "Soil chemistry of wetlands")
+    same = record("W4", "Speculative decoding for language models")
+    pool = [seed, on_topic, off_topic, same]
+    context = {
+        "query": "speculative decoding",
+        "profile": "speculative decoding",
+        "candidates": pool,
+        "seed_records": [seed],
+        "core_records": [seed],
+    }
+
+    scores = {work["openalex_id"]: screener.score(work, context) for work in pool}
+    # Every test abstract starts "Research on", so unrelated works share a little.
+    assert scores["W3"] < 0.1
+    assert scores["W3"] < scores["W2"] < scores["W4"] <= 1.0
+    # Deterministic, and the pool statistics are reused within one context.
+    assert screener.score(on_topic, dict(context)) == scores["W2"]
+    # Rare terms weigh more than terms every pool document shares.
+    common = record("W5", "Research on models")
+    assert screener.score(common, context) < scores["W2"]
+
+
+def test_cocitation_is_normalised_by_largest_non_seed_count() -> None:
+    screener = _only("cocitation")
+    seed = record("W1", "Seed")
+    context = {
+        "seed_records": [seed],
+        "core_reference_counts": {"openalex:W1": 9, "openalex:W5": 2, "openalex:W6": 4},
+        "core_size": 10,
+    }
+
+    assert screener.score(record("W6", "Top"), context) == pytest.approx(1.0)
+    assert screener.score(record("W5", "Half"), context) == pytest.approx(0.5)
+    assert screener.score(record("W7", "None"), context) == 0.0
+
+    by_core = HeuristicScreener(cocitation_weight=1.0, cocitation_norm="core_size")
+    assert by_core.components(record("W5", "Half"), context)["cocitation"] == pytest.approx(0.2)
+    with pytest.raises(ValueError):
+        HeuristicScreener(cocitation_norm="median")
+
+
+def test_coupling_counts_references_shared_by_two_core_works() -> None:
+    screener = _only("coupling")
+    core_a = record("W1", "Core A", refs=["W10", "W11", "W12"])
+    core_b = record("W2", "Core B", refs=["W10", "W11"])
+    core_c = record("W3", "Core C", refs=["W10"])
+    context = {"seed_records": [core_a], "core_records": [core_a, core_b, core_c]}
+
+    # W10 (3 core works) and W11 (2) are shared; W12 (1) and W99 (0) are not.
+    candidate = record("W20", "Candidate", refs=["W10", "W11", "W12", "W99"])
+    assert screener.score(candidate, context) == pytest.approx(0.5)
+    assert screener.score(record("W21", "No references"), context) == 0.0
+    # A core work's own references need two *other* core works: only W10 counts.
+    assert screener.components(core_b, context)["coupling"] == pytest.approx(0.5)
+
+
+def test_recency_prior_penalises_works_after_to_year() -> None:
+    context = {"profile": "graph retrieval", "to_year": 2020}
+    old = record("W1", "Graph retrieval", year=2019)
+    new = record("W2", "Graph retrieval", year=2023)
+
+    default = HeuristicScreener()
+    assert default.score(old, context) == default.score(new, context)
+
+    penalised = HeuristicScreener(recency_weight=0.3)
+    assert penalised.score(new, context) == pytest.approx(
+        max(0.0, penalised.score(old, context) - 0.3)
+    )
+    assert penalised.score(new, {"profile": "graph retrieval"}) == penalised.score(old, context)
+    with pytest.raises(ValueError):
+        HeuristicScreener(recency_weight=1.5)
+
+
+def test_explicit_legacy_weights_reproduce_original_score() -> None:
+    candidates, seed_keys = _synthetic_candidates()
+    request = ResearchRequest(seeds=["W1", "W2"], query="graph retrieval attention")
+    context = {
+        **build_screening_context(request, candidates, seed_keys, set()),
+        "included_records": [candidates[key].record for key in sorted(seed_keys)],
+    }
+    legacy = HeuristicScreener(
+        token_weight=0.45, link_weight=0.2, citation_weight=0.10, cocitation_weight=0.25
+    )
+    for candidate in candidates.values():
+        parts = legacy.components(candidate.record, context)
+        expected = (
+            0.45 * parts["token"]
+            + 0.2 * parts["link"]
+            + 0.10 * parts["citation"]
+            + 0.25 * parts["cocitation"]
+        )
+        assert legacy.score(candidate.record, context) == pytest.approx(expected)
+        counts = context["core_reference_counts"]
+        count = counts.get(candidate.key, 0)
+        assert parts["cocitation"] == pytest.approx(min(1.0, count / context["core_size"]))
+
+    # Naming a new component switches to the new defaults for the rest.
+    mixed = HeuristicScreener(token_weight=0.2, semantic_weight=0.3)
+    assert mixed.cocitation_norm == "pool_max"
+    assert mixed.coupling_weight > 0

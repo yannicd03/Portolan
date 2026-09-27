@@ -37,10 +37,12 @@ from portolan.adapters.base import OfflineCacheMissError  # noqa: E402
 from portolan.graph.memory import InMemoryResearchGraph  # noqa: E402
 from portolan.research import ResearchRunner, ResearchSources  # noqa: E402
 from portolan.research.models import ResearchRequest  # noqa: E402
+from portolan.research.runner import _record_identifiers  # noqa: E402
 from portolan.settings import Settings  # noqa: E402
 
 DEFAULT_SURVEY_PATH = Path(__file__).resolve().with_name("surveys.yaml")
 DEFAULT_RESULTS_DIR = Path(__file__).resolve().with_name("results")
+DEFAULT_POOLS_DIR = Path(__file__).resolve().with_name("pools")
 S2_PAGE_SIZE = 100
 
 
@@ -337,19 +339,126 @@ def fetch_ground_truth(
     return _s2_references(survey_record, sources.semanticscholar)
 
 
+_TRUTH_FIELDS = (
+    "title",
+    "year",
+    "id",
+    "openalex_id",
+    "openalex",
+    "openalexId",
+    "doi",
+    "doi_id",
+    "doiId",
+    "arxiv_id",
+    "arxiv",
+    "arxivId",
+    "s2_id",
+    "paperId",
+    "identifiers",
+    "externalIds",
+    "external_ids",
+)
+POOL_FORMAT = 1
+
+
+def _identity_record(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Keep only the fields identity matching reads (no abstracts)."""
+
+    return {
+        key: copy.deepcopy(record[key])
+        for key in _TRUTH_FIELDS
+        if isinstance(record, Mapping) and record.get(key) is not None
+    }
+
+
+class _SearchRecorder:
+    """OpenAlex adapter proxy that remembers the hits of the last search."""
+
+    def __init__(self, adapter: Any) -> None:
+        self._adapter = adapter
+        self.hits: list[dict[str, Any]] = []
+
+    def search(self, *args: Any, **kwargs: Any) -> Any:
+        results = self._adapter.search(*args, **kwargs)
+        self.hits = [dict(item) for item in results or [] if isinstance(item, Mapping)]
+        return results
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._adapter, name)
+
+
 class _CapturingResearchRunner(ResearchRunner):
-    """ResearchRunner variant that exposes the candidate pool for evaluation."""
+    """ResearchRunner variant that exposes the candidate pool for evaluation.
+
+    ``pool`` is the screening input: every candidate (record plus how it was
+    found), the seed and core keys, the core reference counts and the request.
+    Screening itself is unchanged.
+    """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.candidate_records: list[dict[str, Any]] = []
         self.included_records: list[dict[str, Any]] = []
+        self.search_hits: list[dict[str, Any]] = []
+        self.pool: dict[str, Any] = {}
+
+    def _search(self, *args: Any, **kwargs: Any) -> Any:
+        adapter = self.sources.openalex
+        recorder = _SearchRecorder(adapter)
+        self.sources.openalex = recorder
+        try:
+            return super()._search(*args, **kwargs)
+        finally:
+            self.sources.openalex = adapter
+            self.search_hits = recorder.hits
+
+    def _search_ranks(self, candidates: Mapping[str, Any]) -> dict[str, int]:
+        ranks: dict[str, int] = {}
+        for rank, hit in enumerate(self.search_hits, start=1):
+            identities = _record_identifiers(hit)
+            for key, candidate in candidates.items():
+                if key not in ranks and identities & _record_identifiers(candidate.record):
+                    ranks[key] = rank
+        return ranks
 
     def _screen(self, *args: Any, **kwargs: Any) -> Any:
-        candidates = args[1] if len(args) > 1 else kwargs["candidates"]
+        names = ("request", "candidates", "seed_keys", "relation_pairs")
+        values = dict(zip(names, args, strict=False))
+        values.update({name: kwargs[name] for name in names if name in kwargs})
+        request = values["request"]
+        candidates = values["candidates"]
+        seed_keys = values["seed_keys"]
+        relation_pairs = values["relation_pairs"]
         self.candidate_records = [
             copy.deepcopy(candidate.record) for candidate in candidates.values()
         ]
+        core_counts, core_size = self._core_reference_counts(candidates)
+        ranks = self._search_ranks(candidates)
+        self.pool = {
+            "format": POOL_FORMAT,
+            "request": request.model_dump(mode="json"),
+            "seed_keys": sorted(seed_keys),
+            "core_keys": sorted(
+                key for key, candidate in candidates.items() if candidate.is_seed or candidate.core
+            ),
+            "core_reference_counts": dict(sorted(core_counts.items())),
+            "core_size": core_size,
+            "relation_pairs": sorted([list(pair) for pair in relation_pairs]),
+            # Pool order is kept: it is the runner's order and breaks exact ties.
+            "candidates": [
+                {
+                    "key": key,
+                    "discovered_via": candidate.discovered_via,
+                    "depth": candidate.depth,
+                    "is_seed": candidate.is_seed,
+                    "core": candidate.core,
+                    "frontier_seed": candidate.frontier_seed,
+                    "search_rank": ranks.get(key),
+                    "record": copy.deepcopy(candidate.record),
+                }
+                for key, candidate in candidates.items()
+            ],
+        }
         selected = super()._screen(*args, **kwargs)
         self.included_records = [copy.deepcopy(candidate.record) for candidate in selected]
         return selected
@@ -372,8 +481,13 @@ def run_survey(
     *,
     max_works: int = 150,
     snowball_depth: int = 2,
+    pool_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Resolve, run, and score one survey specification."""
+    """Resolve, run, and score one survey specification.
+
+    With ``pool_dir``, the screened candidate pool is also written to
+    ``pool_dir/<key>.pool.json`` for the offline screening evaluation.
+    """
 
     survey_identifier = str(survey["survey"])
     survey_record = resolve_survey(survey_identifier, sources)
@@ -434,7 +548,45 @@ def run_survey(
         "excluded": report_data.get("excluded", 0),
         "report": report_data,
     }
+    if pool_dir is not None:
+        write_pool(
+            pool_dir / f"{survey['key']}.pool.json",
+            {
+                "key": survey["key"],
+                "survey": survey_identifier,
+                "title": survey["title"],
+                "query": survey["query"],
+                "seeds": list(survey.get("seeds", [])),
+                "to_year": int(survey["to_year"]),
+                "survey_record": _identity_record(survey_record),
+                "ground_truth": [_identity_record(record) for record in ground_truth],
+                "ground_truth_identities": sorted(
+                    {
+                        f"{kind}:{value}"
+                        for record in ground_truth
+                        for kind, value in identity_keys(record)
+                    }
+                ),
+                **runner.pool,
+            },
+        )
     return result
+
+
+def write_pool(path: Path, pool: Mapping[str, Any]) -> None:
+    """Write one candidate pool as JSON."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(pool, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def load_pool(path: Path) -> dict[str, Any]:
+    """Read one candidate pool written by :func:`write_pool`."""
+
+    pool = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(pool, dict) or pool.get("format") != POOL_FORMAT:
+        raise ValueError(f"not a candidate pool (format {POOL_FORMAT}): {path}")
+    return pool
 
 
 def load_surveys(path: Path = DEFAULT_SURVEY_PATH) -> list[dict[str, Any]]:
@@ -567,6 +719,15 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--cache-dir", type=Path, help="HTTP cache directory (default: settings.http_cache_dir)"
     )
+    parser.add_argument(
+        "--dump-pools",
+        metavar="DIR",
+        type=Path,
+        nargs="?",
+        const=DEFAULT_POOLS_DIR,
+        help="also write each screened candidate pool to DIR/<key>.pool.json "
+        "(default DIR: eval/recall/pools)",
+    )
     return parser
 
 
@@ -609,6 +770,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     sources,
                     max_works=survey_max_works,
                     snowball_depth=effective_depth,
+                    pool_dir=args.dump_pools,
                 )
             except OfflineCacheMissError as exc:
                 if args.offline:
