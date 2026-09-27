@@ -295,6 +295,85 @@ export interface DocumentLocateResponse {
   hits: LocateHit[]
 }
 
+export type FrontierComponentName =
+  | 'velocity'
+  | 'local_uptake'
+  | 'main_path_leaf'
+  | 'cluster_growth'
+  | 'new_concept'
+  | 'preprint'
+
+export type FrontierComponents = Record<FrontierComponentName, number>
+
+export interface FrontierWork {
+  work_id: string
+  title: string
+  year: number | null
+  score: number
+  components: FrontierComponents
+}
+
+export interface FrontierConcept {
+  concept_id: string
+  label: string
+  first_year: number
+  adoption_by_year: Record<string, number>
+}
+
+export interface ProjectFrontier {
+  now_year: number | null
+  window_years: number
+  works: FrontierWork[]
+  concepts: FrontierConcept[]
+}
+
+export type GapType = 'bridging' | 'matrix_void' | 'stagnation'
+
+export type GapStatus = 'proposed' | 'accepted' | 'rejected'
+
+export type GapVerdict = 'likely_filled' | 'possibly_open' | 'unknown'
+
+export interface GapEvidence {
+  work_ids: string[]
+  concept_ids: string[]
+  cluster_ids: string[]
+}
+
+export interface GapOutsideHit {
+  id: string
+  title: string
+  year: number | null
+}
+
+export interface GapVerification {
+  query: string
+  checked_at: string
+  total_hits_sampled?: number
+  outside_hits: GapOutsideHit[]
+  verdict: GapVerdict
+  error?: string
+  [key: string]: unknown
+}
+
+export interface GapHypothesis {
+  id: string
+  type: GapType
+  statement: string
+  evidence: GapEvidence
+  metrics: Record<string, number>
+  confidence: number
+  status: GapStatus
+  note: string | null
+  verification: GapVerification | null
+  stale?: boolean
+  search_terms?: string[]
+}
+
+export interface GapUpdateInput {
+  status?: GapStatus
+  note?: string | null
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
@@ -377,6 +456,28 @@ export const api = {
 
   analysis: (projectId: string): Promise<ProjectAnalysis> =>
     request<ProjectAnalysis>(`/api/projects/${encodeURIComponent(projectId)}/analysis`),
+
+  frontier: (projectId: string, windowYears = 2): Promise<ProjectFrontier> =>
+    request<ProjectFrontier>(
+      `/api/projects/${encodeURIComponent(projectId)}/frontier?window_years=${encodeURIComponent(String(windowYears))}`,
+    ),
+
+  gaps: (projectId: string, includeRejected = false): Promise<GapHypothesis[]> =>
+    request<GapHypothesis[]>(
+      `/api/projects/${encodeURIComponent(projectId)}/gaps?include_rejected=${String(includeRejected)}`,
+    ),
+
+  updateGap: (projectId: string, gapId: string, input: GapUpdateInput): Promise<GapHypothesis> =>
+    request<GapHypothesis>(
+      `/api/projects/${encodeURIComponent(projectId)}/gaps/${encodeURIComponent(gapId)}`,
+      { ...jsonOptions(input), method: 'PATCH' },
+    ),
+
+  verifyGap: (projectId: string, gapId: string): Promise<GapHypothesis> =>
+    request<GapHypothesis>(
+      `/api/projects/${encodeURIComponent(projectId)}/gaps/${encodeURIComponent(gapId)}/verify`,
+      { method: 'POST' },
+    ),
 
   search: (projectId: string, query: string, limit = 20): Promise<WorkSummary[]> => {
     const params = new URLSearchParams({ q: query, limit: String(limit) })

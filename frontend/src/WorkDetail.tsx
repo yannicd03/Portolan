@@ -1,6 +1,15 @@
-import type { ProjectAnalysis, WorkDetail as WorkDetailData, WorkRole, WorkSummary } from './api'
+import type {
+  FrontierWork,
+  GapHypothesis,
+  ProjectAnalysis,
+  WorkDetail as WorkDetailData,
+  WorkRole,
+  WorkSummary,
+} from './api'
 import { api } from './api'
 import { clusterColor } from './CitationMap'
+import { FrontierBars } from './FrontierPanel'
+import { GAP_TYPE_SHORT, formatPercent } from './insights'
 import { docHref } from './route'
 
 interface WorkDetailProps {
@@ -8,6 +17,11 @@ interface WorkDetailProps {
   analysis?: ProjectAnalysis | null
   projectId: string
   onSelectWork: (workId: string) => void
+  /** The work's frontier entry when it falls inside the frontier window. */
+  frontierWork?: FrontierWork | null
+  /** Gaps naming this work as evidence. */
+  gaps?: readonly GapHypothesis[]
+  onSelectGap?: (gapId: string) => void
 }
 
 const ROLE_TITLES: Record<WorkRole, string> = {
@@ -59,7 +73,15 @@ function SummaryList({
   )
 }
 
-export function WorkDetail({ detail, analysis, projectId, onSelectWork }: WorkDetailProps) {
+export function WorkDetail({
+  detail,
+  analysis,
+  projectId,
+  onSelectWork,
+  frontierWork = null,
+  gaps = [],
+  onSelectGap,
+}: WorkDetailProps) {
   const work = detail.work
   const workAnalysis = analysis?.works[work.id]
   const cluster = analysis?.clusters.find((item) => item.id === workAnalysis?.cluster)
@@ -98,6 +120,37 @@ export function WorkDetail({ detail, analysis, projectId, onSelectWork }: WorkDe
           <p className="work-detail__local-citations">
             Local citations in: {workAnalysis.local_in} · out: {workAnalysis.local_out}
           </p>
+        </section>
+      ) : null}
+
+      {frontierWork ? (
+        <section className="work-detail__section" aria-label="Frontier">
+          <h3>Frontier</h3>
+          <FrontierBars work={frontierWork} />
+        </section>
+      ) : null}
+
+      {gaps.length > 0 ? (
+        <section className="work-detail__section" aria-label="Gap evidence">
+          <h3>Evidence for gaps</h3>
+          <ul className="work-detail__list">
+            {gaps.map((gap) => (
+              <li key={gap.id}>
+                <button
+                  className="work-detail__list-button"
+                  type="button"
+                  onClick={() => onSelectGap?.(gap.id)}
+                  disabled={!onSelectGap}
+                >
+                  <span>{gap.statement}</span>
+                  <span className="work-detail__list-meta">
+                    {GAP_TYPE_SHORT[gap.type]} · {formatPercent(gap.confidence)} confidence
+                    {gap.status !== 'proposed' ? ` · ${gap.status}` : ''}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 

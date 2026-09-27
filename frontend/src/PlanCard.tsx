@@ -72,7 +72,7 @@ function formValues(args: ResearchPlanArgs): PlanFormValues {
     fromYear: fromYear === null ? '' : String(fromYear),
     toYear: toYear === null ? '' : String(toYear),
     maxWorks: String(numberArg(args, 'max_works', 100)),
-    snowballDepth: String(numberArg(args, 'snowball_depth', 1)),
+    snowballDepth: String(numberArg(args, 'snowball_depth', 2)),
     acquirePdfs: booleanArg(args, 'acquire_pdfs', true),
   }
 }

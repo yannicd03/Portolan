@@ -6,6 +6,7 @@ import {
   useEffect,
   useImperativeHandle,
   useRef,
+  useState,
 } from 'react'
 import Sigma from 'sigma'
 import type { AnalysisCluster, GraphNode, ProjectAnalysis, ProjectGraph } from './api'
@@ -31,6 +32,35 @@ interface GraphEdgeAttributes {
 
 export type CitationMapColorMode = 'cluster' | 'year'
 
+/** How the map is read: plain landscape, the central backbone, the frontier, or structural gaps. */
+export type MapLens = 'landscape' | 'central' | 'frontier' | 'gaps'
+
+/** A dashed overlay link between two works standing in for a bridging gap. */
+export interface GapLink {
+  gapId: string
+  source: string
+  target: string
+  label: string
+}
+
+interface OverlayPoint {
+  id: string
+  x: number
+  y: number
+  r: number
+}
+
+interface OverlayState {
+  halos: (OverlayPoint & { strength: number })[]
+  rings: (OverlayPoint & { active: boolean })[]
+  links: { gapId: string; label: string; x1: number; y1: number; x2: number; y2: number; active: boolean }[]
+}
+
+const EMPTY_OVERLAY: OverlayState = { halos: [], rings: [], links: [] }
+const EMPTY_SET: ReadonlySet<string> = new Set<string>()
+const EMPTY_SCORES: ReadonlyMap<string, number> = new Map<string, number>()
+const EMPTY_LINKS: readonly GapLink[] = []
+
 export interface CitationMapHandle {
   fit: () => void
 }
@@ -40,7 +70,17 @@ export interface CitationMapProps {
   analysis?: ProjectAnalysis | null
   colorMode?: CitationMapColorMode
   focusedClusterId?: string | null
-  mainPathActive?: boolean
+  lens?: MapLens
+  /** Frontier score (0..1) per windowed work; works not in the map are outside the window. */
+  frontierScores?: ReadonlyMap<string, number>
+  gapLinks?: readonly GapLink[]
+  /** Works named as evidence by any gap; ringed in the Gaps lens. */
+  gapWorkIds?: ReadonlySet<string>
+  /** Works belonging to the active gap; other works are dimmed in the Gaps lens. */
+  gapFocusIds?: ReadonlySet<string>
+  activeGapId?: string | null
+  onSelectGap?: (gapId: string) => void
+  onHoverNode?: (id: string | null) => void
   selectedId: string | null
   highlightedIds?: ReadonlySet<string>
   highlightingActive?: boolean
@@ -156,6 +196,19 @@ function getNodeSize(node: GraphNode): number {
   return Math.min(18, 5 + Math.log1p(citedByCount(node)) * 2.2)
 }
 
+function pagerankSizes(analysis: ProjectAnalysis | null | undefined): Map<string, number> {
+  const sizes = new Map<string, number>()
+  if (!analysis) return sizes
+  const values = Object.values(analysis.works).map((work) => work.pagerank)
+  const maxRank = Math.max(0, ...values.filter((value) => Number.isFinite(value)))
+  if (maxRank <= 0) return sizes
+  Object.entries(analysis.works).forEach(([workId, work]) => {
+    const share = Number.isFinite(work.pagerank) ? Math.max(0, work.pagerank) / maxRank : 0
+    sizes.set(workId, 4 + 14 * Math.sqrt(share))
+  })
+  return sizes
+}
+
 function createGraph(
   data: ProjectGraph,
   analysis: ProjectAnalysis | null | undefined,
@@ -229,7 +282,14 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
     analysis = null,
     colorMode = 'year',
     focusedClusterId = null,
-    mainPathActive = false,
+    lens = 'landscape',
+    frontierScores = EMPTY_SCORES,
+    gapLinks = EMPTY_LINKS,
+    gapWorkIds = EMPTY_SET,
+    gapFocusIds = EMPTY_SET,
+    activeGapId = null,
+    onSelectGap,
+    onHoverNode,
     selectedId,
     highlightedIds,
     highlightingActive = false,
@@ -248,9 +308,20 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
   const colorModeRef = useRef<CitationMapColorMode>(colorMode)
   const focusedClusterIdRef = useRef<string | null>(focusedClusterId)
   const focusedClusterWorkIdsRef = useRef<ReadonlySet<string>>(new Set<string>())
+  const mainPathActive = lens === 'central'
   const mainPathActiveRef = useRef(mainPathActive)
   const mainPathNodeIdsRef = useRef<ReadonlySet<string>>(new Set<string>())
+  const pagerankSizesRef = useRef<ReadonlyMap<string, number>>(new Map<string, number>())
+  const lensRef = useRef<MapLens>(lens)
+  const frontierScoresRef = useRef<ReadonlyMap<string, number>>(frontierScores)
+  const gapLinksRef = useRef<readonly GapLink[]>(gapLinks)
+  const gapWorkIdsRef = useRef<ReadonlySet<string>>(gapWorkIds)
+  const gapFocusIdsRef = useRef<ReadonlySet<string>>(gapFocusIds)
+  const activeGapIdRef = useRef<string | null>(activeGapId)
   const onSelectRef = useRef(onSelect)
+  const onSelectGapRef = useRef(onSelectGap)
+  const onHoverNodeRef = useRef(onHoverNode)
+  const [overlay, setOverlay] = useState<OverlayState>(EMPTY_OVERLAY)
 
   useEffect(() => {
     selectedRef.current = selectedId
@@ -267,12 +338,25 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
       ? new Set(analysis.clusters.find((cluster) => cluster.id === focusedClusterId)?.work_ids ?? [])
       : new Set<string>()
     mainPathNodeIdsRef.current = new Set(analysis?.main_path.work_ids ?? [])
+    pagerankSizesRef.current = pagerankSizes(analysis)
     rendererRef.current?.refresh()
   }, [analysis, colorMode, focusedClusterId, mainPathActive])
 
   useEffect(() => {
+    lensRef.current = lens
+    frontierScoresRef.current = frontierScores
+    gapLinksRef.current = gapLinks
+    gapWorkIdsRef.current = gapWorkIds
+    gapFocusIdsRef.current = gapFocusIds
+    activeGapIdRef.current = activeGapId
+    rendererRef.current?.refresh()
+  }, [activeGapId, frontierScores, gapFocusIds, gapLinks, gapWorkIds, lens])
+
+  useEffect(() => {
     onSelectRef.current = onSelect
-  }, [onSelect])
+    onSelectGapRef.current = onSelectGap
+    onHoverNodeRef.current = onHoverNode
+  }, [onHoverNode, onSelect, onSelectGap])
 
   useEffect(() => {
     yearFilterRef.current = yearFilter
@@ -336,6 +420,16 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
       const nodeColor = colorModeRef.current === 'cluster'
         ? attributes.clusterColor
         : attributes.yearColor
+      const currentLens = lensRef.current
+      const isWork = attributes.kind === 'work'
+      const lensDimmed = isWork && (
+        (currentLens === 'frontier' && !frontierScoresRef.current.has(node))
+        || (currentLens === 'gaps' && gapFocusIdsRef.current.size > 0 && !gapFocusIdsRef.current.has(node))
+      )
+      const lensSize = currentLens === 'central'
+        ? pagerankSizesRef.current.get(node) ?? attributes.size
+        : attributes.size
+      const frontierScore = currentLens === 'frontier' ? frontierScoresRef.current.get(node) : undefined
 
       if (hasYearFilter && !isYearVisible) {
         return {
@@ -345,8 +439,8 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
           zIndex: 0,
         }
       }
-      if (isSelected) return { ...attributes, color: nodeColor, highlighted: true, zIndex: 4 }
-      if (!isEmphasisTarget) {
+      if (isSelected) return { ...attributes, size: lensSize, color: nodeColor, highlighted: true, zIndex: 4 }
+      if (!isEmphasisTarget || lensDimmed) {
         return {
           ...attributes,
           color: cssVar('--muted-node', '#dfe1e5'),
@@ -354,12 +448,13 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
           zIndex: 0,
         }
       }
-      if (isNeighbour) return { ...attributes, color: nodeColor, highlighted: true, zIndex: 2 }
+      if (isNeighbour) return { ...attributes, size: lensSize, color: nodeColor, highlighted: true, zIndex: 2 }
       return {
         ...attributes,
+        size: lensSize,
         color: nodeColor,
         highlighted: isMainPathNode,
-        zIndex: isMainPathNode ? 4 : isFocused || isClusterFocused ? 2 : 1,
+        zIndex: isMainPathNode ? 4 : frontierScore !== undefined ? 3 : isFocused || isClusterFocused ? 2 : 1,
       }
     })
     renderer.setSetting('edgeReducer', (edge, attributes) => {
@@ -425,6 +520,59 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
 
     renderer.on('clickNode', ({ node }) => onSelectRef.current(node))
     renderer.on('clickStage', () => onSelectRef.current(null))
+    renderer.on('enterNode', ({ node }) => onHoverNodeRef.current?.(node))
+    renderer.on('leaveNode', () => onHoverNodeRef.current?.(null))
+
+    // Lens decorations (halos, rings, dashed gap links) live in SVG layers
+    // that follow the camera; sigma has no dashed-edge or halo program.
+    const nodePoint = (node: string): OverlayPoint | null => {
+      if (!graph.hasNode(node)) return null
+      if (yearFilterRef.current !== null && !yearVisibleRef.current.has(node)) return null
+      const display = renderer.getNodeDisplayData(node)
+      if (!display || display.hidden) return null
+      const point = renderer.framedGraphToViewport(display)
+      return { id: node, x: point.x, y: point.y, r: renderer.scaleSize(display.size) }
+    }
+    const updateOverlay = () => {
+      const currentLens = lensRef.current
+      if (currentLens === 'frontier') {
+        const halos: OverlayState['halos'] = []
+        frontierScoresRef.current.forEach((score, node) => {
+          const point = nodePoint(node)
+          if (point) halos.push({ ...point, strength: Math.max(0, Math.min(1, score)) })
+        })
+        setOverlay({ halos, rings: [], links: [] })
+        return
+      }
+      if (currentLens === 'gaps') {
+        const activeFocus = gapFocusIdsRef.current
+        const rings: OverlayState['rings'] = []
+        gapWorkIdsRef.current.forEach((node) => {
+          const point = nodePoint(node)
+          if (point) rings.push({ ...point, active: activeFocus.has(node) })
+        })
+        const links: OverlayState['links'] = []
+        gapLinksRef.current.forEach((link) => {
+          const source = nodePoint(link.source)
+          const target = nodePoint(link.target)
+          if (!source || !target) return
+          links.push({
+            gapId: link.gapId,
+            label: link.label,
+            x1: source.x,
+            y1: source.y,
+            x2: target.x,
+            y2: target.y,
+            active: link.gapId === activeGapIdRef.current,
+          })
+        })
+        setOverlay({ halos: [], rings, links })
+        return
+      }
+      setOverlay((current) => (current === EMPTY_OVERLAY ? current : EMPTY_OVERLAY))
+    }
+    renderer.on('afterRender', updateOverlay)
+    renderer.refresh()
     // The renderer owns WebGL and event listeners, so always kill it when the
     // project graph changes or the component leaves the tree.
     const previousRenderer = rendererRef.current
@@ -437,5 +585,53 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
     }
   }, [analysis, data])
 
-  return <div className="citation-map" ref={containerRef} aria-label="Citation graph" />
+  return (
+    <>
+      <svg className="citation-map__layer" aria-hidden="true">
+        {overlay.halos.map((halo) => (
+          <circle
+            key={halo.id}
+            className="citation-map__halo"
+            cx={halo.x}
+            cy={halo.y}
+            r={halo.r + 3 + 10 * halo.strength}
+            style={{ fillOpacity: 0.1 + 0.35 * halo.strength, strokeOpacity: 0.25 + 0.6 * halo.strength }}
+          />
+        ))}
+      </svg>
+      <div className="citation-map" ref={containerRef} aria-label="Citation graph" />
+      <svg className="citation-map__layer">
+        {overlay.links.map((link) => (
+          <g
+            key={link.gapId}
+            className={`citation-map__gap-link${link.active ? ' citation-map__gap-link--active' : ''}`}
+            role="button"
+            tabIndex={0}
+            aria-label={`Open gap: ${link.label}`}
+            onClick={() => onSelectGapRef.current?.(link.gapId)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onSelectGapRef.current?.(link.gapId)
+              }
+            }}
+          >
+            <title>{link.label}</title>
+            <line className="citation-map__gap-hit" x1={link.x1} y1={link.y1} x2={link.x2} y2={link.y2} />
+            <line className="citation-map__gap-line" x1={link.x1} y1={link.y1} x2={link.x2} y2={link.y2} />
+          </g>
+        ))}
+        {overlay.rings.map((ring) => (
+          <circle
+            key={ring.id}
+            className={`citation-map__gap-ring${ring.active ? ' citation-map__gap-ring--active' : ''}`}
+            cx={ring.x}
+            cy={ring.y}
+            r={ring.r + 3}
+            aria-hidden="true"
+          />
+        ))}
+      </svg>
+    </>
+  )
 })

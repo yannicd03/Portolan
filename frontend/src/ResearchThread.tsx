@@ -30,7 +30,7 @@ export function ResearchThread({ projectId, refreshToken, openRunRequest, onRunF
   const [seeds, setSeeds] = useState('')
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [maxWorks, setMaxWorks] = useState(100)
-  const [snowballDepth, setSnowballDepth] = useState(1)
+  const [snowballDepth, setSnowballDepth] = useState(2)
   const [acquirePdfs, setAcquirePdfs] = useState(false)
   const [maxPdfs, setMaxPdfs] = useState(50)
   const [loading, setLoading] = useState(true)

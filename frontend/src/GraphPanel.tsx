@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api'
 import type {
+  GapHypothesis,
+  GapUpdateInput,
   GraphNode,
   ProjectAnalysis,
+  ProjectFrontier,
   ProjectGraph,
   WorkDetail as WorkDetailData,
   WorkSummary,
@@ -12,9 +15,20 @@ import {
   clusterColor,
   type CitationMapColorMode,
   type CitationMapHandle,
+  type MapLens,
 } from './CitationMap'
+import { FrontierBars, FrontierList } from './FrontierPanel'
+import { GapBoard } from './GapBoard'
+import { bridgingLinks, conceptLabeler, gapFocusWorkIds, gapsByWork } from './insights'
 import { Timeline, type YearRange } from './Timeline'
 import { WorkDetail } from './WorkDetail'
+
+const LENSES: readonly { id: MapLens; label: string; title: string }[] = [
+  { id: 'landscape', label: 'Landscape', title: 'All works, sized by citations.' },
+  { id: 'central', label: 'Central', title: 'Main path emphasised; works sized by PageRank.' },
+  { id: 'frontier', label: 'Frontier', title: 'Recent works with momentum; halo strength is the frontier score.' },
+  { id: 'gaps', label: 'Gaps', title: 'Structural gap hypotheses: dashed bridging links, ringed evidence works.' },
+]
 
 export interface GraphPanelProps {
   projectId: string
@@ -59,7 +73,15 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
   const [detailError, setDetailError] = useState<string | null>(null)
   const [colorModeOverride, setColorModeOverride] = useState<CitationMapColorMode | null>(null)
   const [focusedClusterId, setFocusedClusterId] = useState<string | null>(null)
-  const [mainPathActive, setMainPathActive] = useState(false)
+  const [lens, setLens] = useState<MapLens>('landscape')
+  const [frontier, setFrontier] = useState<ProjectFrontier | null>(null)
+  const [frontierUnavailable, setFrontierUnavailable] = useState(false)
+  const [gaps, setGaps] = useState<GapHypothesis[] | null>(null)
+  const [gapsUnavailable, setGapsUnavailable] = useState(false)
+  const [activeGapId, setActiveGapId] = useState<string | null>(null)
+  const [showRejectedGaps, setShowRejectedGaps] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(true)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [showAllClusters, setShowAllClusters] = useState(false)
   const mapRef = useRef<CitationMapHandle>(null)
   const handledWorkRequest = useRef<number | null>(null)
@@ -77,7 +99,6 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
       setDetail(null)
       setDetailError(null)
       setFocusedClusterId(null)
-      setMainPathActive(false)
       setShowAllClusters(false)
     })
 
@@ -110,6 +131,39 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
     }
   }, [projectId, refreshToken, showAuthors, showConcepts])
 
+  useEffect(() => {
+    let active = true
+    queueMicrotask(() => {
+      if (!active) return
+      setFrontier(null)
+      setFrontierUnavailable(false)
+      setGaps(null)
+      setGapsUnavailable(false)
+      setActiveGapId(null)
+    })
+
+    // Both endpoints are optional: a failure only marks the lens unavailable.
+    api.frontier(projectId)
+      .then((nextFrontier) => {
+        if (active) setFrontier(nextFrontier)
+      })
+      .catch(() => {
+        if (active) setFrontierUnavailable(true)
+      })
+    // Fetch rejected gaps too so "show rejected" is a client-side filter.
+    api.gaps(projectId, true)
+      .then((nextGaps) => {
+        if (active) setGaps(nextGaps)
+      })
+      .catch(() => {
+        if (active) setGapsUnavailable(true)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [projectId, refreshToken])
+
   const clusters = analysis?.clusters ?? []
   const displayedClusters = showAllClusters ? clusters : clusters.slice(0, 6)
   const canUseClusters = clusters.length > 0
@@ -118,7 +172,38 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
     : colorModeOverride === 'year'
       ? 'year'
       : clusters.length >= 2 ? 'cluster' : 'year'
-  const hasMainPath = Boolean(analysis?.main_path.work_ids.length)
+  const frontierById = useMemo(
+    () => new Map((frontier?.works ?? []).map((work) => [work.work_id, work])),
+    [frontier],
+  )
+  const frontierScores = useMemo(
+    () => new Map((frontier?.works ?? []).map((work) => [work.work_id, work.score])),
+    [frontier],
+  )
+  const visibleGaps = useMemo(
+    () => (gaps ?? []).filter((gap) => showRejectedGaps || gap.status !== 'rejected'),
+    [gaps, showRejectedGaps],
+  )
+  const gapsForWork = useMemo(() => gapsByWork(visibleGaps), [visibleGaps])
+  const gapWorkIds = useMemo(() => new Set(gapsForWork.keys()), [gapsForWork])
+  const gapLinks = useMemo(() => bridgingLinks(visibleGaps, analysis), [analysis, visibleGaps])
+  const activeGap = useMemo(
+    () => visibleGaps.find((gap) => gap.id === activeGapId) ?? null,
+    [activeGapId, visibleGaps],
+  )
+  const gapFocusIds = useMemo(() => gapFocusWorkIds(activeGap, analysis), [activeGap, analysis])
+  const conceptLabel = useMemo(() => conceptLabeler(graph, frontier), [frontier, graph])
+  const workTitles = useMemo(() => {
+    const titles = new Map<string, string>()
+    graph?.nodes.forEach((node) => {
+      if (node.kind === 'work') titles.set(node.id, node.label)
+    })
+    frontier?.works.forEach((work) => {
+      if (!titles.has(work.work_id)) titles.set(work.work_id, work.title)
+    })
+    return titles
+  }, [frontier, graph])
+  const hoveredFrontierWork = lens === 'frontier' && hoveredId ? frontierById.get(hoveredId) ?? null : null
 
   const toggleCluster = (clusterId: string) => {
     setFocusedClusterId((current) => (current === clusterId ? null : clusterId))
@@ -206,6 +291,54 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
     }
   }
 
+  const chooseLens = (nextLens: MapLens) => {
+    setLens(nextLens)
+    setDrawerOpen(true)
+    setHoveredId(null)
+  }
+
+  const openGap = (gapId: string) => {
+    const gap = gaps?.find((item) => item.id === gapId)
+    if (gap?.status === 'rejected') setShowRejectedGaps(true)
+    setLens('gaps')
+    setActiveGapId(gapId)
+    setDrawerOpen(true)
+  }
+
+  const selectFromMap = (id: string | null) => {
+    selectNode(id)
+    if (lens !== 'gaps' || !id) return
+    const related = gapsForWork.get(id)
+    if (!related?.length) return
+    if (!related.some((gap) => gap.id === activeGapId)) setActiveGapId(related[0].id)
+    setDrawerOpen(true)
+  }
+
+  const updateGap = async (gapId: string, input: GapUpdateInput) => {
+    const previous = gaps?.find((gap) => gap.id === gapId)
+    if (!previous) return
+    const replace = (next: GapHypothesis) => {
+      setGaps((current) => current?.map((gap) => (gap.id === gapId ? next : gap)) ?? current)
+    }
+    // Optimistic: show the change immediately, roll back if the PATCH fails.
+    replace({ ...previous, ...input })
+    try {
+      replace(await api.updateGap(projectId, gapId, input))
+    } catch (reason) {
+      replace(previous)
+      throw reason
+    }
+  }
+
+  const verifyGap = async (gapId: string) => {
+    const updated = await api.verifyGap(projectId, gapId)
+    setGaps((current) => current?.map((gap) => (gap.id === gapId ? updated : gap)) ?? current)
+  }
+
+  const clusterLabel = (clusterId: string) => (
+    clusters.find((cluster) => cluster.id === clusterId)?.label ?? clusterId
+  )
+
   useEffect(() => {
     if (!openWorkRequest || openWorkRequest.projectId !== projectId || handledWorkRequest.current === openWorkRequest.token || !graph?.nodes.some((node) => node.id === openWorkRequest.workId && node.kind === 'work')) return
     let active = true
@@ -266,6 +399,35 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
           </button>
         </div>
         <div className="graph-panel__map-controls" aria-label="Map analysis controls">
+          <span className="graph-panel__map-control-label">Lens:</span>
+          <div className="graph-panel__segmented" role="group" aria-label="Map lens">
+            {LENSES.map((item) => (
+              <button
+                key={item.id}
+                className="graph-panel__segment"
+                type="button"
+                title={item.title}
+                aria-pressed={lens === item.id}
+                disabled={item.id === 'central' && !analysis}
+                onClick={() => chooseLens(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          {lens === 'frontier' || lens === 'gaps' ? (
+            <button
+              className="graph-panel__control graph-panel__drawer-toggle"
+              type="button"
+              aria-pressed={drawerOpen}
+              aria-controls="graph-panel-lens-drawer"
+              onClick={() => setDrawerOpen((open) => !open)}
+            >
+              {lens === 'gaps' ? 'Gap board' : 'Frontier list'}
+            </button>
+          ) : null}
+        </div>
+        <div className="graph-panel__map-controls" aria-label="Map color controls">
           <span className="graph-panel__map-control-label">Color by:</span>
           <div className="graph-panel__segmented" role="group" aria-label="Map color mode">
             <button
@@ -286,15 +448,6 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
               Year
             </button>
           </div>
-          <button
-            className="graph-panel__control graph-panel__path-toggle"
-            type="button"
-            aria-pressed={mainPathActive}
-            disabled={!hasMainPath}
-            onClick={() => setMainPathActive((active) => !active)}
-          >
-            Main path
-          </button>
         </div>
         {clusters.length > 0 ? (
           <div
@@ -380,18 +533,62 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
             analysis={analysis}
             colorMode={colorMode}
             focusedClusterId={focusedClusterId}
-            mainPathActive={mainPathActive}
+            lens={lens}
+            frontierScores={frontierScores}
+            gapLinks={gapLinks}
+            gapWorkIds={gapWorkIds}
+            gapFocusIds={gapFocusIds}
+            activeGapId={activeGap?.id ?? null}
+            onSelectGap={openGap}
+            onHoverNode={setHoveredId}
             selectedId={selectedId}
             highlightedIds={highlightIds}
             highlightingActive={highlightingActive}
             yearFilter={yearFilter}
-            onSelect={selectNode}
+            onSelect={selectFromMap}
           />
+        ) : null}
+        {hoveredFrontierWork ? (
+          <div className="graph-panel__hover-card">
+            <p className="graph-panel__hover-title">{hoveredFrontierWork.title}</p>
+            <FrontierBars work={hoveredFrontierWork} compact />
+          </div>
         ) : null}
         {!graphLoading && !graphError && graph && !hasWorks ? (
           <p className="graph-panel__canvas-message">Start a research run to build the map.</p>
         ) : null}
       </div>
+
+      {drawerOpen && (lens === 'frontier' || lens === 'gaps') ? (
+        <div className="graph-panel__drawer" id="graph-panel-lens-drawer">
+          {lens === 'frontier' ? (
+            <FrontierList
+              works={frontier?.works ?? null}
+              nowYear={frontier?.now_year ?? null}
+              windowYears={frontier?.window_years ?? 2}
+              unavailable={frontierUnavailable}
+              selectedId={selectedId}
+              onSelectWork={selectNode}
+            />
+          ) : (
+            <GapBoard
+              gaps={gaps}
+              unavailable={gapsUnavailable}
+              activeGapId={activeGap?.id ?? null}
+              showRejected={showRejectedGaps}
+              onShowRejectedChange={setShowRejectedGaps}
+              onActivateGap={setActiveGapId}
+              onSelectWork={selectNode}
+              onUpdateGap={updateGap}
+              onVerifyGap={verifyGap}
+              onClose={() => setDrawerOpen(false)}
+              workTitle={(workId) => workTitles.get(workId) ?? null}
+              clusterLabel={clusterLabel}
+              conceptLabel={conceptLabel}
+            />
+          )}
+        </div>
+      ) : null}
 
       {selectedNode?.kind === 'work' ? (
         <section className="graph-panel__detail" aria-live="polite">
@@ -403,6 +600,9 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
               projectId={projectId}
               analysis={analysis}
               onSelectWork={selectNode}
+              frontierWork={frontierById.get(detail.work.id) ?? null}
+              gaps={gapsForWork.get(detail.work.id) ?? []}
+              onSelectGap={openGap}
             />
           ) : null}
         </section>
