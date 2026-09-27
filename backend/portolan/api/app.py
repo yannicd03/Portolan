@@ -15,15 +15,18 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from neo4j.exceptions import ServiceUnavailable
 
+from ..analysis.service import analyze_project
 from ..documents import DocumentStore, PdfFetcher
 from ..documents.models import Outline
 from ..documents.text import find_passage
 from ..graph import GraphView, ResearchGraph
 from ..graph.models import Project, WorkSummary
 from ..settings import Settings
+from .chat import build_chat_router
 from .models import (
     HealthResponse,
     LocateResponse,
+    ProjectAnalysis,
     ProjectCreateRequest,
     ProjectDetailResponse,
     ResearchRunRequest,
@@ -204,6 +207,7 @@ def create_app(
     *,
     graph: ResearchGraph | None = None,
     runner_factory: Callable[..., Any] | None = None,
+    chat_agent_factory: Callable[..., Any] | None = None,
 ) -> FastAPI:
     """Create the API application, optionally using injected test doubles."""
 
@@ -251,6 +255,14 @@ def create_app(
             app.state.runs = None
 
     app = FastAPI(title="Portolan API", version="0.1.0", lifespan=lifespan)
+    app.include_router(
+        build_chat_router(
+            lambda: _LockedGraph(app.state.graph, app.state.lock),
+            lambda: app.state.document_store,
+            settings,
+            agent_factory=chat_agent_factory,
+        )
+    )
 
     def _state(request: Request) -> tuple[ResearchGraph, threading.RLock, RunRegistry]:
         return request.app.state.graph, request.app.state.lock, request.app.state.runs
@@ -309,6 +321,13 @@ def create_app(
                 include_authors=authors,
                 include_concepts=concepts,
             )
+
+    @app.get("/api/projects/{project_id}/analysis", response_model=ProjectAnalysis)
+    def project_analysis(project_id: str, request: Request) -> ProjectAnalysis:
+        graph_instance, lock, _ = _state(request)
+        with lock:
+            _project_or_404(graph_instance, project_id)
+            return analyze_project(graph_instance, project_id)
 
     @app.get("/api/projects/{project_id}/search", response_model=list[WorkSummary])
     def search_project(

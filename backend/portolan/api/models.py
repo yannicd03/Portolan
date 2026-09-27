@@ -51,6 +51,45 @@ class ProjectDetailResponse(ApiModel):
     stats: ProjectStats
 
 
+class AnalysisCluster(ApiModel):
+    id: str
+    label: str
+    size: int
+    top_concepts: list[str]
+    work_ids: list[str]
+
+
+AnalysisRole = Literal["foundational", "bridge", "hub", "emerging", "peripheral"]
+
+
+class AnalysisWork(ApiModel):
+    cluster: str | None
+    pagerank: float
+    betweenness: float
+    local_in: int
+    local_out: int
+    roles: list[AnalysisRole]
+
+
+class MainPathEdge(ApiModel):
+    source: str
+    target: str
+    spc: int
+
+
+class MainPath(ApiModel):
+    work_ids: list[str]
+    edges: list[MainPathEdge]
+
+
+class ProjectAnalysis(ApiModel):
+    project_id: str
+    computed_at: datetime
+    clusters: list[AnalysisCluster]
+    works: dict[str, AnalysisWork]
+    main_path: MainPath
+
+
 class AuthorMembership(ApiModel):
     author: AuthorNode
     position: int
@@ -134,14 +173,19 @@ class Run(ApiModel):
 
 
 __all__ = [
+    "AnalysisCluster",
+    "AnalysisWork",
     "AuthorMembership",
     "ConceptMembership",
     "GraphView",
     "HealthResponse",
     "LocateHit",
     "LocateResponse",
+    "MainPath",
+    "MainPathEdge",
     "Outline",
     "Project",
+    "ProjectAnalysis",
     "ProjectCreateRequest",
     "ProjectDetailResponse",
     "ProjectStats",

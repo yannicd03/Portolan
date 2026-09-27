@@ -7,6 +7,7 @@ import threading
 import time
 import types
 from collections.abc import Callable, Iterator
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -257,6 +258,7 @@ def test_project_crud_validation_and_404s(graph: InMemoryResearchGraph, tmp_path
         for path in (
             "/api/projects/missing",
             "/api/projects/missing/graph",
+            "/api/projects/missing/analysis",
             "/api/projects/missing/search?q=anything",
             "/api/projects/missing/runs",
         ):
@@ -315,6 +317,37 @@ def test_project_graph_search_and_work_neighborhood(
 
         assert client.get("/api/works/missing", params={"project": project.id}).status_code == 404
         assert client.get("/api/works/missing").status_code == 404
+
+
+def test_project_analysis_response(graph: InMemoryResearchGraph, tmp_path: Path) -> None:
+    project = graph.create_project("Analysis")
+    for work_id, year in (("older", 2020), ("middle", 2021), ("newer", 2022)):
+        graph.upsert_work(WorkNode(id=work_id, title=work_id, year=year))
+        graph.include_work(Inclusion(project_id=project.id, work_id=work_id, discovered_via="seed"))
+    graph.add_citation("middle", "older")
+    graph.add_citation("newer", "middle")
+
+    with TestClient(create_app(_settings(tmp_path), graph=graph)) as client:
+        response = client.get(f"/api/projects/{project.id}/analysis")
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"project_id", "computed_at", "clusters", "works", "main_path"}
+    assert body["project_id"] == project.id
+    assert datetime.fromisoformat(body["computed_at"]).tzinfo is not None
+    assert set(body["works"]) == {"older", "middle", "newer"}
+    assert set(body["works"]["older"]) == {
+        "cluster",
+        "pagerank",
+        "betweenness",
+        "local_in",
+        "local_out",
+        "roles",
+    }
+    assert body["main_path"]["work_ids"] == ["older", "middle", "newer"]
+    assert body["main_path"]["edges"] == [
+        {"source": "older", "target": "middle", "spc": 1},
+        {"source": "middle", "target": "newer", "spc": 1},
+    ]
 
 
 def test_runs_succeed_with_progress_and_report(
