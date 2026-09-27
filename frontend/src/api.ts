@@ -184,6 +184,11 @@ export interface RunReport {
   pdfs_failed: number
   pdfs_skipped: number
   warnings: string[]
+  /** Incremental counts added by the backend run registry (absent on older runs). */
+  works_before?: number
+  works_after?: number
+  works_added?: number
+  added_work_ids?: string[]
 }
 
 export interface Run {

@@ -1,20 +1,44 @@
-"""In-memory research run registry used by the HTTP API."""
+"""Research run registry used by the HTTP API.
+
+Runs execute in a process-local thread pool.  Every state change is also
+persisted as JSON under ``settings.runs_dir/<project_id>/<run_id>.json`` so a
+project's run history survives backend restarts.
+"""
 
 from __future__ import annotations
 
 import inspect
+import json
 import logging
+import os
+import re
+import tempfile
 import threading
+import time
 import uuid
 from collections.abc import Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from .models import ResearchRunRequest, Run, RunProgress
 
 log = logging.getLogger("portolan.api.runs")
+
+_RUN_ID = re.compile(r"[0-9a-f]{32}\Z")
+_PROJECT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
+_ACTIVE = frozenset({"queued", "running"})
+
+# At most one progress write per run in this many seconds; other states always persist.
+PROGRESS_WRITE_INTERVAL = 2.0
+# Newest runs kept (on disk and in memory) per project.
+MAX_RUNS_PER_PROJECT = 50
+# Upper bound on the work ids listed in a run's incremental report.
+MAX_ADDED_WORK_IDS = 200
+INTERRUPTED_ERROR = "interrupted by a backend restart"
 
 
 def _now() -> datetime:
@@ -41,6 +65,49 @@ def _is_cancelled(error: BaseException) -> bool:
     except Exception:
         return False
     return isinstance(error, RunCancelled)
+
+
+def _valid_project_id(project_id: object) -> bool:
+    return isinstance(project_id, str) and _PROJECT_ID.fullmatch(project_id) is not None
+
+
+def _valid_run_id(run_id: object) -> bool:
+    return isinstance(run_id, str) and _RUN_ID.fullmatch(run_id) is not None
+
+
+def _runs_dir(settings: Any) -> Path | None:
+    """Return the configured run directory, or ``None`` to disable persistence."""
+
+    try:
+        value = getattr(settings, "runs_dir", None)
+    except (AssertionError, AttributeError):
+        return None
+    return None if value is None else Path(value)
+
+
+def _write_atomic(path: Path, run: Run) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    encoded = run.model_dump_json(indent=2).encode("utf-8")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        with suppress(FileNotFoundError):
+            temporary.unlink()
+
+
+def _decode(path: Path) -> Run | None:
+    try:
+        return Run.model_validate(json.loads(path.read_text(encoding="utf-8")))
+    except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError):
+        return None
 
 
 def _report_dict(report: Any) -> dict[str, Any] | None:
@@ -78,7 +145,11 @@ class ActiveRunError(RuntimeError):
 
 
 class RunRegistry:
-    """Thread-safe, process-local registry and executor for research runs."""
+    """Thread-safe registry and executor for research runs, persisted as JSON.
+
+    Persistence is enabled when ``settings`` exposes ``runs_dir``.  Call
+    :meth:`load` once at startup to restore earlier runs.
+    """
 
     def __init__(
         self,
@@ -99,6 +170,118 @@ class RunRegistry:
         self._cancel: dict[str, threading.Event] = {}
         self._active_by_project: dict[str, str] = {}
         self._closed = False
+        self._runs_dir = _runs_dir(settings)
+        self._last_write: dict[str, float] = {}
+
+    # -- persistence -------------------------------------------------------
+
+    def _path(self, project_id: str, run_id: str) -> Path | None:
+        if self._runs_dir is None:
+            return None
+        if not _valid_project_id(project_id) or not _valid_run_id(run_id):
+            return None
+        return self._runs_dir / project_id / f"{run_id}.json"
+
+    def _persist(self, run: Run, *, throttle: bool = False) -> None:
+        """Write ``run`` to disk; callers hold ``self._lock``."""
+
+        path = self._path(run.project_id, run.id)
+        if path is None:
+            return
+        if throttle:
+            last = self._last_write.get(run.id)
+            if last is not None and time.monotonic() - last < PROGRESS_WRITE_INTERVAL:
+                return
+        try:
+            _write_atomic(path, run)
+        except OSError:
+            log.warning("could not persist research run %s", run.id, exc_info=True)
+            return
+        if run.status in _ACTIVE:
+            self._last_write[run.id] = time.monotonic()
+        else:
+            self._last_write.pop(run.id, None)
+
+    def _prune(self, project_id: str) -> None:
+        """Keep only the newest runs of a project; callers hold ``self._lock``."""
+
+        runs = [run for run in self._runs.values() if run.project_id == project_id]
+        if len(runs) <= MAX_RUNS_PER_PROJECT:
+            return
+        runs.sort(key=lambda run: (run.created_at, run.id), reverse=True)
+        for run in runs[MAX_RUNS_PER_PROJECT:]:
+            if run.status in _ACTIVE:
+                continue
+            self._runs.pop(run.id, None)
+            self._cancel.pop(run.id, None)
+            self._last_write.pop(run.id, None)
+            path = self._path(run.project_id, run.id)
+            if path is not None:
+                with suppress(OSError):
+                    path.unlink()
+
+    def load(self) -> int:
+        """Restore persisted runs; runs left queued or running are marked failed.
+
+        Returns the number of runs loaded.
+        """
+
+        root = self._runs_dir
+        if root is None or not root.is_dir():
+            return 0
+        now = _now()
+        loaded = 0
+        projects: set[str] = set()
+        with self._lock:
+            for project_dir in sorted(root.iterdir()):
+                if not project_dir.is_dir() or not _valid_project_id(project_dir.name):
+                    continue
+                for path in sorted(project_dir.glob("*.json")):
+                    if not _valid_run_id(path.stem) or path.stem in self._runs:
+                        continue
+                    run = _decode(path)
+                    if run is None or run.id != path.stem or run.project_id != project_dir.name:
+                        continue
+                    if run.status in _ACTIVE:
+                        run = run.model_copy(
+                            update={
+                                "status": "failed",
+                                "error": INTERRUPTED_ERROR,
+                                "finished_at": now,
+                            }
+                        )
+                        self._persist(run)
+                    self._runs[run.id] = run
+                    projects.add(run.project_id)
+                    loaded += 1
+            for project_id in projects:
+                self._prune(project_id)
+        return loaded
+
+    def delete_project_runs(self, project_id: str) -> None:
+        """Forget a deleted project's finished runs and remove its run directory."""
+
+        with self._lock:
+            for run_id, run in list(self._runs.items()):
+                if run.project_id == project_id and run.status not in _ACTIVE:
+                    self._runs.pop(run_id, None)
+                    self._cancel.pop(run_id, None)
+                    self._last_write.pop(run_id, None)
+            if self._runs_dir is None or not _valid_project_id(project_id):
+                return
+            if project_id in self._active_by_project:
+                return
+            directory = self._runs_dir / project_id
+            if not directory.is_dir():
+                return
+            for path in directory.iterdir():
+                if path.is_file():
+                    with suppress(OSError):
+                        path.unlink()
+            with suppress(OSError):
+                directory.rmdir()
+
+    # -- public API --------------------------------------------------------
 
     def submit(self, project_id: str, request: ResearchRunRequest) -> Run:
         """Queue a run, rejecting a second active run for the same project."""
@@ -125,6 +308,8 @@ class RunRegistry:
                 self._cancel.pop(run.id, None)
                 self._active_by_project.pop(project_id, None)
                 raise
+            self._persist(run)
+            self._prune(project_id)
             return run.model_copy(deep=True)
 
     def get(self, run_id: str) -> Run | None:
@@ -158,6 +343,7 @@ class RunRegistry:
                 run = run.model_copy(update={"status": "cancelled", "finished_at": now})
                 self._runs[run_id] = run
                 self._active_by_project.pop(run.project_id, None)
+                self._persist(run)
             elif run.status == "running":
                 self._cancel[run_id].set()
             return run.model_copy(deep=True)
@@ -175,6 +361,7 @@ class RunRegistry:
                     self._runs[run_id] = run.model_copy(
                         update={"status": "cancelled", "finished_at": now}
                     )
+                    self._persist(self._runs[run_id])
                 elif run.status == "running":
                     self._cancel[run_id].set()
             self._active_by_project.clear()
@@ -192,10 +379,12 @@ class RunRegistry:
                     update={"status": "cancelled", "finished_at": now}
                 )
                 self._active_by_project.pop(run.project_id, None)
+                self._persist(self._runs[run_id])
                 return None
             started = _now()
             run = run.model_copy(update={"status": "running", "started_at": started})
             self._runs[run_id] = run
+            self._persist(run)
             return run, cancel
 
     def _finish(
@@ -220,6 +409,7 @@ class RunRegistry:
             )
             self._runs[run_id] = finished
             self._active_by_project.pop(run.project_id, None)
+            self._persist(finished)
 
     def _progress_callback(self, run_id: str, progress: Any) -> None:
         stage = str(_value(progress, "stage", ""))
@@ -240,7 +430,42 @@ class RunRegistry:
             if run is None or run.status not in {"queued", "running"}:
                 return
             events = [*run.progress, event][-50:]
-            self._runs[run_id] = run.model_copy(update={"progress": events})
+            updated = run.model_copy(update={"progress": events})
+            self._runs[run_id] = updated
+            self._persist(updated, throttle=True)
+
+    def _work_ids(self, project_id: str) -> set[str] | None:
+        """Snapshot a project's included work ids, or ``None`` if unavailable."""
+
+        try:
+            works = self._graph.project_works(project_id)
+        except Exception:
+            log.warning("could not snapshot works of project %s", project_id, exc_info=True)
+            return None
+        ids = {_value(work, "id") for work in works or ()}
+        return {str(work_id) for work_id in ids if work_id is not None}
+
+    def _with_increment(
+        self,
+        project_id: str,
+        before: set[str] | None,
+        report: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        """Add what this run contributed relative to the project's earlier works."""
+
+        if before is None or report is None:
+            return report
+        after = self._work_ids(project_id)
+        if after is None:
+            return report
+        added = sorted(after - before)
+        return {
+            **report,
+            "works_before": len(before),
+            "works_after": len(after),
+            "works_added": len(added),
+            "added_work_ids": added[:MAX_ADDED_WORK_IDS],
+        }
 
     @staticmethod
     def _call_factory(
@@ -298,6 +523,7 @@ class RunRegistry:
             if cancel.is_set():
                 self._finish(run_id, status="cancelled")
                 return
+            before = self._work_ids(run.project_id)
             report = handle.runner.run(
                 run.project_id,
                 handle.request,
@@ -307,7 +533,11 @@ class RunRegistry:
             if cancel.is_set():
                 self._finish(run_id, status="cancelled")
             else:
-                self._finish(run_id, status="succeeded", report=_report_dict(report))
+                self._finish(
+                    run_id,
+                    status="succeeded",
+                    report=self._with_increment(run.project_id, before, _report_dict(report)),
+                )
         except BaseException as error:
             if _is_cancelled(error) or cancel.is_set():
                 self._finish(run_id, status="cancelled")

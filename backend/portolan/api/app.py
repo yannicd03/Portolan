@@ -243,6 +243,7 @@ def create_app(
                 settings,
                 runner_factory or _default_runner_factory,
             )
+            registry.load()
             app.state.runs = registry
             log.info("portolan api ready: %s projects=%d", settings.describe(), len(projects))
             yield
@@ -310,6 +311,7 @@ def create_app(
                 raise HTTPException(status_code=409, detail="project has an active run")
             if not graph_instance.delete_project(project_id):
                 raise HTTPException(status_code=404, detail="project not found")
+            registry.delete_project_runs(project_id)
 
     @app.get("/api/projects/{project_id}/graph", response_model=GraphView)
     def project_graph(

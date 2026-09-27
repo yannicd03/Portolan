@@ -72,6 +72,13 @@ class Settings:
         return self.data_dir / "chats"
 
     @property
+    def runs_dir(self) -> Path:
+        """Directory holding persisted research run records."""
+
+        assert self.data_dir is not None
+        return self.data_dir / "runs"
+
+    @property
     def http_cache_dir(self) -> Path:
         """Directory used by source adapters for HTTP response caching."""
 

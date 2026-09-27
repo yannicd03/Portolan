@@ -38,6 +38,15 @@ function formatCountLabel(label: string): string {
   return label.replaceAll('_', ' ')
 }
 
+// Mirrors INTERRUPTED_ERROR in backend/portolan/api/runs.py.
+const INTERRUPTED_ERROR = 'interrupted by a backend restart'
+
+function formatIncrement(report: NonNullable<Run['report']>): string | null {
+  const { works_added: added, works_after: total } = report
+  if (typeof added !== 'number' || typeof total !== 'number') return null
+  return `+${added} new work${added === 1 ? '' : 's'} (${total} total)`
+}
+
 function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp)
   return Number.isNaN(date.getTime()) ? timestamp : date.toLocaleString()
@@ -48,6 +57,8 @@ export function RunCard({ run, cancelling, onCancel }: RunCardProps) {
   const report = run.report
   const seedCount = run.request.seeds.length
   const query = run.request.query?.trim()
+  const increment = report ? formatIncrement(report) : null
+  const interrupted = run.error === INTERRUPTED_ERROR
 
   return (
     <article className={`run-card run-card-${run.status}`}>
@@ -99,6 +110,7 @@ export function RunCard({ run, cancelling, onCancel }: RunCardProps) {
       {report ? (
         <section className="run-card-report" aria-label="Research report">
           <h3>Report</h3>
+          {increment ? <p className="run-card-summary">{increment}</p> : null}
           <dl className="run-card-report-grid">
             {REPORT_FIELDS.map(({ key, label }) => (
               <div className="run-card-report-item" key={key}>
@@ -120,7 +132,13 @@ export function RunCard({ run, cancelling, onCancel }: RunCardProps) {
         </section>
       ) : null}
 
-      {run.error ? <p className="run-card-error" role="alert">{run.error}</p> : null}
+      {interrupted ? (
+        <p className="run-card-summary" style={{ color: 'var(--text-soft)', fontWeight: 'normal' }}>
+          Interrupted by a backend restart
+        </p>
+      ) : run.error ? (
+        <p className="run-card-error" role="alert">{run.error}</p>
+      ) : null}
     </article>
   )
 }
