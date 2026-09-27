@@ -359,35 +359,79 @@ class _Candidate:
     work_id: str | None = None
 
 
-def rebuild_project_concepts(
+@dataclass(frozen=True, slots=True)
+class ConceptRebuildReport:
+    """Counts from one project concept rebuild.
+
+    ``ungrounded`` counts source keywords whose terms the work's own title and
+    abstract do not support; ``downweighted`` is the subset kept at half score
+    because the work has no abstract to check against.  ``text_phrases`` counts
+    distinct text-derived keyphrases and ``text_phrase_occurrences`` their
+    work-level occurrences.
+    """
+
+    kept: int
+    filtered: int
+    ungrounded: int = 0
+    downweighted: int = 0
+    text_phrases: int = 0
+    text_phrase_occurrences: int = 0
+
+
+# Source keywords of a work without an abstract can only be checked against the
+# title, which is too short to reject a keyword reliably.  Such keywords are kept
+# at this fraction of their score instead of being dropped.
+_UNGROUNDED_NO_ABSTRACT_FACTOR = 0.5
+
+
+def rebuild_project_concepts_with_report(
     graph: ResearchGraph,
     project_id: str,
     *,
     cancel: Event | None = None,
     progress: Callable[[RunProgress], None] | None = None,
-) -> tuple[int, int]:
-    """Rebuild and filter the keyword concepts attached to one project.
+) -> ConceptRebuildReport:
+    """Rebuild and filter one project's concepts and return detailed counts.
 
-    The returned pair contains the number of concepts kept and the number filtered
-    out.  Rebuilding replaces every work's concept memberships, which also clears
-    stale edges for works whose current keywords do not produce a kept concept.
+    Concept candidates come from two sources: source (OpenAlex) keywords that are
+    grounded in the work's title and abstract, and keyphrases extracted from the
+    project's titles and abstracts.  Ungrounded keywords are dropped, except on
+    works without an abstract, where they are kept at half score.  Rebuilding
+    replaces every work's concept memberships, which also clears stale edges for
+    works whose current keywords do not produce a kept concept.
     """
 
     from portolan.concepts import filter_concepts
+    from portolan.concepts.grounding import is_grounded
+    from portolan.concepts.keyphrases import extract_keyphrases
 
     project_works = graph.project_works(project_id)
     occurrences: list[KeywordOccurrence] = []
+    texts: list[tuple[str, str | None, str | None]] = []
+    ungrounded = 0
+    downweighted = 0
     for index, work in enumerate(project_works, start=1):
         if cancel is not None and cancel.is_set():
             raise RunCancelled()
         if work.id is None:
             continue
+        title = _text(getattr(work, "title", None))
+        abstract = _text(getattr(work, "abstract", None))
+        texts.append((work.id, title, abstract))
+        grounding_text = " ".join(part for part in (title, abstract) if part)
         keywords = list(getattr(work, "keywords", []) or [])
         scores = list(getattr(work, "keyword_scores", []) or [])
         for keyword_index, term in enumerate(keywords):
             if not _text(term):
                 continue
             score = scores[keyword_index] if keyword_index < len(scores) else None
+            if not is_grounded(str(term), grounding_text):
+                ungrounded += 1
+                if abstract is not None:
+                    continue
+                downweighted += 1
+                base = 1.0 if score is None else float(score)
+                score = base * _UNGROUNDED_NO_ABSTRACT_FACTOR
             occurrences.append(KeywordOccurrence(work_id=work.id, term=str(term), score=score))
         if progress is not None and index % 25 == 0:
             progress(
@@ -397,6 +441,10 @@ def rebuild_project_concepts(
                     counts={"candidates": len(project_works), "included": len(project_works)},
                 )
             )
+    if cancel is not None and cancel.is_set():
+        raise RunCancelled()
+    phrases = extract_keyphrases(texts)
+    occurrences.extend(phrases)
     clusters, _ = merge_keywords_with_report(occurrences, embedder=None)
     clusters, filter_report = filter_concepts(clusters, total_works=len(project_works))
     for cluster in clusters:
@@ -414,7 +462,45 @@ def rebuild_project_concepts(
             raise RunCancelled()
         if work.id is not None:
             graph.set_concepts(work.id, by_work.get(work.id, []))
-    return len(clusters), filter_report.total_dropped
+    report = ConceptRebuildReport(
+        kept=len(clusters),
+        filtered=filter_report.total_dropped,
+        ungrounded=ungrounded,
+        downweighted=downweighted,
+        text_phrases=len({occurrence.term for occurrence in phrases}),
+        text_phrase_occurrences=len(phrases),
+    )
+    _LOG.info(
+        "Rebuilt concepts for project %s: kept=%d filtered=%d ungrounded=%d "
+        "downweighted=%d text_phrases=%d",
+        project_id,
+        report.kept,
+        report.filtered,
+        report.ungrounded,
+        report.downweighted,
+        report.text_phrases,
+    )
+    return report
+
+
+def rebuild_project_concepts(
+    graph: ResearchGraph,
+    project_id: str,
+    *,
+    cancel: Event | None = None,
+    progress: Callable[[RunProgress], None] | None = None,
+) -> tuple[int, int]:
+    """Rebuild and filter the concepts attached to one project.
+
+    The returned pair contains the number of concepts kept and the number filtered
+    out.  See :func:`rebuild_project_concepts_with_report` for the sources used and
+    for the grounding and keyphrase counts.
+    """
+
+    report = rebuild_project_concepts_with_report(
+        graph, project_id, cancel=cancel, progress=progress
+    )
+    return report.kept, report.filtered
 
 
 class ResearchRunner:
@@ -1925,4 +2011,9 @@ class ResearchRunner:
         return report
 
 
-__all__ = ["ResearchRunner", "rebuild_project_concepts"]
+__all__ = [
+    "ConceptRebuildReport",
+    "ResearchRunner",
+    "rebuild_project_concepts",
+    "rebuild_project_concepts_with_report",
+]

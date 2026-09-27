@@ -14,6 +14,7 @@ from pypdf import PdfWriter
 
 from portolan.documents import DocumentStore, FetchResult, PdfCandidate
 from portolan.graph.memory import InMemoryResearchGraph
+from portolan.graph.models import Inclusion, WorkNode
 from portolan.research import (
     HeuristicScreener,
     ResearchRequest,
@@ -21,6 +22,7 @@ from portolan.research import (
     ResearchSources,
     RunCancelled,
     rebuild_project_concepts,
+    rebuild_project_concepts_with_report,
 )
 
 
@@ -486,8 +488,15 @@ def test_snowball_candidate_cap_bounds_batch_fetches() -> None:
 
 
 def test_keyword_threshold_and_project_wide_concept_rebuild() -> None:
-    first = record("W1", "First", keywords=[("Natural Language Processing", 0.9), ("Weak", 0.1)])
-    second = record("W2", "Second", keywords=[("NLP", 0.8)])
+    first = record(
+        "W1",
+        "Natural language processing survey",
+        keywords=[("Natural Language Processing", 0.9), ("Weak", 0.1)],
+    )
+    second = record("W2", "NLP benchmark suite", keywords=[("NLP", 0.8)])
+    # Titles only: the keywords are grounded in them and no text phrase is shared.
+    first["abstract"] = None
+    second["abstract"] = None
     graph = InMemoryResearchGraph()
     project = graph.create_project("Concepts")
     runner = make_runner(graph, FakeOpenAlex([first, second]))
@@ -511,19 +520,37 @@ def test_keyword_threshold_and_project_wide_concept_rebuild() -> None:
     }
 
 
-def test_concept_filter_removes_generic_and_singleton_keywords() -> None:
-    works = [
-        record(
+def _filter_fixture_works() -> list[dict[str, Any]]:
+    """Fifteen works whose keywords are grounded in their own titles.
+
+    Every work has the generic "Library science"; W1 and W2 share "Knowledge graph";
+    only W1 has "One-off method".  Punctuation keeps text phrases from spanning
+    keywords, so the text source contributes no concept beyond the keywords.
+    """
+
+    works: list[dict[str, Any]] = []
+    for index in range(1, 16):
+        title = "Library science"
+        if index <= 2:
+            title += ": knowledge graph"
+        if index == 1:
+            title += "; one-off method"
+        work = record(
             f"W{index}",
-            f"Graph paper {index}",
+            title,
             keywords=(
                 [("Library science", 0.9)]
                 + ([("Knowledge graph", 0.8)] if index <= 2 else [])
                 + ([("One-off method", 0.7)] if index == 1 else [])
             ),
         )
-        for index in range(1, 16)
-    ]
+        work["abstract"] = title
+        works.append(work)
+    return works
+
+
+def test_concept_filter_removes_generic_and_singleton_keywords() -> None:
+    works = _filter_fixture_works()
     graph = InMemoryResearchGraph()
     project = graph.create_project("Filtered concepts")
     runner = make_runner(graph, FakeOpenAlex(works))
@@ -553,18 +580,7 @@ def test_concept_filter_removes_generic_and_singleton_keywords() -> None:
 
 
 def test_rebuild_project_concepts_returns_filter_counts_and_replaces_edges() -> None:
-    works = [
-        record(
-            f"W{index}",
-            f"Graph paper {index}",
-            keywords=(
-                [("Library science", 0.9)]
-                + ([("Knowledge graph", 0.8)] if index <= 2 else [])
-                + ([("One-off method", 0.7)] if index == 1 else [])
-            ),
-        )
-        for index in range(1, 16)
-    ]
+    works = _filter_fixture_works()
     graph = InMemoryResearchGraph()
     project = graph.create_project("Direct concept rebuild")
     runner = make_runner(graph, FakeOpenAlex(works))
@@ -590,6 +606,93 @@ def test_rebuild_project_concepts_returns_filter_counts_and_replaces_edges() -> 
         for work in graph.project_works(project.id)
         if work.openalex_id not in {"W1", "W2"}
     )
+
+
+def _include(graph: InMemoryResearchGraph, project_id: str, work: WorkNode) -> str:
+    stored = graph.upsert_work(work)
+    assert stored.id is not None
+    graph.include_work(Inclusion(project_id=project_id, work_id=stored.id, discovered_via="seed"))
+    return stored.id
+
+
+def test_rebuild_grounds_keywords_and_adds_text_phrases() -> None:
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Speculative decoding")
+    first = _include(
+        graph,
+        project.id,
+        WorkNode(
+            openalex_id="W1",
+            title="Speculative decoding with a draft model",
+            abstract=(
+                "A small draft model proposes tokens that the target verifies at the edge, "
+                "with low latency."
+            ),
+            keywords=["Enhanced Data Rates for GSM Evolution", "Security token", "Latency"],
+            keyword_scores=[0.9, 0.8, 0.7],
+        ),
+    )
+    second = _include(
+        graph,
+        project.id,
+        WorkNode(
+            openalex_id="W2",
+            title="Tree-based speculative decoding",
+            abstract="The draft model builds a token tree; latency drops.",
+            keywords=["Tree (set theory)", "Latency (audio)"],
+            keyword_scores=[0.9, 0.6],
+        ),
+    )
+
+    report = rebuild_project_concepts_with_report(graph, project.id)
+
+    assert report.ungrounded == 2
+    assert report.downweighted == 0
+    assert report.text_phrases >= 2
+    labels = {concept.label for concept in graph._concepts.values()}
+    assert "Enhanced Data Rates for GSM Evolution" not in labels
+    assert "Security token" not in labels
+    assert {"speculative decoding", "draft model"} <= labels
+    assert "Latency" in labels or "Latency (audio)" in labels
+    assert "Tree (set theory)" in labels
+    speculative = next(
+        concept for concept in graph._concepts.values() if concept.label == "speculative decoding"
+    )
+    assert {work.id for work in graph.works_by_concept(speculative.id, project.id)} == {
+        first,
+        second,
+    }
+    assert (report.kept, report.filtered) == rebuild_project_concepts(graph, project.id)
+
+
+def test_rebuild_keeps_ungrounded_keywords_at_half_score_without_abstract() -> None:
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("No abstracts")
+    work_ids = [
+        _include(
+            graph,
+            project.id,
+            WorkNode(
+                openalex_id=f"W{index}",
+                title=f"Untitled draft {index}",
+                keywords=["Knowledge graph"],
+                keyword_scores=[0.8],
+            ),
+        )
+        for index in (1, 2)
+    ]
+
+    report = rebuild_project_concepts_with_report(graph, project.id)
+
+    assert (report.ungrounded, report.downweighted) == (2, 2)
+    concept = next(
+        concept for concept in graph._concepts.values() if concept.label == "Knowledge graph"
+    )
+    assert {work.id for work in graph.works_by_concept(concept.id, project.id)} == set(work_ids)
+    assert [graph._concepts_by_work[work_id][concept.id] for work_id in work_ids] == [
+        pytest.approx(0.4),
+        pytest.approx(0.4),
+    ]
 
 
 def test_pdf_order_cap_skip_existing_and_enrichment(tmp_path: Any) -> None:

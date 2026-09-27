@@ -146,10 +146,20 @@ def test_project_rebuild_concepts_uses_in_memory_graph(
         if index == 1:
             keywords.append("One-off method")
             scores.append(0.7)
+        if index <= 2:
+            # Not supported by the text: dropped and reported as ungrounded.
+            keywords.append("Security token")
+            scores.append(0.6)
+        title = "Library science"
+        if index <= 2:
+            title += ": knowledge graph"
+        if index == 1:
+            title += "; one-off method"
         work = graph.upsert_work(
             WorkNode(
                 openalex_id=f"W{index}",
-                title=f"Graph paper {index}",
+                title=title,
+                abstract=title,
                 year=2024,
                 keywords=keywords,
                 keyword_scores=scores,
@@ -171,7 +181,7 @@ def test_project_rebuild_concepts_uses_in_memory_graph(
     )
 
     assert result.exit_code == 0, result.output
-    assert result.output.strip() == "kept=1 filtered=2"
+    assert result.output.strip() == "kept=1 filtered=2 ungrounded=2 text_phrases=2"
 
 
 def test_research_command_uses_lazy_monkeypatched_runner(

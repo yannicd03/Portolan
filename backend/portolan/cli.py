@@ -141,7 +141,7 @@ def project_rebuild_concepts(
 ) -> None:
     """Rebuild and filter the concepts attached to a research project."""
 
-    from portolan.research import rebuild_project_concepts
+    from portolan.research import rebuild_project_concepts_with_report
 
     settings = Settings.from_env()
     graph = make_graph(settings)
@@ -150,8 +150,11 @@ def project_rebuild_concepts(
         if graph.get_project(project_id) is None:
             typer.echo(f"project not found: {project_id}", err=True)
             raise typer.Exit(code=1)
-        kept, filtered = rebuild_project_concepts(graph, project_id)
-        typer.echo(f"kept={kept} filtered={filtered}")
+        report = rebuild_project_concepts_with_report(graph, project_id)
+        typer.echo(
+            f"kept={report.kept} filtered={report.filtered} "
+            f"ungrounded={report.ungrounded} text_phrases={report.text_phrases}"
+        )
     finally:
         _close(graph)
 

@@ -8,6 +8,8 @@ from dataclasses import dataclass
 import pytest
 
 from portolan.concepts.filter import filter_concepts
+from portolan.concepts.grounding import is_grounded
+from portolan.concepts.keyphrases import extract_keyphrases
 from portolan.concepts.merge import (
     DEFAULT_STOP_TERMS,
     ConceptCluster,
@@ -439,3 +441,118 @@ def test_filter_is_deterministic_and_does_not_mutate_input() -> None:
 
     assert first == second
     assert clusters == original
+
+
+def test_grounding_rejects_edge_misclassification() -> None:
+    text = "Speculative decoding on EDGE devices at the edge of the network."
+
+    assert not is_grounded("Enhanced Data Rates for GSM Evolution", text)
+
+
+def test_grounding_requires_every_content_token() -> None:
+    text = "The draft model proposes several tokens per step."
+
+    assert not is_grounded("Security token", text)
+    assert is_grounded("Draft model", text)
+
+
+def test_grounding_strips_trailing_parenthetical_disambiguator() -> None:
+    text = "We verify a token tree in one forward pass."
+
+    assert is_grounded("Tree (set theory)", text)
+    assert is_grounded("Token Tree (data structure)", text)
+    assert not is_grounded("Latency (audio)", text)
+
+
+def test_grounding_accepts_uppercase_acronym_only() -> None:
+    assert is_grounded("Key value", "Reusing the KV cache across steps.")
+    assert is_grounded("Large language models", "Serving LLMs cheaply.")
+    assert not is_grounded("Key value", "A kv store for caching.")
+    assert not is_grounded("Key value", "Acronyms like KVX do not count.")
+
+
+def test_grounding_matches_plural_and_singular_forms() -> None:
+    assert is_grounded("Draft models", "A single draft model is trained.")
+    assert is_grounded("Token", "Draft tokens are verified in parallel.")
+    assert is_grounded("mixture of experts", "Sparse Mixture-of-Experts layers.")
+
+
+def test_grounding_rejects_empty_input() -> None:
+    assert not is_grounded("", "some text")
+    assert not is_grounded("Draft model", "")
+
+
+_SPECULATIVE_WORKS = [
+    (
+        "w1",
+        "Speculative decoding with a draft model",
+        "We propose speculative decoding for large language models. A small draft model "
+        "proposes tokens that the target model verifies, reducing latency.",
+    ),
+    (
+        "w2",
+        "Tree-based speculative decoding",
+        "Speculative decoding accelerates inference of large language models. We build a "
+        "token tree from the draft model and verify it with the KV cache.",
+    ),
+    (
+        "w3",
+        "Faster inference via draft models",
+        "Draft models guess future tokens; the KV cache of the target model is reused.",
+    ),
+    ("w4", "Protein folding", "Protein folding with diffusion."),
+]
+
+
+def test_keyphrases_find_shared_field_terms() -> None:
+    occurrences = extract_keyphrases(_SPECULATIVE_WORKS)
+    by_work: dict[str, dict[str, float]] = {}
+    for occurrence in occurrences:
+        assert occurrence.kind == "keyphrase"
+        assert occurrence.score is not None and 0.0 < occurrence.score <= 1.0
+        by_work.setdefault(occurrence.work_id, {})[occurrence.term] = occurrence.score
+
+    assert {"speculative decoding", "draft model"} <= set(by_work["w1"])
+    assert "kv cache" in by_work["w2"]
+    assert max(by_work["w1"].values()) == 1.0
+    # Title phrases outrank abstract-only phrases.
+    assert by_work["w1"]["speculative decoding"] > by_work["w1"]["language model"]
+
+
+def test_keyphrases_drop_single_work_phrases() -> None:
+    terms = {occurrence.term for occurrence in extract_keyphrases(_SPECULATIVE_WORKS)}
+
+    assert "protein folding" not in terms
+    assert "diffusion" not in terms
+    assert "token tree" not in terms
+    assert all(occurrence.work_id != "w4" for occurrence in extract_keyphrases(_SPECULATIVE_WORKS))
+
+
+def test_keyphrases_drop_stopword_edged_and_generic_phrases() -> None:
+    works = [
+        ("a", "The proposed method", "We show results of the proposed method on a model."),
+        ("b", "The proposed method", "We show results of the proposed method on a model."),
+    ]
+
+    assert extract_keyphrases(works) == []
+
+
+def test_keyphrases_prefer_longer_phrase_with_similar_support() -> None:
+    terms = {occurrence.term for occurrence in extract_keyphrases(_SPECULATIVE_WORKS)}
+
+    assert "speculative decoding" in terms
+    assert "speculative" not in terms
+    assert "decoding" not in terms
+    assert "draft" not in terms
+
+
+def test_keyphrases_respect_max_per_work_and_are_deterministic() -> None:
+    first = extract_keyphrases(_SPECULATIVE_WORKS, max_per_work=2)
+    second = extract_keyphrases(list(_SPECULATIVE_WORKS), max_per_work=2)
+
+    assert first == second
+    counts: dict[str, int] = {}
+    for occurrence in first:
+        counts[occurrence.work_id] = counts.get(occurrence.work_id, 0) + 1
+    assert max(counts.values()) == 2
+    assert extract_keyphrases(_SPECULATIVE_WORKS, max_per_work=0) == []
