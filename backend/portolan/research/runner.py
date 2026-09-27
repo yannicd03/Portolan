@@ -30,6 +30,20 @@ from .sources import ResearchSources
 
 _LOG = logging.getLogger(__name__)
 
+# API budget.  With the default request (max_works=100, snowball_depth=2,
+# forward_per_work=20, core_search_hits=10, chase_top=20) and S seeds, one run
+# makes at most:
+#   - seeds: one batch lookup per 50 seeds (the adapter's OR-filter batch size;
+#     OpenAlex allows up to 100), plus fallback lookups for unresolved seeds;
+#   - search: ceil(200 / 100) = 2 cursor pages (limit min(200, max(50, 2 * max_works)));
+#   - forward citations, core set only: S + 10 single-page requests
+#     (forward_per_work <= 100 fits in one page);
+#   - backward references, frontier and chase round together: every looked-up
+#     id becomes a candidate slot, so at most 5 * max_works = 500 ids, fetched
+#     in OR-filter batches: ceil(500 / 50) + 2 = 12 requests (one partial batch
+#     per round).  References already in the pool are linked without lookup.
+# That is roughly S + 25 OpenAlex requests before enrichment and PDF stages.
+
 
 def _text(value: Any) -> str | None:
     if value is None:
@@ -165,6 +179,12 @@ def _semantic_identifier(record: Mapping[str, Any]) -> str | None:
         _text(record.get("openalex_id") or identifiers.get("openalex")),
     )
     return next((value for value in values if value), None)
+
+
+def _search_limit(max_works: int) -> int:
+    """Return the number of search hits requested for a run."""
+
+    return min(200, max(50, 2 * max_works))
 
 
 def _candidate_sort_id(candidate: _Candidate | Mapping[str, Any]) -> str:
@@ -333,9 +353,68 @@ class _Candidate:
     depth: int
     is_seed: bool = False
     frontier_seed: bool = False
+    core: bool = False
     score: float | None = None
     citation_pairs: set[tuple[str, str]] = field(default_factory=set)
     work_id: str | None = None
+
+
+def rebuild_project_concepts(
+    graph: ResearchGraph,
+    project_id: str,
+    *,
+    cancel: Event | None = None,
+    progress: Callable[[RunProgress], None] | None = None,
+) -> tuple[int, int]:
+    """Rebuild and filter the keyword concepts attached to one project.
+
+    The returned pair contains the number of concepts kept and the number filtered
+    out.  Rebuilding replaces every work's concept memberships, which also clears
+    stale edges for works whose current keywords do not produce a kept concept.
+    """
+
+    from portolan.concepts import filter_concepts
+
+    project_works = graph.project_works(project_id)
+    occurrences: list[KeywordOccurrence] = []
+    for index, work in enumerate(project_works, start=1):
+        if cancel is not None and cancel.is_set():
+            raise RunCancelled()
+        if work.id is None:
+            continue
+        keywords = list(getattr(work, "keywords", []) or [])
+        scores = list(getattr(work, "keyword_scores", []) or [])
+        for keyword_index, term in enumerate(keywords):
+            if not _text(term):
+                continue
+            score = scores[keyword_index] if keyword_index < len(scores) else None
+            occurrences.append(KeywordOccurrence(work_id=work.id, term=str(term), score=score))
+        if progress is not None and index % 25 == 0:
+            progress(
+                RunProgress(
+                    stage="concepts",
+                    message=f"Collected keywords from {index} works",
+                    counts={"candidates": len(project_works), "included": len(project_works)},
+                )
+            )
+    clusters, _ = merge_keywords_with_report(occurrences, embedder=None)
+    clusters, filter_report = filter_concepts(clusters, total_works=len(project_works))
+    for cluster in clusters:
+        if cancel is not None and cancel.is_set():
+            raise RunCancelled()
+        graph.upsert_concept(
+            ConceptNode(id=cluster.id, label=cluster.label, aliases=list(cluster.aliases))
+        )
+    by_work: dict[str, list[tuple[str, float]]] = {work.id: [] for work in project_works if work.id}
+    for cluster in clusters:
+        for work_id, score in cluster.work_scores.items():
+            by_work.setdefault(work_id, []).append((cluster.id, float(score)))
+    for work in project_works:
+        if cancel is not None and cancel.is_set():
+            raise RunCancelled()
+        if work.id is not None:
+            graph.set_concepts(work.id, by_work.get(work.id, []))
+    return len(clusters), filter_report.total_dropped
 
 
 class ResearchRunner:
@@ -476,6 +555,8 @@ class ResearchRunner:
             duplicate = candidates.pop(duplicate_key)
             target.record = _merge_record(target.record, duplicate.record)
             target.is_seed = target.is_seed or duplicate.is_seed
+            target.core = target.core or duplicate.core
+            target.frontier_seed = target.frontier_seed or duplicate.frontier_seed
             target.depth = min(target.depth, duplicate.depth)
             if target.discovered_via != "seed" and duplicate.discovered_via == "seed":
                 target.discovered_via = "seed"
@@ -872,16 +953,24 @@ class ResearchRunner:
         excluded_identities: set[tuple[str, str]] | None = None,
         excluded_count: list[int] | None = None,
     ) -> set[str]:
+        """Add search hits and return the round-one snowball frontier.
+
+        The top ``core_search_hits`` hits by search rank join the seeds in the
+        core set.  With seeds, the frontier is the core set; without seeds, every
+        search hit is on the frontier.
+        """
+
         if not request.query:
             return set(seed_keys)
         search = self.sources.openalex.search
         results = search(
             request.query,
-            limit=min(request.max_works, 50),
+            limit=_search_limit(request.max_works),
             from_year=request.from_year,
             to_year=request.to_year,
         )
         search_keys: set[str] = set()
+        core_keys: set[str] = set()
         query_only = not seed_keys
         for item in results:
             self._check_cancel(cancel)
@@ -909,10 +998,201 @@ class ResearchRunner:
                 excluded_identities=excluded_identities,
                 excluded_count=excluded_count,
             )
-            if key is not None and query_only:
-                candidates[key].frontier_seed = True
+            if key is None:
+                continue
+            candidate = candidates[key]
+            if (
+                not candidate.is_seed
+                and key not in core_keys
+                and len(core_keys) < request.core_search_hits
+            ):
+                candidate.core = True
+                candidate.frontier_seed = True
+                core_keys.add(key)
+            if query_only:
+                candidate.frontier_seed = True
                 search_keys.add(key)
-        return seed_keys or search_keys
+        if query_only:
+            return search_keys
+        return set(seed_keys) | core_keys
+
+    def _expand(
+        self,
+        request: ResearchRequest,
+        candidates: dict[str, _Candidate],
+        identity_index: dict[tuple[str, str], str],
+        warnings: list[str],
+        cancel: Event | None,
+        frontier: Sequence[str],
+        *,
+        level: int,
+        forward: bool,
+        relation_pairs: set[tuple[str, str]],
+        expanded: set[str],
+        processed: list[int],
+        progress: Callable[[RunProgress], None] | None = None,
+        excluded_identities: set[tuple[str, str]] | None = None,
+        excluded_count: list[int] | None = None,
+    ) -> None:
+        """Expand backward references (and optionally forward citations) of works."""
+
+        cap = max(1, request.max_works * 5)
+        reference_ids: list[str] = []
+        reference_parents: dict[str, set[str]] = {}
+        for parent_key in frontier:
+            self._check_cancel(cancel)
+            parent = candidates.get(parent_key)
+            if parent is None:
+                continue
+            expanded.add(parent_key)
+            refs = parent.record.get("referenced_works")
+            if isinstance(refs, Sequence) and not isinstance(refs, (str, bytes)):
+                for reference in refs:
+                    reference_text = _text(reference)
+                    if reference_text is None:
+                        continue
+                    reference_keys = _identifier_keys_for_input(reference_text)
+                    if excluded_identities and reference_keys & excluded_identities:
+                        if excluded_count is not None:
+                            excluded_count[0] += 1
+                        continue
+                    known = next(
+                        (identity_index[item] for item in reference_keys if item in identity_index),
+                        None,
+                    )
+                    if known is not None:
+                        # Already a candidate: record the edge without a lookup.
+                        if known != parent_key:
+                            relation_pairs.add((parent_key, known))
+                        continue
+                    reference_ids.append(reference_text)
+                    reference_parents.setdefault(reference_text, set()).add(parent_key)
+
+        if reference_ids:
+            unique_references = list(dict.fromkeys(reference_ids))
+            remaining_slots = max(0, cap - len(candidates))
+            if len(unique_references) > remaining_slots:
+                warning = "candidate cap reached; stopped expanding"
+                if warning not in warnings:
+                    warnings.append(warning)
+            unique_references = unique_references[:remaining_slots]
+            lookup_many = getattr(self.sources.openalex, "lookup_many", None)
+            if not unique_references:
+                references = []
+            elif callable(lookup_many):
+                references = lookup_many(unique_references)
+            else:
+                lookup = getattr(self.sources.openalex, "lookup", None)
+                references = (
+                    [lookup(item) for item in unique_references] if callable(lookup) else []
+                )
+            for item in references:
+                self._check_cancel(cancel)
+                processed[0] += 1
+                if progress is not None and processed[0] % 25 == 0:
+                    self._emit(
+                        progress,
+                        "snowball",
+                        f"Processed {processed[0]} snowball results",
+                        {"candidates": len(candidates), "included": 0},
+                    )
+                if not isinstance(item, Mapping):
+                    continue
+                if self._remove_excluded_candidate(
+                    candidates,
+                    identity_index,
+                    item,
+                    excluded_identities,
+                    excluded_count,
+                ):
+                    continue
+                if not _year_allowed(item, request):
+                    continue
+                key = self._add_candidate(
+                    candidates,
+                    identity_index,
+                    item,
+                    via="backward",
+                    depth=level,
+                    is_seed=False,
+                    cap=cap,
+                    warnings=warnings,
+                    excluded_identities=excluded_identities,
+                    excluded_count=excluded_count,
+                )
+                if key is None:
+                    continue
+                item_ids = _record_identifiers(item)
+                for reference_id, parents in reference_parents.items():
+                    if _identifier_keys_for_input(reference_id) & item_ids:
+                        for parent_key in parents:
+                            relation_pairs.add((parent_key, key))
+
+        if forward and request.forward_per_work:
+            cited_by = getattr(self.sources.openalex, "cited_by", None)
+            if callable(cited_by):
+                for parent_key in frontier:
+                    self._check_cancel(cancel)
+                    if len(candidates) >= cap:
+                        break
+                    parent = candidates.get(parent_key)
+                    if parent is None or not (parent.is_seed or parent.core):
+                        continue
+                    identifier = _source_identifier(parent.record)
+                    if identifier is None:
+                        continue
+                    remaining_slots = max(0, cap - len(candidates))
+                    children = cited_by(
+                        identifier,
+                        limit=min(request.forward_per_work, remaining_slots),
+                    )
+                    for item in children:
+                        self._check_cancel(cancel)
+                        processed[0] += 1
+                        if progress is not None and processed[0] % 25 == 0:
+                            self._emit(
+                                progress,
+                                "snowball",
+                                f"Processed {processed[0]} snowball results",
+                                {"candidates": len(candidates), "included": 0},
+                            )
+                        if not isinstance(item, Mapping):
+                            continue
+                        if self._remove_excluded_candidate(
+                            candidates,
+                            identity_index,
+                            item,
+                            excluded_identities,
+                            excluded_count,
+                        ):
+                            continue
+                        if not _year_allowed(item, request):
+                            continue
+                        key = self._add_candidate(
+                            candidates,
+                            identity_index,
+                            item,
+                            via="forward",
+                            depth=level,
+                            is_seed=False,
+                            cap=cap,
+                            warnings=warnings,
+                            excluded_identities=excluded_identities,
+                            excluded_count=excluded_count,
+                        )
+                        if key is not None and key != parent_key:
+                            relation_pairs.add((key, parent_key))
+        if len(candidates) >= cap:
+            warning = "candidate cap reached; stopped expanding"
+            if warning not in warnings:
+                warnings.append(warning)
+        if progress is not None and len(expanded) and len(expanded) % 25 == 0:
+            self._emit(
+                progress,
+                "snowball",
+                f"Expanded {len(expanded)} frontier works",
+                {"candidates": len(candidates), "included": 0},
+            )
 
     def _snowball(
         self,
@@ -926,182 +1206,97 @@ class ResearchRunner:
         excluded_identities: set[tuple[str, str]] | None = None,
         excluded_count: list[int] | None = None,
     ) -> set[tuple[str, str]]:
+        """Expand the frontier, then chase references of the top screened works.
+
+        Depth 1 expands the frontier backward and the core set forward.  Depth 2
+        is the chase round: the pool is screened once and the backward
+        references of the ``chase_top`` best non-seed candidates not yet
+        expanded are added.
+        """
+
         relation_pairs: set[tuple[str, str]] = set()
         expanded: set[str] = set()
-        processed = 0
-        frontier = [key for key in sorted(frontier_keys) if key in candidates]
+        processed = [0]
         cap = max(1, request.max_works * 5)
+        frontier = [key for key in sorted(frontier_keys) if key in candidates]
         for level in range(1, request.snowball_depth + 1):
             self._check_cancel(cancel)
+            if level >= 2:
+                if request.chase_top <= 0:
+                    break
+                seed_keys = {key for key, candidate in candidates.items() if candidate.is_seed}
+                ranked = self._rank_pool(request, candidates, seed_keys, relation_pairs, cancel)
+                frontier = [
+                    candidate.key
+                    for candidate in ranked
+                    if not candidate.is_seed and candidate.key not in expanded
+                ][: request.chase_top]
+                if frontier:
+                    self._emit(
+                        progress,
+                        "snowball",
+                        f"Chasing references of {len(frontier)} top candidates",
+                        {"candidates": len(candidates), "included": 0},
+                    )
             if not frontier or len(candidates) >= cap:
                 if frontier and len(candidates) >= cap:
                     warning = "candidate cap reached; stopped expanding"
                     if warning not in warnings:
                         warnings.append(warning)
                 break
-            next_frontier: set[str] = set()
-            reference_ids: list[str] = []
-            reference_parents: dict[str, set[str]] = {}
-            for parent_key in frontier:
-                self._check_cancel(cancel)
-                parent = candidates.get(parent_key)
-                if parent is None:
-                    continue
-                expanded.add(parent_key)
-                refs = parent.record.get("referenced_works")
-                if isinstance(refs, Sequence) and not isinstance(refs, (str, bytes)):
-                    for reference in refs:
-                        reference_text = _text(reference)
-                        if reference_text is None:
-                            continue
-                        if excluded_identities and (
-                            _identifier_keys_for_input(reference_text) & excluded_identities
-                        ):
-                            if excluded_count is not None:
-                                excluded_count[0] += 1
-                            continue
-                        reference_ids.append(reference_text)
-                        reference_parents.setdefault(reference_text, set()).add(parent_key)
-
-            if reference_ids:
-                unique_references = list(dict.fromkeys(reference_ids))
-                remaining_slots = max(0, cap - len(candidates))
-                if len(unique_references) > remaining_slots:
-                    warning = "candidate cap reached; stopped expanding"
-                    if warning not in warnings:
-                        warnings.append(warning)
-                unique_references = unique_references[:remaining_slots]
-                lookup_many = getattr(self.sources.openalex, "lookup_many", None)
-                if callable(lookup_many):
-                    references = lookup_many(unique_references)
-                else:
-                    lookup = getattr(self.sources.openalex, "lookup", None)
-                    references = (
-                        [lookup(item) for item in unique_references] if callable(lookup) else []
-                    )
-                for item in references:
-                    self._check_cancel(cancel)
-                    processed += 1
-                    if progress is not None and processed % 25 == 0:
-                        self._emit(
-                            progress,
-                            "snowball",
-                            f"Processed {processed} snowball results",
-                            {"candidates": len(candidates), "included": 0},
-                        )
-                    if not isinstance(item, Mapping):
-                        continue
-                    if self._remove_excluded_candidate(
-                        candidates,
-                        identity_index,
-                        item,
-                        excluded_identities,
-                        excluded_count,
-                    ):
-                        continue
-                    if not _year_allowed(item, request):
-                        continue
-                    key = self._add_candidate(
-                        candidates,
-                        identity_index,
-                        item,
-                        via="backward",
-                        depth=level,
-                        is_seed=False,
-                        cap=cap,
-                        warnings=warnings,
-                        excluded_identities=excluded_identities,
-                        excluded_count=excluded_count,
-                    )
-                    if key is None:
-                        continue
-                    item_ids = _record_identifiers(item)
-                    for reference_id, parents in reference_parents.items():
-                        if _identifier_keys_for_input(reference_id) & item_ids:
-                            for parent_key in parents:
-                                relation_pairs.add((parent_key, key))
-                    if key not in expanded:
-                        next_frontier.add(key)
-
-            if request.forward_per_work:
-                cited_by = getattr(self.sources.openalex, "cited_by", None)
-                if callable(cited_by):
-                    for parent_key in frontier:
-                        self._check_cancel(cancel)
-                        if len(candidates) >= cap:
-                            break
-                        parent = candidates.get(parent_key)
-                        if parent is None:
-                            continue
-                        identifier = _source_identifier(parent.record)
-                        if identifier is None:
-                            continue
-                        remaining_slots = max(0, cap - len(candidates))
-                        children = cited_by(
-                            identifier,
-                            limit=min(request.forward_per_work, remaining_slots),
-                        )
-                        for item in children:
-                            self._check_cancel(cancel)
-                            processed += 1
-                            if progress is not None and processed % 25 == 0:
-                                self._emit(
-                                    progress,
-                                    "snowball",
-                                    f"Processed {processed} snowball results",
-                                    {"candidates": len(candidates), "included": 0},
-                                )
-                            if not isinstance(item, Mapping):
-                                continue
-                            if self._remove_excluded_candidate(
-                                candidates,
-                                identity_index,
-                                item,
-                                excluded_identities,
-                                excluded_count,
-                            ):
-                                continue
-                            if not _year_allowed(item, request):
-                                continue
-                            key = self._add_candidate(
-                                candidates,
-                                identity_index,
-                                item,
-                                via="forward",
-                                depth=level,
-                                is_seed=False,
-                                cap=cap,
-                                warnings=warnings,
-                                excluded_identities=excluded_identities,
-                                excluded_count=excluded_count,
-                            )
-                            if key is not None:
-                                relation_pairs.add((key, parent_key))
-                                if key not in expanded:
-                                    next_frontier.add(key)
-            if len(candidates) >= cap:
-                warning = "candidate cap reached; stopped expanding"
-                if warning not in warnings:
-                    warnings.append(warning)
-            if progress is not None and len(expanded) and len(expanded) % 25 == 0:
-                self._emit(
-                    progress,
-                    "snowball",
-                    f"Expanded {len(expanded)} frontier works",
-                    {"candidates": len(candidates), "included": 0},
-                )
-            frontier = sorted(next_frontier)
+            self._expand(
+                request,
+                candidates,
+                identity_index,
+                warnings,
+                cancel,
+                frontier,
+                level=level,
+                forward=level == 1,
+                relation_pairs=relation_pairs,
+                expanded=expanded,
+                processed=processed,
+                progress=progress,
+                excluded_identities=excluded_identities,
+                excluded_count=excluded_count,
+            )
         return relation_pairs
 
-    def _screen(
+    @staticmethod
+    def _core_reference_counts(candidates: Mapping[str, _Candidate]) -> tuple[dict[str, int], int]:
+        """Count, per candidate identifier, the core-set works that reference it."""
+
+        core = [
+            candidate for candidate in candidates.values() if candidate.is_seed or candidate.core
+        ]
+        core_references: list[tuple[str, set[tuple[str, str]]]] = []
+        for candidate in core:
+            identities: set[tuple[str, str]] = set()
+            refs = candidate.record.get("referenced_works")
+            if isinstance(refs, Sequence) and not isinstance(refs, (str, bytes)):
+                for reference in refs:
+                    identities.update(_identifier_keys_for_input(reference))
+            core_references.append((candidate.key, identities))
+        counts: dict[str, int] = {}
+        for candidate in candidates.values():
+            identities = _record_identifiers(candidate.record)
+            count = sum(
+                1
+                for core_key, references in core_references
+                if core_key != candidate.key and identities & references
+            )
+            if count:
+                for kind, value in identities:
+                    counts[f"{kind}:{value}"] = count
+        return counts, len(core)
+
+    def _screening_context(
         self,
         request: ResearchRequest,
         candidates: dict[str, _Candidate],
         seed_keys: set[str],
         relation_pairs: set[tuple[str, str]],
-        cancel: Event | None,
-        progress: Callable[[RunProgress], None] | None = None,
-    ) -> list[_Candidate]:
+    ) -> dict[str, Any]:
         records = [candidate.record for candidate in candidates.values()]
         counts: list[float] = []
         for record in records:
@@ -1109,7 +1304,8 @@ class ResearchRunner:
                 counts.append(max(0.0, float(record.get("cited_by_count") or 0)))
             except (TypeError, ValueError):
                 continue
-        base_context: dict[str, Any] = {
+        core_counts, core_size = self._core_reference_counts(candidates)
+        return {
             "query": request.query,
             "profile": request.query or "",
             "candidates": records,
@@ -1121,7 +1317,49 @@ class ResearchRunner:
             "included_ids": set(seed_keys),
             "max_cited_by_count": max(counts, default=0.0),
             "citation_pairs": relation_pairs,
+            "core_reference_counts": core_counts,
+            "core_size": core_size,
         }
+
+    def _score(self, candidate: _Candidate, context: Mapping[str, Any]) -> float:
+        raw_score = self.screener.score(candidate.record, context)
+        try:
+            return max(0.0, min(1.0, float(raw_score)))
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _rank_pool(
+        self,
+        request: ResearchRequest,
+        candidates: dict[str, _Candidate],
+        seed_keys: set[str],
+        relation_pairs: set[tuple[str, str]],
+        cancel: Event | None,
+    ) -> list[_Candidate]:
+        """Score every non-seed candidate once and return them best first."""
+
+        context = self._screening_context(request, candidates, seed_keys, relation_pairs)
+        scored: list[tuple[float, str, _Candidate]] = []
+        for candidate in candidates.values():
+            self._check_cancel(cancel)
+            if candidate.key in seed_keys:
+                continue
+            scored.append(
+                (self._score(candidate, context), _candidate_sort_id(candidate), candidate)
+            )
+        scored.sort(key=lambda item: (-item[0], item[1]))
+        return [candidate for _, _, candidate in scored]
+
+    def _screen(
+        self,
+        request: ResearchRequest,
+        candidates: dict[str, _Candidate],
+        seed_keys: set[str],
+        relation_pairs: set[tuple[str, str]],
+        cancel: Event | None,
+        progress: Callable[[RunProgress], None] | None = None,
+    ) -> list[_Candidate]:
+        base_context = self._screening_context(request, candidates, seed_keys, relation_pairs)
         explicit_seeds = [
             candidate for candidate in candidates.values() if candidate.key in seed_keys
         ]
@@ -1146,15 +1384,15 @@ class ResearchRunner:
                 "included_ids": included_ids,
             }
             for candidate in remaining:
-                raw_score = self.screener.score(candidate.record, context)
-                try:
-                    candidate.score = max(0.0, min(1.0, float(raw_score)))
-                except (TypeError, ValueError):
-                    candidate.score = 0.0
+                candidate.score = self._score(candidate, context)
             best = min(
                 remaining,
                 key=lambda candidate: (-(candidate.score or 0.0), _candidate_sort_id(candidate)),
             )
+            if (best.score or 0.0) < request.min_score:
+                # Every remaining candidate scores below the threshold: leave
+                # the remaining slots empty rather than filling them.
+                break
             selected.append(best)
             selected_ids.add(best.key)
             remaining.remove(best)
@@ -1391,47 +1629,13 @@ class ResearchRunner:
         cancel: Event | None,
         progress: Callable[[RunProgress], None] | None = None,
     ) -> int:
-        from portolan.concepts import filter_concepts
-
-        project_works = self.graph.project_works(project_id)
-        occurrences: list[KeywordOccurrence] = []
-        for index, work in enumerate(project_works, start=1):
-            self._check_cancel(cancel)
-            if work.id is None:
-                continue
-            keywords = list(getattr(work, "keywords", []) or [])
-            scores = list(getattr(work, "keyword_scores", []) or [])
-            for keyword_index, term in enumerate(keywords):
-                if not _text(term):
-                    continue
-                score = scores[keyword_index] if keyword_index < len(scores) else None
-                occurrences.append(KeywordOccurrence(work_id=work.id, term=str(term), score=score))
-            if progress is not None and index % 25 == 0:
-                self._emit(
-                    progress,
-                    "concepts",
-                    f"Collected keywords from {index} works",
-                    {"candidates": len(project_works), "included": len(project_works)},
-                )
-        clusters, _ = merge_keywords_with_report(occurrences, embedder=None)
-        clusters, filter_report = filter_concepts(clusters, total_works=len(project_works))
-        self._concepts_filtered = filter_report.total_dropped
-        for cluster in clusters:
-            self._check_cancel(cancel)
-            self.graph.upsert_concept(
-                ConceptNode(id=cluster.id, label=cluster.label, aliases=list(cluster.aliases))
-            )
-        by_work: dict[str, list[tuple[str, float]]] = {
-            work.id: [] for work in project_works if work.id
-        }
-        for cluster in clusters:
-            for work_id, score in cluster.work_scores.items():
-                by_work.setdefault(work_id, []).append((cluster.id, float(score)))
-        for work in project_works:
-            self._check_cancel(cancel)
-            if work.id is not None:
-                self.graph.set_concepts(work.id, by_work.get(work.id, []))
-        return len(clusters)
+        concepts, self._concepts_filtered = rebuild_project_concepts(
+            self.graph,
+            project_id,
+            cancel=cancel,
+            progress=progress,
+        )
+        return concepts
 
     @staticmethod
     def _pdf_candidates(record: Mapping[str, Any]) -> list[PdfCandidate]:
@@ -1721,4 +1925,4 @@ class ResearchRunner:
         return report
 
 
-__all__ = ["ResearchRunner"]
+__all__ = ["ResearchRunner", "rebuild_project_concepts"]

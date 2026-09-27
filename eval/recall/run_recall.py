@@ -371,7 +371,7 @@ def run_survey(
     sources: ResearchSources,
     *,
     max_works: int = 150,
-    snowball_depth: int = 1,
+    snowball_depth: int = 2,
 ) -> dict[str, Any]:
     """Resolve, run, and score one survey specification."""
 
@@ -561,7 +561,7 @@ def _parser() -> argparse.ArgumentParser:
         "--max-works", type=int, default=None, help="candidate/inclusion cap (default: 150)"
     )
     parser.add_argument(
-        "--snowball-depth", type=int, default=1, help="citation expansion depth (default: 1)"
+        "--snowball-depth", type=int, default=2, help="citation expansion depth (default: 2)"
     )
     parser.add_argument("--offline", action="store_true", help="use only cached HTTP responses")
     parser.add_argument(

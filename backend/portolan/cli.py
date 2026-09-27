@@ -135,6 +135,27 @@ def project_delete(
         _close(graph)
 
 
+@project_app.command("rebuild-concepts")
+def project_rebuild_concepts(
+    project_id: Annotated[str, typer.Argument(help="Project id.")],
+) -> None:
+    """Rebuild and filter the concepts attached to a research project."""
+
+    from portolan.research import rebuild_project_concepts
+
+    settings = Settings.from_env()
+    graph = make_graph(settings)
+    try:
+        _ensure_schema(graph)
+        if graph.get_project(project_id) is None:
+            typer.echo(f"project not found: {project_id}", err=True)
+            raise typer.Exit(code=1)
+        kept, filtered = rebuild_project_concepts(graph, project_id)
+        typer.echo(f"kept={kept} filtered={filtered}")
+    finally:
+        _close(graph)
+
+
 @documents_app.command("backfill-outlines")
 def documents_backfill_outlines(
     rebuild: Annotated[bool, typer.Option(help="Rebuild existing outlines too.")] = False,
@@ -199,7 +220,7 @@ def research(
     max_works: Annotated[
         int, typer.Option("--max-works", min=1, help="Maximum works to consider.")
     ] = 100,
-    depth: Annotated[int, typer.Option("--depth", min=0, help="Citation snowball depth.")] = 1,
+    depth: Annotated[int, typer.Option("--depth", min=0, help="Citation snowball depth.")] = 2,
     no_pdfs: Annotated[bool, typer.Option("--no-pdfs", help="Skip PDF acquisition.")] = False,
     max_pdfs: Annotated[
         int, typer.Option("--max-pdfs", min=0, help="Maximum PDFs to acquire.")

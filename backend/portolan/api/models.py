@@ -134,7 +134,7 @@ class ResearchRunRequest(ApiModel):
     seeds: list[str] = Field(default_factory=list)
     query: str | None = None
     max_works: int = Field(default=100, ge=1, le=2000)
-    snowball_depth: int = Field(default=1, ge=0, le=2)
+    snowball_depth: int = Field(default=2, ge=0, le=2)
     forward_per_work: int = Field(default=20, ge=0, le=200)
     from_year: int | None = None
     to_year: int | None = None

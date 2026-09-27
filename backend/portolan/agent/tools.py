@@ -781,7 +781,7 @@ def build_research_tools(
         from_year: int | None = None,
         to_year: int | None = None,
         max_works: int = 100,
-        snowball_depth: int = 1,
+        snowball_depth: int = 2,
         acquire_pdfs: bool = True,
         rationale: str = "",
     ) -> str:

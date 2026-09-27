@@ -13,6 +13,7 @@ from typer.testing import CliRunner
 
 import portolan.cli as cli_module
 from portolan.graph.memory import InMemoryResearchGraph
+from portolan.graph.models import Inclusion, WorkNode
 
 
 class FakeResearchRequest:
@@ -127,6 +128,50 @@ def test_project_create_list_and_delete(monkeypatch: pytest.MonkeyPatch, tmp_pat
     deleted = runner.invoke(cli_module.app, ["project", "delete", project.id])
     assert deleted.exit_code == 0, deleted.output
     assert graph.list_projects() == []
+
+
+def test_project_rebuild_concepts_uses_in_memory_graph(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("PORTOLAN_STORE", "memory")
+    monkeypatch.setenv("PORTOLAN_DATA_DIR", str(tmp_path))
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("CLI concepts")
+    for index in range(1, 16):
+        keywords = ["Library science"]
+        scores = [0.9]
+        if index <= 2:
+            keywords.append("Knowledge graph")
+            scores.append(0.8)
+        if index == 1:
+            keywords.append("One-off method")
+            scores.append(0.7)
+        work = graph.upsert_work(
+            WorkNode(
+                openalex_id=f"W{index}",
+                title=f"Graph paper {index}",
+                year=2024,
+                keywords=keywords,
+                keyword_scores=scores,
+            )
+        )
+        assert work.id is not None
+        graph.include_work(
+            Inclusion(
+                project_id=project.id,
+                work_id=work.id,
+                discovered_via="seed",
+            )
+        )
+    _patch_graph(monkeypatch, graph)
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        ["project", "rebuild-concepts", project.id],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert result.output.strip() == "kept=1 filtered=2"
 
 
 def test_research_command_uses_lazy_monkeypatched_runner(

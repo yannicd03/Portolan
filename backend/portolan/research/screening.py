@@ -41,6 +41,24 @@ _STOP_WORDS = frozenset(
 class Screener(Protocol):
     """Minimal screening interface used by :class:`ResearchRunner`."""
 
+    def _cocitation_score(self, candidate: Mapping[str, Any], context: Mapping[str, Any]) -> float:
+        counts = context.get("core_reference_counts")
+        if not isinstance(counts, Mapping) or not counts:
+            return 0.0
+        try:
+            core_size = int(context.get("core_size") or 0)
+        except (TypeError, ValueError):
+            core_size = 0
+        if core_size <= 0:
+            return 0.0
+        count = 0
+        for kind, value in _identifier_keys(candidate):
+            try:
+                count = max(count, int(counts.get(f"{kind}:{value}") or 0))
+            except (TypeError, ValueError):
+                continue
+        return max(0.0, min(1.0, count / core_size))
+
     def score(self, candidate: Mapping[str, Any], context: Mapping[str, Any]) -> float:
         """Return a relevance score between zero and one."""
 
@@ -174,22 +192,47 @@ def _records(value: Any) -> list[Mapping[str, Any]]:
 
 
 class HeuristicScreener:
-    """Score candidates with text, citation-link, and citation-count signals."""
+    """Score candidates with text, link, co-citation, and citation-count signals.
+
+    The co-citation signal counts how many core-set works (seeds plus the top
+    search hits) reference the candidate.  The runner supplies these counts in
+    the screening context as ``core_reference_counts`` (``"kind:value"``
+    identifier -> count) together with ``core_size``.
+
+    Callers that pass any of the original three weights explicitly, but not
+    ``cocitation_weight``, keep the original three-signal score.
+    """
 
     def __init__(
         self,
         *,
-        token_weight: float = 0.6,
-        link_weight: float = 0.25,
-        citation_weight: float = 0.15,
+        token_weight: float | None = None,
+        link_weight: float | None = None,
+        citation_weight: float | None = None,
+        cocitation_weight: float | None = None,
     ) -> None:
-        weights = (float(token_weight), float(link_weight), float(citation_weight))
+        legacy = cocitation_weight is None and any(
+            weight is not None for weight in (token_weight, link_weight, citation_weight)
+        )
+        # (token, link, citation count, co-citation)
+        defaults = (0.6, 0.25, 0.15, 0.0) if legacy else (0.45, 0.2, 0.10, 0.25)
+        weights = tuple(
+            float(default if weight is None else weight)
+            for weight, default in zip(
+                (token_weight, link_weight, citation_weight, cocitation_weight),
+                defaults,
+                strict=True,
+            )
+        )
         if any(weight < 0 for weight in weights) or sum(weights) <= 0:
             raise ValueError("screener weights must be non-negative and have a positive sum")
         total = sum(weights)
-        self.token_weight, self.link_weight, self.citation_weight = (
-            weight / total for weight in weights
-        )
+        (
+            self.token_weight,
+            self.link_weight,
+            self.citation_weight,
+            self.cocitation_weight,
+        ) = (weight / total for weight in weights)
 
     def _profile_tokens(self, context: Mapping[str, Any]) -> set[str]:
         parts: list[str] = []
@@ -262,6 +305,24 @@ class HeuristicScreener:
             return 0.0
         return min(1.0, math.log1p(count) / math.log1p(maximum_value))
 
+    def _cocitation_score(self, candidate: Mapping[str, Any], context: Mapping[str, Any]) -> float:
+        counts = context.get("core_reference_counts")
+        if not isinstance(counts, Mapping) or not counts:
+            return 0.0
+        try:
+            core_size = int(context.get("core_size") or 0)
+        except (TypeError, ValueError):
+            core_size = 0
+        if core_size <= 0:
+            return 0.0
+        count = 0
+        for kind, value in _identifier_keys(candidate):
+            try:
+                count = max(count, int(counts.get(f"{kind}:{value}") or 0))
+            except (TypeError, ValueError):
+                continue
+        return max(0.0, min(1.0, count / core_size))
+
     def score(self, candidate: Mapping[str, Any], context: Mapping[str, Any]) -> float:
         """Return a deterministic score in ``[0, 1]`` for one candidate."""
 
@@ -277,6 +338,7 @@ class HeuristicScreener:
             self.token_weight * token_score
             + self.link_weight * self._link_score(candidate, context)
             + self.citation_weight * self._citation_score(candidate, context)
+            + self.cocitation_weight * self._cocitation_score(candidate, context)
         )
         return max(0.0, min(1.0, float(score)))
 

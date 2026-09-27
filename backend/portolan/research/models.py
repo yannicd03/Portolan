@@ -15,8 +15,11 @@ class ResearchRequest(BaseModel):
     exclude: list[str] = Field(default_factory=list)
     query: str | None = None
     max_works: int = Field(100, ge=1, le=2000)
-    snowball_depth: int = Field(1, ge=0, le=2)
+    snowball_depth: int = Field(2, ge=0, le=2)
     forward_per_work: int = Field(20, ge=0, le=200)
+    core_search_hits: int = Field(10, ge=0, le=50)
+    chase_top: int = Field(20, ge=0, le=100)
+    min_score: float = Field(0.15, ge=0, le=1)
     from_year: int | None = None
     to_year: int | None = None
     acquire_pdfs: bool = True

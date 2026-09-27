@@ -20,6 +20,7 @@ from portolan.research import (
     ResearchRunner,
     ResearchSources,
     RunCancelled,
+    rebuild_project_concepts,
 )
 
 
@@ -235,10 +236,12 @@ def make_runner(
 
 
 def test_seed_snowball_writes_graph_and_is_idempotent() -> None:
+    # W4 is only reachable through the default depth-2 chase of W2's references,
+    # so it has no co-citation support from the core set and is screened out.
     seed = record(
         "W1",
         "Graph retrieval",
-        refs=["W2", "W4"],
+        refs=["W2"],
         keywords=[("Knowledge Graph", 0.9), ("Data", 0.8)],
         authors=[
             {"name": "Ada", "openalex_id": "A1", "orcid": None, "position": 1},
@@ -301,7 +304,7 @@ def test_query_only_search_frontier_and_year_filter() -> None:
         ResearchRequest(query="graph models", from_year=2020, max_works=3, acquire_pdfs=False),
     )
 
-    assert source.search_calls == [("graph models", 3, 2020, None)]
+    assert source.search_calls == [("graph models", 50, 2020, None)]
     assert {work.openalex_id for work in graph.project_works(project.id)} == {"W1", "W3"}
     assert report.candidates_found == 2
 
@@ -549,11 +552,52 @@ def test_concept_filter_removes_generic_and_singleton_keywords() -> None:
     )
 
 
+def test_rebuild_project_concepts_returns_filter_counts_and_replaces_edges() -> None:
+    works = [
+        record(
+            f"W{index}",
+            f"Graph paper {index}",
+            keywords=(
+                [("Library science", 0.9)]
+                + ([("Knowledge graph", 0.8)] if index <= 2 else [])
+                + ([("One-off method", 0.7)] if index == 1 else [])
+            ),
+        )
+        for index in range(1, 16)
+    ]
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Direct concept rebuild")
+    runner = make_runner(graph, FakeOpenAlex(works))
+    runner.run(
+        project.id,
+        ResearchRequest(
+            seeds=[work["openalex_id"] for work in works],
+            max_works=15,
+            snowball_depth=0,
+            acquire_pdfs=False,
+        ),
+    )
+
+    kept, filtered = rebuild_project_concepts(graph, project.id)
+
+    assert (kept, filtered) == (1, 2)
+    concept = next(iter(graph._concepts.values()))
+    assert {work.id for work in graph.works_by_concept(concept.id, project.id)} == {
+        work.id for work in graph.project_works(project.id) if work.openalex_id in {"W1", "W2"}
+    }
+    assert all(
+        not graph.work_neighborhood(work.id, project.id).concepts
+        for work in graph.project_works(project.id)
+        if work.openalex_id not in {"W1", "W2"}
+    )
+
+
 def test_pdf_order_cap_skip_existing_and_enrichment(tmp_path: Any) -> None:
     seed = record("W1", "Seed", pdf_url="https://example.org/seed.pdf")
     other = record("W2", "Other", doi="10.1000/other", citations=100)
     other["abstract"] = None
     third = record("W3", "Third", arxiv="2401.12345")
+    third["abstract"] = None
     source = FakeOpenAlex([seed, other, third], search=["W2", "W3"])
     s2 = FakeSemanticScholar(
         [
@@ -571,7 +615,12 @@ def test_pdf_order_cap_skip_existing_and_enrichment(tmp_path: Any) -> None:
     fetcher = FakeFetcher(store)
     runner = make_runner(graph, source, store=store, fetcher=fetcher, semanticscholar=s2)
     request = ResearchRequest(
-        seeds=["W1"], query="papers", snowball_depth=0, max_pdfs=2, max_works=3
+        seeds=["W1"],
+        query="papers",
+        snowball_depth=0,
+        max_pdfs=2,
+        max_works=3,
+        min_score=0.0,
     )
 
     report = runner.run(project.id, request)
@@ -620,7 +669,9 @@ def test_progress_updates_inside_long_stages() -> None:
 
     make_runner(graph, source).run(
         project.id,
-        ResearchRequest(query="Graph", max_works=30, snowball_depth=0, acquire_pdfs=False),
+        ResearchRequest(
+            query="Graph", max_works=30, snowball_depth=0, min_score=0.0, acquire_pdfs=False
+        ),
         progress=events.append,
     )
 
@@ -808,3 +859,325 @@ def test_default_sources_only_builds_unpaywall_with_contact_email(
         assert with_email.unpaywall.email == "reader@example.org"
     finally:
         with_email.close()
+
+
+def test_core_search_hits_are_snowballed_alongside_seeds() -> None:
+    seed = record("W1", "Retrieval models", refs=["W10"])
+    hits = [
+        record("W2", "Retrieval models core", refs=["W20"]),
+        record("W3", "Retrieval models second", refs=["W30"]),
+        record("W4", "Retrieval models tail", refs=["W40"]),
+    ]
+    references = [
+        record(wid, f"Retrieval models reference {wid}") for wid in ("W10", "W20", "W30", "W40")
+    ]
+    source = FakeOpenAlex(
+        [seed, *hits, *references],
+        search=["W2", "W3", "W4"],
+        citing={"W2": ["W5"]},
+    )
+    source.works["W5"] = record("W5", "Retrieval models follow-up", refs=["W2"])
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Core set")
+
+    report = make_runner(graph, source).run(
+        project.id,
+        ResearchRequest(
+            seeds=["W1"],
+            query="retrieval models",
+            core_search_hits=2,
+            snowball_depth=1,
+            max_works=20,
+            acquire_pdfs=False,
+        ),
+    )
+
+    assert source.search_calls[0][1] == 50
+    backward = {identifier for call in source.lookup_calls[1:] for identifier in call}
+    assert backward == {"W10", "W20", "W30"}
+    assert sorted(identifier for identifier, _ in source.forward_calls) == ["W1", "W2", "W3"]
+    included = {work.openalex_id for work in graph.project_works(project.id)}
+    assert {"W20", "W30", "W5"} <= included
+    assert "W40" not in included
+    assert report.candidates_found == 8
+
+
+def test_search_breadth_scales_with_max_works() -> None:
+    source = FakeOpenAlex([record("W1", "Paper")], search=["W1"])
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Breadth")
+    runner = make_runner(graph, source)
+    for max_works in (10, 60, 150):
+        runner.run(
+            project.id,
+            ResearchRequest(
+                query="paper", max_works=max_works, snowball_depth=0, acquire_pdfs=False
+            ),
+        )
+    assert [call[1] for call in source.search_calls] == [50, 120, 200]
+
+
+def _chase_fixture() -> tuple[FakeOpenAlex, list[str]]:
+    """A seed whose references have references of their own.
+
+    The strong references share the seed's topic; the weak ones do not, so the
+    chase round ranks the strong ones first.
+    """
+
+    strong = [
+        record(f"W{index}", f"Graph retrieval method {index}", refs=[f"W{index}0"])
+        for index in range(2, 5)
+    ]
+    weak = [record(f"W{index}", "Organic chemistry", refs=[f"W{index}0"]) for index in (5, 6)]
+    second = [record(f"W{index}0", f"Graph retrieval origin {index}") for index in range(2, 7)]
+    seed = record(
+        "W1",
+        "Graph retrieval",
+        refs=[work["openalex_id"] for work in [*strong, *weak]],
+    )
+    return FakeOpenAlex([seed, *strong, *weak, *second]), [work["openalex_id"] for work in second]
+
+
+def test_chase_round_expands_references_of_top_screened_candidates() -> None:
+    source, _ = _chase_fixture()
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Chase")
+    events: list[Any] = []
+
+    report = make_runner(graph, source).run(
+        project.id,
+        ResearchRequest(
+            seeds=["W1"],
+            chase_top=3,
+            forward_per_work=0,
+            max_works=20,
+            min_score=0.0,
+            acquire_pdfs=False,
+        ),
+        progress=events.append,
+    )
+
+    assert len(source.lookup_calls) == 3
+    assert set(source.lookup_calls[2]) == {"W20", "W30", "W40"}
+    assert any(
+        event.stage == "snowball" and event.message == "Chasing references of 3 top candidates"
+        for event in events
+    )
+    assert report.candidates_found == 9
+    chased = next(work for work in graph.project_works(project.id) if work.openalex_id == "W20")
+    inclusion = graph._inclusions[(project.id, chased.id)]
+    assert inclusion.discovered_via == "backward"
+    assert inclusion.depth == 2
+    source_work = next(work for work in graph.project_works(project.id) if work.openalex_id == "W2")
+    cites = graph.work_neighborhood(source_work.id, project.id).cites
+    assert [work.title for work in cites] == ["Graph retrieval origin 2"]
+
+
+def test_chase_round_respects_depth_chase_top_and_forward_scope() -> None:
+    source, _ = _chase_fixture()
+    source.citing = {"W2": ["W99"]}
+    source.works["W99"] = record("W99", "Graph retrieval citing paper", refs=["W2"])
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Chase bounds")
+    runner = make_runner(graph, source)
+
+    depth_one = runner.run(
+        project.id,
+        ResearchRequest(seeds=["W1"], snowball_depth=1, max_works=20, acquire_pdfs=False),
+    )
+    assert depth_one.candidates_found == 6
+    assert len(source.lookup_calls) == 2
+
+    source.lookup_calls.clear()
+    no_chase = runner.run(
+        project.id,
+        ResearchRequest(seeds=["W1"], chase_top=0, max_works=20, acquire_pdfs=False),
+    )
+    assert no_chase.candidates_found == 6
+    assert len(source.lookup_calls) == 2
+
+    source.lookup_calls.clear()
+    source.forward_calls.clear()
+    runner.run(
+        project.id,
+        ResearchRequest(seeds=["W1"], max_works=20, acquire_pdfs=False),
+    )
+    # Forward citations are fetched for the core set only, never in the chase.
+    assert [identifier for identifier, _ in source.forward_calls] == ["W1"]
+
+
+def test_chase_round_respects_candidate_cap() -> None:
+    source, _ = _chase_fixture()
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Chase cap")
+
+    report = make_runner(graph, source).run(
+        project.id,
+        ResearchRequest(
+            seeds=["W1"], max_works=1, forward_per_work=0, min_score=0.0, acquire_pdfs=False
+        ),
+    )
+
+    assert report.candidates_found == 5
+    assert len(source.lookup_calls) == 2
+    assert any("candidate cap" in warning for warning in report.warnings)
+
+
+def test_chase_round_skips_excluded_references() -> None:
+    source, _ = _chase_fixture()
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Chase exclusions")
+
+    report = make_runner(graph, source).run(
+        project.id,
+        ResearchRequest(
+            seeds=["W1"],
+            exclude=["W20"],
+            chase_top=3,
+            forward_per_work=0,
+            max_works=20,
+            min_score=0.0,
+            acquire_pdfs=False,
+        ),
+    )
+
+    assert "W20" not in source.lookup_calls[-1]
+    assert set(source.lookup_calls[-1]) == {"W30", "W40"}
+    assert report.excluded == 1
+    assert "W20" not in {work.openalex_id for work in graph.project_works(project.id)}
+
+
+def test_chase_round_honours_cancellation() -> None:
+    source, _ = _chase_fixture()
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Chase cancel")
+    cancel = Event()
+
+    def on_progress(event: Any) -> None:
+        if event.message.startswith("Chasing references"):
+            cancel.set()
+
+    with pytest.raises(RunCancelled):
+        make_runner(graph, source).run(
+            project.id,
+            ResearchRequest(seeds=["W1"], forward_per_work=0, max_works=20, acquire_pdfs=False),
+            progress=on_progress,
+            cancel=cancel,
+        )
+
+    assert len(source.lookup_calls) == 2
+    assert graph.project_works(project.id) == []
+
+
+def test_min_score_leaves_slots_empty_but_keeps_seeds() -> None:
+    seed = record("W1", "Graph retrieval", refs=["W2", "W3"])
+    related = record("W2", "Graph retrieval benchmark")
+    unrelated = record("W3", "Organic chemistry")
+    unrelated["abstract"] = None
+    source = FakeOpenAlex([seed, related, unrelated])
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Screen")
+    runner = make_runner(graph, source)
+    base = {"seeds": ["W1"], "max_works": 10, "forward_per_work": 0, "acquire_pdfs": False}
+
+    report = runner.run(project.id, ResearchRequest(**base, min_score=0.5))
+    assert report.candidates_found == 3
+    assert report.included == 2
+    assert report.screened_out == 1
+    assert {work.openalex_id for work in graph.project_works(project.id)} == {"W1", "W2"}
+
+    strict = graph.create_project("Strict")
+    report = runner.run(strict.id, ResearchRequest(**base, min_score=1.0))
+    assert report.included == 1
+    assert {work.openalex_id for work in graph.project_works(strict.id)} == {"W1"}
+
+    lenient = graph.create_project("Lenient")
+    report = runner.run(lenient.id, ResearchRequest(**base, min_score=0.0))
+    assert report.included == 3
+
+
+def test_cocitation_by_core_set_raises_candidate_score() -> None:
+    screener = HeuristicScreener()
+    candidate = record("W5", "Unrelated title")
+    context = {"profile": "graph retrieval", "max_cited_by_count": 10}
+    baseline = screener.score(candidate, context)
+    cocited = screener.score(
+        candidate,
+        {**context, "core_reference_counts": {"openalex:W5": 2}, "core_size": 4},
+    )
+    fully_cocited = screener.score(
+        candidate,
+        {**context, "core_reference_counts": {"openalex:W5": 4}, "core_size": 4},
+    )
+    assert baseline < cocited < fully_cocited
+    assert fully_cocited - baseline == pytest.approx(0.25)
+
+    only_cocitation = HeuristicScreener(
+        token_weight=0, link_weight=0, citation_weight=0, cocitation_weight=1
+    )
+    assert only_cocitation.score(
+        candidate, {"core_reference_counts": {"openalex:W5": 9}, "core_size": 3}
+    ) == pytest.approx(1.0)
+
+
+def test_runner_puts_core_reference_counts_in_screening_context() -> None:
+    seed = record("W1", "Seed", refs=["W3"])
+    hit = record("W2", "Hit", refs=["W3", "W4"])
+    shared = record("W3", "Shared reference")
+    single = record("W4", "Single reference")
+    source = FakeOpenAlex([seed, hit, shared, single], search=["W2"])
+    contexts: list[dict[str, Any]] = []
+
+    class RecordingScreener(HeuristicScreener):
+        def score(self, candidate: Mapping[str, Any], context: Mapping[str, Any]) -> float:
+            contexts.append(dict(context))
+            return super().score(candidate, context)
+
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Co-citation")
+    runner = ResearchRunner(graph, ResearchSources(source), screener=RecordingScreener())
+    runner.run(
+        project.id,
+        ResearchRequest(
+            seeds=["W1"], query="seed", snowball_depth=1, forward_per_work=0, acquire_pdfs=False
+        ),
+    )
+
+    context = contexts[-1]
+    assert context["core_size"] == 2
+    assert context["core_reference_counts"]["openalex:W3"] == 2
+    assert context["core_reference_counts"]["openalex:W4"] == 1
+    assert "openalex:W1" not in context["core_reference_counts"]
+    works = {work.openalex_id: work for work in graph.project_works(project.id)}
+    scores = {
+        openalex_id: graph._inclusions[(project.id, work.id)].score
+        for openalex_id, work in works.items()
+    }
+    assert scores["W3"] > scores["W4"]
+
+
+def test_new_request_fields_default_for_existing_callers() -> None:
+    request = ResearchRequest(seeds=["W1"])
+    assert request.snowball_depth == 2
+    assert request.core_search_hits == 10
+    assert request.chase_top == 20
+    assert request.min_score == pytest.approx(0.15)
+    with pytest.raises(ValueError):
+        ResearchRequest(seeds=["W1"], core_search_hits=51)
+    with pytest.raises(ValueError):
+        ResearchRequest(seeds=["W1"], chase_top=101)
+    with pytest.raises(ValueError):
+        ResearchRequest(seeds=["W1"], min_score=1.5)
+
+    default = HeuristicScreener()
+    assert (
+        default.token_weight,
+        default.link_weight,
+        default.cocitation_weight,
+        default.citation_weight,
+    ) == pytest.approx((0.45, 0.2, 0.25, 0.10))
+    legacy = HeuristicScreener(token_weight=0.6, link_weight=0.25, citation_weight=0.15)
+    assert legacy.cocitation_weight == 0
+    assert (legacy.token_weight, legacy.link_weight, legacy.citation_weight) == pytest.approx(
+        (0.6, 0.25, 0.15)
+    )
