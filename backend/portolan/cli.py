@@ -180,6 +180,10 @@ def _make_research_request(
     depth: int,
     acquire_pdfs: bool,
     max_pdfs: int,
+    exclude: list[str] | None = None,
+    core_search_hits: int = 10,
+    chase_top: int = 20,
+    min_score: float = 0.15,
 ) -> Any:
     """Build a pipeline request without importing the optional pipeline package eagerly."""
 
@@ -192,6 +196,10 @@ def _make_research_request(
         snowball_depth=depth,
         acquire_pdfs=acquire_pdfs,
         max_pdfs=max_pdfs,
+        exclude=list(exclude or []),
+        core_search_hits=core_search_hits,
+        chase_top=chase_top,
+        min_score=min_score,
     )
 
 
@@ -228,6 +236,40 @@ def research(
     max_pdfs: Annotated[
         int, typer.Option("--max-pdfs", min=0, help="Maximum PDFs to acquire.")
     ] = 50,
+    exclude: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--exclude",
+            help="Paper to keep out of the run (DOI, arXiv id or OpenAlex id); may be repeated.",
+        ),
+    ] = None,
+    core_search_hits: Annotated[
+        int,
+        typer.Option(
+            "--core-search-hits",
+            min=0,
+            max=50,
+            help="Top query-search hits that join the seeds as core papers.",
+        ),
+    ] = 10,
+    chase_top: Annotated[
+        int,
+        typer.Option(
+            "--chase-top",
+            min=0,
+            max=100,
+            help="Best non-seed candidates whose references are chased at depth 2.",
+        ),
+    ] = 20,
+    min_score: Annotated[
+        float,
+        typer.Option(
+            "--min-score",
+            min=0.0,
+            max=1.0,
+            help="Candidates scoring below this are not included.",
+        ),
+    ] = 0.15,
 ) -> None:
     """Run the research pipeline synchronously for a project."""
 
@@ -245,6 +287,10 @@ def research(
             depth=depth,
             acquire_pdfs=not no_pdfs,
             max_pdfs=max_pdfs,
+            exclude=list(exclude or []),
+            core_search_hits=core_search_hits,
+            chase_top=chase_top,
+            min_score=min_score,
         )
         runner, sources, fetcher = _make_research_components(settings, graph)
 

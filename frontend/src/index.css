@@ -292,6 +292,8 @@ textarea.research-composer-input { resize: vertical; min-height: 52px; }
 .research-advanced-toggle { padding: 0; border: 0; background: transparent; color: var(--accent); font-size: 12px; font-weight: 650; }
 .research-advanced-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin-top: 10px; font-size: 12px; }
 .research-advanced-grid .research-composer-input { margin-top: 5px; }
+.research-advanced-wide { grid-column: 1 / -1; }
+.research-advanced-help { color: var(--text-soft); font-size: 11px; font-weight: 400; }
 .research-pdf-toggle { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; }
 .research-pdf-toggle input { accent-color: var(--accent); }
 .research-error, .run-card-error { margin: 0; color: var(--error); font-size: 12px; }

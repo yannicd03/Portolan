@@ -24,6 +24,25 @@ function readNumber(value: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
+// Mirrors the backend defaults and bounds (ResearchRunRequest); values left at the
+// default are not sent, which keeps the run request small.
+const DEFAULT_CORE_SEARCH_HITS = 10
+const MAX_CORE_SEARCH_HITS = 50
+const DEFAULT_CHASE_TOP = 20
+const MAX_CHASE_TOP = 100
+const DEFAULT_MIN_SCORE = 0.15
+
+function clampInt(value: string, fallback: number, max: number): number {
+  return Math.min(max, Math.max(0, Math.floor(readNumber(value, fallback))))
+}
+
+function splitLines(value: string): string[] {
+  return value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+}
+
 export function ResearchThread({ projectId, refreshToken, openRunRequest, onRunFinished }: ResearchThreadProps) {
   const [runs, setRuns] = useState<Run[]>([])
   const [topic, setTopic] = useState('')
@@ -33,6 +52,11 @@ export function ResearchThread({ projectId, refreshToken, openRunRequest, onRunF
   const [snowballDepth, setSnowballDepth] = useState(2)
   const [acquirePdfs, setAcquirePdfs] = useState(true)
   const [maxPdfs, setMaxPdfs] = useState(50)
+  const [exclude, setExclude] = useState('')
+  const [coreSearchHits, setCoreSearchHits] = useState(DEFAULT_CORE_SEARCH_HITS)
+  const [chaseTop, setChaseTop] = useState(DEFAULT_CHASE_TOP)
+  // Kept as text so partial input such as "0." can be typed; validated on submit.
+  const [minScore, setMinScore] = useState(String(DEFAULT_MIN_SCORE))
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [cancellingRunId, setCancellingRunId] = useState<string | null>(null)
@@ -147,14 +171,19 @@ export function ResearchThread({ projectId, refreshToken, openRunRequest, onRunF
   const handleStart = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const trimmedTopic = topic.trim()
-    const parsedSeeds = seeds
-      .split('\n')
-      .map((seed) => seed.trim())
-      .filter((seed) => seed.length > 0)
+    const parsedSeeds = splitLines(seeds)
     if (!trimmedTopic && parsedSeeds.length === 0) {
       setError('Enter a topic or add at least one seed paper.')
       return
     }
+    const trimmedMinScore = minScore.trim()
+    const parsedMinScore = trimmedMinScore === '' ? DEFAULT_MIN_SCORE : Number(trimmedMinScore)
+    if (!Number.isFinite(parsedMinScore) || parsedMinScore < 0 || parsedMinScore > 1) {
+      setAdvancedOpen(true)
+      setError('Minimum screening score must be a number between 0 and 1.')
+      return
+    }
+    const parsedExclude = splitLines(exclude)
 
     setSubmitting(true)
     setError(null)
@@ -167,6 +196,10 @@ export function ResearchThread({ projectId, refreshToken, openRunRequest, onRunF
       acquire_pdfs: acquirePdfs,
       max_pdfs: Math.max(0, Math.floor(maxPdfs)),
     }
+    if (parsedExclude.length > 0) request.exclude = parsedExclude
+    if (coreSearchHits !== DEFAULT_CORE_SEARCH_HITS) request.core_search_hits = coreSearchHits
+    if (chaseTop !== DEFAULT_CHASE_TOP) request.chase_top = chaseTop
+    if (parsedMinScore !== DEFAULT_MIN_SCORE) request.min_score = parsedMinScore
 
     try {
       const createdRun = await api.startRun(projectId, request)
@@ -305,6 +338,60 @@ export function ResearchThread({ projectId, refreshToken, openRunRequest, onRunF
                   value={maxPdfs}
                   onChange={(event) => setMaxPdfs(Math.max(0, Math.floor(readNumber(event.target.value, 50))))}
                 />
+              </label>
+              <label className="research-composer-field" htmlFor="research-core-search-hits">
+                Core search hits
+                <input
+                  className="research-composer-input"
+                  id="research-core-search-hits"
+                  type="number"
+                  min={0}
+                  max={MAX_CORE_SEARCH_HITS}
+                  value={coreSearchHits}
+                  onChange={(event) =>
+                    setCoreSearchHits(clampInt(event.target.value, DEFAULT_CORE_SEARCH_HITS, MAX_CORE_SEARCH_HITS))
+                  }
+                />
+                <span className="research-advanced-help">Top topic-search hits that join the seeds as core papers (0–50).</span>
+              </label>
+              <label className="research-composer-field" htmlFor="research-chase-top">
+                Chase top candidates
+                <input
+                  className="research-composer-input"
+                  id="research-chase-top"
+                  type="number"
+                  min={0}
+                  max={MAX_CHASE_TOP}
+                  value={chaseTop}
+                  onChange={(event) => setChaseTop(clampInt(event.target.value, DEFAULT_CHASE_TOP, MAX_CHASE_TOP))}
+                />
+                <span className="research-advanced-help">Best candidates whose references are followed at depth 2 (0–100).</span>
+              </label>
+              <label className="research-composer-field" htmlFor="research-min-score">
+                Minimum screening score
+                <input
+                  className="research-composer-input"
+                  id="research-min-score"
+                  type="number"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={minScore}
+                  onChange={(event) => setMinScore(event.target.value)}
+                />
+                <span className="research-advanced-help">Candidates scoring below this are left out (0–1).</span>
+              </label>
+              <label className="research-composer-field research-advanced-wide" htmlFor="research-exclude">
+                Exclude papers <span className="research-advanced-help">(DOI / arXiv / OpenAlex id, one per line)</span>
+                <textarea
+                  className="research-composer-input"
+                  id="research-exclude"
+                  value={exclude}
+                  onChange={(event) => setExclude(event.target.value)}
+                  placeholder="doi:10.1000/unrelated-paper"
+                  rows={2}
+                />
+                <span className="research-advanced-help">Kept out of the map even when found by search or citations.</span>
               </label>
             </div>
           ) : null}

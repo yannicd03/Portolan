@@ -229,3 +229,76 @@ def test_research_command_uses_lazy_monkeypatched_runner(
     assert request.acquire_pdfs is False
     assert request.max_pdfs == 4
     assert FakeSources.instances and FakeSources.instances[0].closed is True
+
+
+def test_research_command_passes_selection_options(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("PORTOLAN_STORE", "memory")
+    monkeypatch.setenv("PORTOLAN_DATA_DIR", str(tmp_path))
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("CLI selection")
+    _patch_graph(monkeypatch, graph)
+    _install_fake_research(monkeypatch)
+    FakeResearchRunner.instances.clear()
+    FakeSources.instances.clear()
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        [
+            "research",
+            project.id,
+            "--query",
+            "graph",
+            "--exclude",
+            "10.1000/xyz",
+            "--exclude",
+            "arXiv:2101.00001",
+            "--core-search-hits",
+            "5",
+            "--chase-top",
+            "7",
+            "--min-score",
+            "0.4",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    request = FakeResearchRunner.instances[0].requests[0]
+    assert request.exclude == ["10.1000/xyz", "arXiv:2101.00001"]
+    assert request.core_search_hits == 5
+    assert request.chase_top == 7
+    assert request.min_score == 0.4
+
+
+def test_research_command_selection_defaults_and_bounds(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("PORTOLAN_STORE", "memory")
+    monkeypatch.setenv("PORTOLAN_DATA_DIR", str(tmp_path))
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("CLI selection defaults")
+    _patch_graph(monkeypatch, graph)
+    _install_fake_research(monkeypatch)
+    FakeResearchRunner.instances.clear()
+    FakeSources.instances.clear()
+    runner = CliRunner()
+
+    result = runner.invoke(cli_module.app, ["research", project.id, "--query", "graph"])
+    assert result.exit_code == 0, result.output
+    request = FakeResearchRunner.instances[0].requests[0]
+    assert request.exclude == []
+    assert request.core_search_hits == 10
+    assert request.chase_top == 20
+    assert request.min_score == 0.15
+
+    for option, value in [
+        ("--core-search-hits", "51"),
+        ("--chase-top", "101"),
+        ("--min-score", "1.5"),
+        ("--min-score", "-0.1"),
+    ]:
+        rejected = runner.invoke(
+            cli_module.app, ["research", project.id, "--query", "graph", option, value]
+        )
+        assert rejected.exit_code == 2, (option, value, rejected.output)
+    assert len(FakeResearchRunner.instances) == 1

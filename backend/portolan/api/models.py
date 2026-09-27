@@ -132,10 +132,14 @@ class ResearchRunRequest(ApiModel):
     """
 
     seeds: list[str] = Field(default_factory=list)
+    exclude: list[str] = Field(default_factory=list)
     query: str | None = None
     max_works: int = Field(default=100, ge=1, le=2000)
     snowball_depth: int = Field(default=2, ge=0, le=2)
     forward_per_work: int = Field(default=20, ge=0, le=200)
+    core_search_hits: int = Field(default=10, ge=0, le=50)
+    chase_top: int = Field(default=20, ge=0, le=100)
+    min_score: float = Field(default=0.15, ge=0.0, le=1.0)
     from_year: int | None = None
     to_year: int | None = None
     acquire_pdfs: bool = True

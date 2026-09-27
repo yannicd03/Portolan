@@ -17,7 +17,8 @@ from fastapi.testclient import TestClient
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
-from portolan.api.app import create_app
+from portolan.api.app import _default_runner_factory, create_app
+from portolan.api.models import ResearchRunRequest
 from portolan.documents import DocumentStore
 from portolan.graph import AuthorNode, ConceptNode, Inclusion, WorkNode
 from portolan.graph.memory import InMemoryResearchGraph
@@ -380,6 +381,126 @@ def test_runs_succeed_with_progress_and_report(
         assert listed.status_code == 200
         assert [item["id"] for item in listed.json()] == [run_id]
         assert client.get("/api/runs/missing").status_code == 404
+
+
+SELECTION_FIELDS = {
+    "exclude": ["10.1000/xyz", "arXiv:2101.00001", "W123"],
+    "core_search_hits": 5,
+    "chase_top": 7,
+    "min_score": 0.4,
+}
+
+
+def test_run_request_selection_fields_reach_the_runner_factory(
+    graph: InMemoryResearchGraph, tmp_path: Path
+) -> None:
+    project = graph.create_project("Selection")
+    runner = FakeRunner()
+    received: list[ResearchRunRequest] = []
+
+    def factory(_graph: Any, _settings: Any, request: ResearchRunRequest) -> FakeRunner:
+        received.append(request)
+        return runner
+
+    with TestClient(create_app(_settings(tmp_path), graph=graph, runner_factory=factory)) as client:
+        created = client.post(
+            f"/api/projects/{project.id}/runs",
+            json={"query": "graph", **SELECTION_FIELDS},
+        )
+        assert created.status_code == 202, created.text
+        for field, value in SELECTION_FIELDS.items():
+            assert created.json()["request"][field] == value
+        _wait_for_status(client, created.json()["id"], "succeeded")
+
+    assert len(received) == 1
+    assert len(runner.requests) == 1
+    for request in (received[0], runner.requests[0]):
+        for field, value in SELECTION_FIELDS.items():
+            assert getattr(request, field) == value
+
+
+def test_run_request_selection_defaults_match_the_pipeline() -> None:
+    from portolan.research.models import ResearchRequest
+
+    api_fields = ResearchRunRequest.model_fields
+    pipeline_fields = ResearchRequest.model_fields
+    assert set(api_fields) == set(pipeline_fields)
+    for name, pipeline_field in pipeline_fields.items():
+        api_field = api_fields[name]
+        assert api_field.get_default(call_default_factory=True) == pipeline_field.get_default(
+            call_default_factory=True
+        ), name
+        assert api_field.metadata == pipeline_field.metadata, name
+
+    defaults = ResearchRunRequest(query="graph")
+    assert defaults.snowball_depth == 2
+    assert defaults.acquire_pdfs is True
+    assert defaults.exclude == []
+    assert defaults.core_search_hits == 10
+    assert defaults.chase_top == 20
+    assert defaults.min_score == 0.15
+
+
+def test_default_runner_factory_forwards_selection_fields(
+    graph: InMemoryResearchGraph, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from portolan.research.models import ResearchRequest
+
+    class Sources:
+        closed = False
+
+        @classmethod
+        def default(cls, *_: Any, **__: Any) -> Sources:
+            return cls()
+
+        def close(self) -> None:
+            self.closed = True
+
+    class Runner:
+        def __init__(self, *_: Any, **__: Any) -> None:
+            pass
+
+    module = types.ModuleType("portolan.research")
+    module.ResearchRequest = ResearchRequest  # type: ignore[attr-defined]
+    module.ResearchSources = Sources  # type: ignore[attr-defined]
+    module.ResearchRunner = Runner  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "portolan.research", module)
+
+    request = ResearchRunRequest(query="graph", **SELECTION_FIELDS)
+    handle = _default_runner_factory(graph, _settings(tmp_path), request)
+    try:
+        assert isinstance(handle.request, ResearchRequest)
+        for field, value in SELECTION_FIELDS.items():
+            assert getattr(handle.request, field) == value
+    finally:
+        handle.close()
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("core_search_hits", -1),
+        ("core_search_hits", 51),
+        ("chase_top", -1),
+        ("chase_top", 101),
+        ("min_score", -0.01),
+        ("min_score", 1.01),
+        ("exclude", "10.1000/xyz"),
+    ],
+)
+def test_run_request_rejects_out_of_range_selection_fields(
+    graph: InMemoryResearchGraph, tmp_path: Path, field: str, value: Any
+) -> None:
+    project = graph.create_project("Bounds")
+    runner = FakeRunner()
+    with TestClient(
+        create_app(_settings(tmp_path), graph=graph, runner_factory=_runner_factory(runner))
+    ) as client:
+        response = client.post(
+            f"/api/projects/{project.id}/runs", json={"query": "graph", field: value}
+        )
+        assert response.status_code == 422, response.text
+    assert runner.requests == []
 
 
 def test_one_active_run_per_project_and_delete_conflict(

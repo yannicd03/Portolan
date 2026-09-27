@@ -164,6 +164,11 @@ export interface RunRequest {
   snowball_depth: number
   acquire_pdfs: boolean
   max_pdfs: number
+  // Selection options: omitted from new requests when left at the backend defaults.
+  exclude?: string[]
+  core_search_hits?: number
+  chase_top?: number
+  min_score?: number
 }
 
 export interface RunProgress {
