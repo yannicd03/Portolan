@@ -555,3 +555,24 @@ def test_settings_reject_unknown_store(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_neo4j_store_requires_uri() -> None:
     with pytest.raises(ValueError, match="NEO4J_URI"):
         make_graph(Settings(store="neo4j"))
+
+
+def test_project_delete_removes_its_chats_and_gap_state(
+    graph: InMemoryResearchGraph, tmp_path: Path
+) -> None:
+    settings = _settings(tmp_path)
+    with TestClient(create_app(settings, graph=graph)) as client:
+        kept = client.post("/api/projects", json={"name": "Kept"}).json()["id"]
+        doomed = client.post("/api/projects", json={"name": "Doomed"}).json()["id"]
+        for project_id in (kept, doomed):
+            assert client.post(f"/api/projects/{project_id}/chats", json={}).status_code == 201
+            gap_file = settings.data_dir / "gaps" / f"{project_id}.json"
+            gap_file.parent.mkdir(parents=True, exist_ok=True)
+            gap_file.write_text("{}", encoding="utf-8")
+
+        assert client.delete(f"/api/projects/{doomed}").status_code == 204
+
+    assert not (settings.chats_dir / doomed).exists()
+    assert not (settings.data_dir / "gaps" / f"{doomed}.json").exists()
+    assert (settings.chats_dir / kept).is_dir()
+    assert (settings.data_dir / "gaps" / f"{kept}.json").is_file()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import shutil
 import threading
 import time
 import unicodedata
@@ -203,6 +204,22 @@ def _page_blocks(text: str) -> dict[int, str]:
     }
 
 
+def _delete_project_files(settings: Settings, project_id: str) -> None:
+    """Remove a deleted project's chat threads and gap statuses from the data dir."""
+
+    # Works, authors and concepts are shared across projects and stay (ADR-0006).
+    targets = (settings.chats_dir / project_id, settings.data_dir / "gaps" / f"{project_id}.json")
+    for target in targets:
+        # The id has already resolved to a stored project; still refuse anything that
+        # would escape its parent directory.
+        if target.resolve().parent != target.parent.resolve():
+            continue
+        if target.is_dir():
+            shutil.rmtree(target, ignore_errors=True)
+        elif target.is_file():
+            target.unlink(missing_ok=True)
+
+
 def create_app(
     settings: Settings | None = None,
     *,
@@ -312,6 +329,7 @@ def create_app(
             if not graph_instance.delete_project(project_id):
                 raise HTTPException(status_code=404, detail="project not found")
             registry.delete_project_runs(project_id)
+            _delete_project_files(settings, project_id)
 
     @app.get("/api/projects/{project_id}/graph", response_model=GraphView)
     def project_graph(

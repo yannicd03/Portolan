@@ -4,7 +4,7 @@
 #
 # Neo4j is the graph store (ADR-0005). Settings come from .env (gitignored; template in
 # .env.example); NEO4J_PASSWORD must be set there. Ports bind to localhost only.
-# PORTOLAN_STORE=oxigraph still selects the embedded RDF backend, kept for the spike.
+# PORTOLAN_STORE=memory runs without a database (data is lost on restart).
 
 name: portolan
 
