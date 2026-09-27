@@ -27,6 +27,11 @@ BRIDGING_EXPECTED_CITATION_RATIO = 0.25
 # one low-degree neighbour (degree <= 7) or several better-connected ones.
 MATRIX_VOID_SCORE_THRESHOLD = 0.50
 MATRIX_VOID_MAX_RESULTS = 10
+# Matrix-void endpoints must be specific: a concept on more than this share of the
+# project's works (e.g. "decoding" in a speculative-decoding project) is part of the
+# project's framing rather than a region that could be void.
+MATRIX_VOID_MAX_CONCEPT_SHARE = 0.40
+MATRIX_VOID_MIN_CONCEPT_WORKS = 3
 STAGNATION_MIN_CLUSTER_SIZE = 5
 STAGNATION_EVIDENCE_WORKS = 5
 STAGNATION_WINDOW_YEARS = 2
@@ -431,18 +436,57 @@ def _detect_bridging(
     return gaps
 
 
+def _is_lowercase_word(term: str) -> bool:
+    return len(term.split()) == 1 and not any(character.isupper() for character in term)
+
+
+def _unspecific_concepts(view: GraphView) -> set[str]:
+    """Return concept ids that are single-word, text-derived keyphrases.
+
+    Concept nodes carry no provenance, so the source is read off the surface forms:
+    text keyphrases are emitted casefolded (acronyms in uppercase), while source
+    keywords keep their capitalisation ("Speedup").  A concept counts as a
+    text-derived single word when its label and every alias are one lowercase word;
+    acronyms ("GPU") and concepts also backed by a source keyword are not included.
+    """
+
+    unspecific: set[str] = set()
+    for raw_node in view.nodes:
+        if not isinstance(raw_node, Mapping):
+            continue
+        if str(raw_node.get("kind", "")).casefold() != "concept":
+            continue
+        node_id = _node_id(raw_node)
+        label = raw_node.get("label")
+        if node_id is None or not isinstance(label, str) or not label.strip():
+            continue
+        aliases = _node_value(raw_node, "aliases", []) or []
+        surfaces = [label, *(str(alias) for alias in aliases if alias is not None)]
+        if all(_is_lowercase_word(surface.strip()) for surface in surfaces):
+            unspecific.add(node_id)
+    return unspecific
+
+
 def _detect_matrix_voids(
     works: Mapping[str, Mapping[str, Any]],
     concept_labels: Mapping[str, str],
     work_concepts: Mapping[str, set[str]],
     analysis_works: Mapping[str, Any],
+    unspecific_concepts: set[str] | frozenset[str] = frozenset(),
 ) -> list[GapHypothesis]:
     works_by_concept: dict[str, set[str]] = defaultdict(set)
     for work_id, concepts in work_concepts.items():
         for concept_id in concepts:
             works_by_concept[concept_id].add(work_id)
+    # Endpoints must be studied (at least three works) but specific: not on more
+    # than MATRIX_VOID_MAX_CONCEPT_SHARE of the project, and not a bare text-derived
+    # word such as "adaptive", which pairs with anything into a meaningless void.
+    max_works = MATRIX_VOID_MAX_CONCEPT_SHARE * len(works)
     candidate_concepts = sorted(
-        concept_id for concept_id, ids in works_by_concept.items() if len(ids) >= 3
+        concept_id
+        for concept_id, ids in works_by_concept.items()
+        if MATRIX_VOID_MIN_CONCEPT_WORKS <= len(ids) <= max_works
+        and concept_id not in unspecific_concepts
     )
     if len(candidate_concepts) < 2:
         return []
@@ -651,7 +695,9 @@ def detect_gaps(view: GraphView, analysis: Any) -> list[GapHypothesis]:
             analysis_works,
             project_work_ids,
         ),
-        *_detect_matrix_voids(works, concept_labels, work_concepts, analysis_works),
+        *_detect_matrix_voids(
+            works, concept_labels, work_concepts, analysis_works, _unspecific_concepts(view)
+        ),
         *_detect_stagnation(
             works,
             concept_labels,
@@ -678,8 +724,10 @@ __all__ = [
     "BRIDGING_SIMILARITY_THRESHOLD",
     "GapHypothesis",
     "MAX_GAPS_PER_TYPE",
+    "MATRIX_VOID_MAX_CONCEPT_SHARE",
     "MATRIX_VOID_MAX_RESULTS",
     "MATRIX_VOID_MIN_ADAMIC_ADAR",
+    "MATRIX_VOID_MIN_CONCEPT_WORKS",
     "MATRIX_VOID_SCORE_THRESHOLD",
     "STAGNATION_EVIDENCE_WORKS",
     "STAGNATION_MIN_CLUSTER_SIZE",

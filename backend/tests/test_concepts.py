@@ -9,7 +9,7 @@ import pytest
 
 from portolan.concepts.filter import filter_concepts
 from portolan.concepts.grounding import is_grounded
-from portolan.concepts.keyphrases import extract_keyphrases
+from portolan.concepts.keyphrases import extract_keyphrases, strip_boilerplate
 from portolan.concepts.merge import (
     DEFAULT_STOP_TERMS,
     ConceptCluster,
@@ -457,11 +457,31 @@ def test_grounding_requires_every_content_token() -> None:
 
 
 def test_grounding_strips_trailing_parenthetical_disambiguator() -> None:
-    text = "We verify a token tree in one forward pass."
+    text = "We verify a token tree data structure in one forward pass."
 
-    assert is_grounded("Tree (set theory)", text)
+    assert is_grounded("Tree (set theory)", text + " Set theory helps.")
     assert is_grounded("Token Tree (data structure)", text)
     assert not is_grounded("Latency (audio)", text)
+
+
+def test_grounding_requires_a_disambiguator_word_in_the_text() -> None:
+    text = (
+        "Speculative decoding verifies a token tree with a large language model; "
+        "latency drops and draft sampling selects tokens."
+    )
+
+    assert not is_grounded("Tree (set theory)", text)
+    assert not is_grounded("Latency (audio)", text)
+    assert not is_grounded("Sampling (signal processing)", text)
+    assert not is_grounded("Selection (genetic algorithm)", text + " A selection step.")
+    assert is_grounded("Transformer (machine learning model)", "A transformer language model.")
+    assert is_grounded("Transformer (machine learning model)", "Transformer machine translation.")
+    assert not is_grounded("Transformer (machine learning model)", "A transformer in the grid.")
+
+
+def test_grounding_accepts_parenthetical_acronym_of_the_term() -> None:
+    assert is_grounded("Key value (KV)", "A key value store for caching.")
+    assert not is_grounded("Key value (KV)", "A cache for tokens.")
 
 
 def test_grounding_accepts_uppercase_acronym_only() -> None:
@@ -556,3 +576,170 @@ def test_keyphrases_respect_max_per_work_and_are_deterministic() -> None:
         counts[occurrence.work_id] = counts.get(occurrence.work_id, 0) + 1
     assert max(counts.values()) == 2
     assert extract_keyphrases(_SPECULATIVE_WORKS, max_per_work=0) == []
+
+
+def _terms(works: list[tuple[str, str | None, str | None]]) -> set[str]:
+    return {occurrence.term for occurrence in extract_keyphrases(works)}
+
+
+def test_strip_boilerplate_cuts_venue_and_licence_fragments() -> None:
+    abstract = (
+        "Speculative decoding speeds up inference. "
+        "© 2023 Association for Computational Linguistics. "
+        "Published as a conference paper at ICLR 2024. "
+        "Code is licensed under MIT. All rights reserved. "
+        "Draft models help. In: Proceedings of the 61st Annual Meeting, pages 1-9."
+    )
+
+    stripped = strip_boilerplate(abstract)
+
+    assert stripped == "Speculative decoding speeds up inference. Code is Draft models help."
+    assert strip_boilerplate("Tokens are verified, see arXiv:2302.01318 for details.") == (
+        "Tokens are verified, see"
+    )
+    assert strip_boilerplate("") == ""
+
+
+def test_keyphrases_never_emit_boilerplate_phrases() -> None:
+    works = [
+        (
+            "a",
+            "Speculative decoding",
+            "Draft tokens are verified. Copyright 2023 Association for Computational "
+            "Linguistics. In: Proceedings of ACL 2023.",
+        ),
+        (
+            "b",
+            "Speculative decoding at scale",
+            "A draft model helps. (c) 2024 Association for Computational Linguistics.",
+        ),
+        # Boilerplate that escaped sentence stripping (no sentence boundary).
+        ("c", "Venues", "association for computational linguistics"),
+        ("d", "Venues again", "computational linguistics proceedings"),
+    ]
+
+    terms = _terms(works)
+
+    assert "speculative decoding" in terms
+    assert "venue" in terms
+    assert (
+        not {
+            "association",
+            "association for computational",
+            "computational linguistic",
+            "computational",
+            "linguistic",
+            "proceeding",
+            "copyright",
+            "ACL",
+            "acl",
+        }
+        & terms
+    )
+
+
+def test_keyphrases_emit_acronyms_in_canonical_uppercase_singular_form() -> None:
+    works = [
+        ("a", "Serving LLMs on GPUs", "We batch requests to LLMs across many GPUs."),
+        ("b", "LLM inference on a GPU", "A single GPU serves the LLM with a KV cache."),
+        ("c", "Paged KV memory", "The KV cache lives in paged memory."),
+    ]
+
+    terms = _terms(works)
+
+    assert {"GPU", "LLM", "kv cache"} <= terms
+    assert not {"gpu", "gpus", "GPUs", "llm", "llms"} & terms
+    # "KV" is still subsumed by the longer "kv cache" with the same support.
+    assert "KV" not in terms
+
+
+def test_keyphrases_ignore_uppercase_in_all_caps_titles() -> None:
+    works = [
+        ("a", "DRAFT TOKENS", "Draft tokens are cheap to verify."),
+        ("b", "DRAFT TOKENS", "Draft tokens are verified."),
+    ]
+
+    assert "DRAFT" not in _terms(works)
+    assert "TOKENS" not in _terms(works)
+
+
+def test_keyphrases_drop_generic_single_words() -> None:
+    generic = [
+        "fast",
+        "adaptive",
+        "execution",
+        "efficient",
+        "survey",
+        "training",
+        "optimization",
+        "query",
+        "resource",
+        "parameter",
+        "constraint",
+        "accelerate",
+        "generate",
+    ]
+    # One generic word per sentence, so no multi-word phrase subsumes it.
+    abstract = " ".join(f"{word.capitalize()}." for word in [*generic, "batch"])
+    works = [(f"w{index}", "Batch", abstract) for index in range(3)]
+
+    terms = {
+        occurrence.term for occurrence in extract_keyphrases(works, max_per_work=len(generic) + 1)
+    }
+
+    assert terms == {"batch"}
+
+
+def test_keyphrases_drop_single_words_redundant_with_a_kept_phrase() -> None:
+    works = [
+        ("a", "Speculative decoding", "Speculative decoding with a draft model and a decoder."),
+        (
+            "b",
+            "Speculative decoding",
+            "Speculative decoding reuses the decoder. Parallel decoding.",
+        ),
+        ("c", "Parallel decoding", "Speculative decoding and parallel decoding compared."),
+    ]
+
+    terms = _terms(works)
+
+    assert {"speculative decoding", "parallel decoding", "decoder"} <= terms
+    # "speculative" occurs only inside "speculative decoding"; "decoding" has an
+    # -ing suffix and is part of kept phrases.
+    assert "speculative" not in terms
+    assert "decoding" not in terms
+
+
+def test_keyphrases_keep_suffixed_title_terms_outside_any_phrase() -> None:
+    works = [
+        ("a", "Clustering of tokens", "We study clustering."),
+        ("b", "Clustering at scale", "Clustering is hard."),
+        ("c", "Tokens", "Hashing helps clustering. Hashing is cheap."),
+        ("d", "Other", "Hashing again."),
+    ]
+
+    terms = _terms(works)
+
+    # In two titles and in no kept multi-word phrase: a legitimate domain term.
+    assert "clustering" in terms
+    # Same suffix, but never in a title.
+    assert "hashing" not in terms
+    # Nouns that merely look suffixed stay.
+    assert "token" in terms
+
+
+def test_keyphrases_drop_word_mostly_used_inside_one_phrase() -> None:
+    # "branch" is in three works but "branch predictor" in only two, so the
+    # document-frequency subsumption keeps "branch"; its occurrences are, however,
+    # 8 of 9 inside "branch predictor", which makes it redundant.
+    predictor = " ".join(["A branch predictor."] * 4)
+    works = [
+        ("a", "Pipelines", predictor),
+        ("b", "Pipelines", predictor),
+        ("c", "Other", "A branch appears once."),
+    ]
+
+    terms = {occurrence.term for occurrence in extract_keyphrases(works)}
+
+    assert "branch predictor" in terms
+    assert "branch" not in terms

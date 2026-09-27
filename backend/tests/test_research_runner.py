@@ -646,15 +646,18 @@ def test_rebuild_grounds_keywords_and_adds_text_phrases() -> None:
 
     report = rebuild_project_concepts_with_report(graph, project.id)
 
-    assert report.ungrounded == 2
+    # Both disambiguated keywords of W2 are ungrounded: neither paper mentions set
+    # theory or audio.
+    assert report.ungrounded == 4
     assert report.downweighted == 0
     assert report.text_phrases >= 2
     labels = {concept.label for concept in graph._concepts.values()}
     assert "Enhanced Data Rates for GSM Evolution" not in labels
     assert "Security token" not in labels
     assert {"speculative decoding", "draft model"} <= labels
-    assert "Latency" in labels or "Latency (audio)" in labels
-    assert "Tree (set theory)" in labels
+    assert "latency" in {label.casefold() for label in labels}
+    assert "Latency (audio)" not in labels
+    assert "Tree (set theory)" not in labels
     speculative = next(
         concept for concept in graph._concepts.values() if concept.label == "speculative decoding"
     )

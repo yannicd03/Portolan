@@ -112,9 +112,14 @@ def test_bridging_is_suppressed_when_clusters_cite_each_other() -> None:
     assert not [gap for gap in gaps if gap.type == "bridging"]
 
 
+# Works without concepts, so that each three-work endpoint stays under the 40%
+# share ceiling of matrix-void candidates.
+_FILLER = [(f"f{i}", 2023) for i in range(2)]
+
+
 def test_matrix_void_finds_dense_disjoint_concepts_with_common_neighbour() -> None:
     view = _view(
-        [(f"x{i}", 2023) for i in range(3)] + [(f"y{i}", 2023) for i in range(3)],
+        [(f"x{i}", 2023) for i in range(3)] + [(f"y{i}", 2023) for i in range(3)] + _FILLER,
         {"x": "X", "y": "Y", "z": "shared neighbour"},
         {
             **{f"x{i}": ["x", "z"] for i in range(3)},
@@ -185,7 +190,7 @@ def test_bridging_search_terms_pair_top_concepts_of_each_cluster() -> None:
 def test_matrix_void_requires_disjoint_concepts_and_informative_neighbours() -> None:
     # X and Y co-occur on one work, so they are not a void.
     view = _view(
-        [(f"x{i}", 2023) for i in range(3)] + [(f"y{i}", 2023) for i in range(3)],
+        [(f"x{i}", 2023) for i in range(3)] + [(f"y{i}", 2023) for i in range(3)] + _FILLER,
         {"x": "X", "y": "Y", "z": "Z"},
         {
             "x0": ["x", "z", "y"],
@@ -247,3 +252,50 @@ def test_gap_ordering_and_ids_survive_recomputation() -> None:
     assert stagnation.search_terms == ["Old methods"]
     assert len(stagnation.evidence["work_ids"]) == 5
     assert "2018" in stagnation.statement
+
+
+def _void_pairs(view: GraphView) -> list[list[str]]:
+    return [
+        gap.evidence["concept_ids"]
+        for gap in detect_gaps(view, _analysis([]))
+        if gap.type == "matrix_void"
+    ]
+
+
+def _void_view(labels: dict[str, str], extra_works: int = 2) -> GraphView:
+    return _view(
+        [(f"x{i}", 2023) for i in range(3)]
+        + [(f"y{i}", 2023) for i in range(3)]
+        + [(f"f{i}", 2023) for i in range(extra_works)],
+        {**labels, "z": "Shared neighbour"},
+        {
+            **{f"x{i}": ["x", "z"] for i in range(3)},
+            **{f"y{i}": ["y", "z"] for i in range(3)},
+        },
+    )
+
+
+def test_matrix_void_skips_concepts_on_more_than_forty_percent_of_works() -> None:
+    labels = {"x": "Draft model", "y": "Tree attention"}
+
+    # 3 of 7 works (43%) is above the ceiling; 3 of 8 (37.5%) is not.
+    assert _void_pairs(_void_view(labels, extra_works=1)) == []
+    assert _void_pairs(_void_view(labels, extra_works=2)) == [["x", "y"]]
+
+
+def test_matrix_void_skips_single_word_text_concepts_but_keeps_acronyms() -> None:
+    # Text keyphrases are lowercase: a bare "adaptive" is not a void endpoint.
+    assert _void_pairs(_void_view({"x": "adaptive", "y": "accelerating"})) == []
+    assert _void_pairs(_void_view({"x": "adaptive", "y": "Tree attention"})) == []
+    # Multi-word text phrases, acronyms and source keywords remain candidates.
+    assert _void_pairs(_void_view({"x": "draft model", "y": "GPU"})) == [["x", "y"]]
+    assert _void_pairs(_void_view({"x": "Speedup", "y": "tree attention"})) == [["x", "y"]]
+
+
+def test_matrix_void_keeps_single_word_concepts_backed_by_a_source_keyword() -> None:
+    view = _void_view({"x": "latency", "y": "draft model"})
+    for node in view.nodes:
+        if node["id"] == "x":
+            node["data"] = {"aliases": ["Latency"]}
+
+    assert _void_pairs(view) == [["x", "y"]]
