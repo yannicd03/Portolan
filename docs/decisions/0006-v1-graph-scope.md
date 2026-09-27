@@ -1,6 +1,6 @@
 # ADR-0006 — v1 graph scope: works, citations, authors, merged keyword concepts
 
-- **Status:** accepted
+- **Status:** accepted; concept sources amended by ADR-0008 (2026-09-27)
 - **Date:** 2026-09-26
 - **Decides:** how much of the v0.2 ontology (`ontology/README.md`) the product needs now
 - **Related:** ADR-0005 (Neo4j)

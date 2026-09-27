@@ -12,6 +12,7 @@ gains a `Superseded by` line.
 | [0005](0005-graph-store.md) | Graph store is Neo4j (M0 spike: both stores at parity) | accepted |
 | [0006](0006-v1-graph-scope.md) | v1 graph: works, citations, authors, merged keyword concepts; the graph is the agents' map | accepted (amended 2026-09-26) |
 | [0007](0007-chat-agents-deepagents.md) | Chat agents run on LangGraph Deep Agents; they read papers as files | accepted |
+| [0008](0008-grounded-concepts-and-structural-analytics.md) | Concepts are grounded in the paper's text (checked keywords + keyphrases); frontier and gaps are structural and transparent | accepted |
 
 Strategic and cross-project context lives in the private design notes at `$PORTOLAN_NOTES_DIR` (set in `.env`);
 these ADRs are the per-repo, implementation-level record.
