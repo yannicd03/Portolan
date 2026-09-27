@@ -1,0 +1,179 @@
+{
+  "cutoff_year": 2022,
+  "frontier": {
+    "base_rate": 0.3333333333333333,
+    "baseline_local_in_degree_precision": {
+      "@10": 0.3333333333333333,
+      "@5": 0.4
+    },
+    "baseline_local_in_degree_spearman": 0.1875916198442167,
+    "future_works": 10,
+    "precision": {
+      "@10": 0.3333333333333333,
+      "@5": 0.4
+    },
+    "relevant_works": 2,
+    "spearman": 0.246416441453479,
+    "top": [
+      {
+        "future_uptake": 2,
+        "relevant": false,
+        "score": 0.4875,
+        "title": "REALM: Retrieval-Augmented Language Model Pre-Training",
+        "work_id": "arxiv:2002.08909",
+        "year": 2020
+      },
+      {
+        "future_uptake": 5,
+        "relevant": true,
+        "score": 0.4875,
+        "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "work_id": "arxiv:2005.11401",
+        "year": 2020
+      },
+      {
+        "future_uptake": 2,
+        "relevant": false,
+        "score": 0.4625,
+        "title": "Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering",
+        "work_id": "doi:10.18653/v1/2021.eacl-main.74",
+        "year": 2020
+      },
+      {
+        "future_uptake": 1,
+        "relevant": false,
+        "score": 0.4375,
+        "title": "Dense Passage Retrieval for Open-Domain Question Answering",
+        "work_id": "doi:10.18653/v1/2020.emnlp-main.550",
+        "year": 2020
+      },
+      {
+        "future_uptake": 4,
+        "relevant": true,
+        "score": 0.275,
+        "title": "Chain of Thought Prompting Elicits Reasoning in Large Language Models",
+        "work_id": "doi:10.52202/068431-1800",
+        "year": 2022
+      },
+      {
+        "future_uptake": 2,
+        "relevant": false,
+        "score": 0.225,
+        "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+        "work_id": "arxiv:2210.03629",
+        "year": 2022
+      }
+    ],
+    "windowed_works": 6
+  },
+  "frontier_leak_free": {
+    "base_rate": 0.3333333333333333,
+    "baseline_local_in_degree_precision": {
+      "@10": 0.3333333333333333,
+      "@5": 0.4
+    },
+    "baseline_local_in_degree_spearman": 0.1875916198442167,
+    "future_works": 10,
+    "precision": {
+      "@10": 0.3333333333333333,
+      "@5": 0.4
+    },
+    "relevant_works": 2,
+    "spearman": 0.246416441453479,
+    "top": [
+      {
+        "future_uptake": 2,
+        "relevant": false,
+        "score": 0.4875,
+        "title": "REALM: Retrieval-Augmented Language Model Pre-Training",
+        "work_id": "arxiv:2002.08909",
+        "year": 2020
+      },
+      {
+        "future_uptake": 5,
+        "relevant": true,
+        "score": 0.4875,
+        "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "work_id": "arxiv:2005.11401",
+        "year": 2020
+      },
+      {
+        "future_uptake": 2,
+        "relevant": false,
+        "score": 0.4625,
+        "title": "Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering",
+        "work_id": "doi:10.18653/v1/2021.eacl-main.74",
+        "year": 2020
+      },
+      {
+        "future_uptake": 1,
+        "relevant": false,
+        "score": 0.4375,
+        "title": "Dense Passage Retrieval for Open-Domain Question Answering",
+        "work_id": "doi:10.18653/v1/2020.emnlp-main.550",
+        "year": 2020
+      },
+      {
+        "future_uptake": 4,
+        "relevant": true,
+        "score": 0.275,
+        "title": "Chain of Thought Prompting Elicits Reasoning in Large Language Models",
+        "work_id": "doi:10.52202/068431-1800",
+        "year": 2022
+      },
+      {
+        "future_uptake": 2,
+        "relevant": false,
+        "score": 0.225,
+        "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+        "work_id": "arxiv:2210.03629",
+        "year": 2022
+      }
+    ],
+    "windowed_works": 6
+  },
+  "frontier_window_years": 2,
+  "gaps": {
+    "by_type": {
+      "bridging": {
+        "baseline_population": 0,
+        "baseline_rate": null,
+        "hits": 0,
+        "hypotheses": 0,
+        "rate": null
+      },
+      "matrix_void": {
+        "baseline_population": 0,
+        "baseline_rate": null,
+        "hits": 0,
+        "hypotheses": 0,
+        "rate": null
+      },
+      "stagnation": {
+        "baseline_population": 0,
+        "baseline_rate": null,
+        "hits": 0,
+        "hypotheses": 0,
+        "rate": null
+      }
+    },
+    "draws": 20,
+    "future_works": 10,
+    "hypotheses": [],
+    "seed": 13
+  },
+  "generated": "2026-09-27",
+  "horizon_years": 2,
+  "key": "golden",
+  "project_id": "golden-mini-graph-demo-ae11ce",
+  "project_name": "Golden mini-graph (demo)",
+  "slice_citations": 17,
+  "slice_clusters": 1,
+  "slice_works": 9,
+  "works_total": 19,
+  "works_undated": 0,
+  "year_range": [
+    2017,
+    2024
+  ]
+}
