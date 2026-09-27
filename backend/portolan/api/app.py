@@ -23,6 +23,7 @@ from ..graph import GraphView, ResearchGraph
 from ..graph.models import Project, WorkSummary
 from ..settings import Settings
 from .chat import build_chat_router
+from .insights import build_insights_router
 from .models import (
     HealthResponse,
     LocateResponse,
@@ -263,6 +264,9 @@ def create_app(
             agent_factory=chat_agent_factory,
             get_runs=lambda: app.state.runs,
         )
+    )
+    app.include_router(
+        build_insights_router(lambda: _LockedGraph(app.state.graph, app.state.lock), settings)
     )
 
     def _state(request: Request) -> tuple[ResearchGraph, threading.RLock, RunRegistry]:
