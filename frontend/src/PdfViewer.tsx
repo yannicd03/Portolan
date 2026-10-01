@@ -3,6 +3,7 @@ import * as pdfjs from 'pdfjs-dist'
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist'
 import { api } from './api'
+import { findPageMatch, normalizeQuote, type PageMatch, type SearchItemRange } from './pdfQuoteMatch'
 import { docHref, projectHref } from './route'
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
@@ -20,23 +21,6 @@ export interface PdfViewerProps {
 interface PageSize {
   width: number
   height: number
-}
-
-interface SearchChar {
-  char: string
-  itemIndex: number
-  rawStart: number
-  rawEnd: number
-}
-
-interface SearchItemRange {
-  itemIndex: number
-  start: number
-  end: number
-}
-
-interface PageMatch {
-  ranges: SearchItemRange[]
 }
 
 interface PassageState {
@@ -61,100 +45,6 @@ interface PageViewProps {
 interface LayerState {
   textLayer: pdfjs.TextLayer
   textDivs: HTMLElement[]
-}
-
-function isWhitespace(value: string): boolean {
-  return /\s/u.test(value)
-}
-
-function isBreakHyphen(value: string): boolean {
-  return value === '-' || value === '‐' || value === '‑' || value === '‒' || value === '–' || value === '—'
-}
-
-function appendSearchChars(target: SearchChar[], value: string, itemIndex: number): void {
-  let rawOffset = 0
-  for (const original of Array.from(value)) {
-    const rawEnd = rawOffset + original.length
-    const normalized = original.normalize('NFKC').toLocaleLowerCase()
-    for (const character of Array.from(normalized)) {
-      target.push({ char: character, itemIndex, rawStart: rawOffset, rawEnd })
-    }
-    rawOffset = rawEnd
-  }
-}
-
-function normalizedPageText(strings: string[]): { text: string; chars: SearchChar[] } {
-  const source: SearchChar[] = []
-  strings.forEach((value, itemIndex) => {
-    appendSearchChars(source, value, itemIndex)
-    if (itemIndex < strings.length - 1) {
-      source.push({ char: ' ', itemIndex: -1, rawStart: 0, rawEnd: 0 })
-    }
-  })
-
-  const chars: SearchChar[] = []
-  for (let index = 0; index < source.length; index += 1) {
-    const current = source[index]
-    if (isBreakHyphen(current.char)) {
-      let next = index + 1
-      let hasWhitespace = false
-      while (next < source.length && isWhitespace(source[next].char)) {
-        hasWhitespace = true
-        next += 1
-      }
-      if (hasWhitespace) {
-        index = next - 1
-        continue
-      }
-    }
-
-    if (isWhitespace(current.char)) {
-      if (chars.at(-1)?.char === ' ') continue
-      chars.push({ ...current, char: ' ' })
-      continue
-    }
-    chars.push(current)
-  }
-
-  return { text: chars.map(({ char }) => char).join(''), chars }
-}
-
-function textStrings(content: TextContent): string[] {
-  // TextLayer skips marked-content records when indexing its textDivs.
-  return content.items.flatMap((item) => ('str' in item && typeof item.str === 'string' ? [item.str] : []))
-}
-
-function normalizeQuote(value: string): string {
-  return normalizedPageText([value]).text.trim()
-}
-
-function findPageMatch(content: TextContent, query: string): PageMatch | null {
-  if (!query) return null
-  const normalized = normalizedPageText(textStrings(content))
-  const start = normalized.text.indexOf(query)
-  if (start < 0) return null
-
-  // `indexOf` uses UTF-16 offsets, while `chars` has one entry per code point.
-  const charStart = Array.from(normalized.text.slice(0, start)).length
-  const charEnd = charStart + Array.from(query).length
-  const ranges = new Map<number, SearchItemRange>()
-  for (let index = charStart; index < charEnd; index += 1) {
-    const current = normalized.chars[index]
-    if (!current || current.itemIndex < 0 || current.rawEnd <= current.rawStart) continue
-    const existing = ranges.get(current.itemIndex)
-    if (existing) {
-      existing.start = Math.min(existing.start, current.rawStart)
-      existing.end = Math.max(existing.end, current.rawEnd)
-    } else {
-      ranges.set(current.itemIndex, {
-        itemIndex: current.itemIndex,
-        start: current.rawStart,
-        end: current.rawEnd,
-      })
-    }
-  }
-
-  return { ranges: [...ranges.values()] }
 }
 
 function applyHighlights(textDivs: HTMLElement[], ranges: SearchItemRange[]): boolean {
@@ -291,11 +181,16 @@ function PageView({
 
       const textContent = await getTextContent(pageNumber)
       if (cancelled) return
+      // The glyph sizing rules in index.css read this; pdf.js 6 only sets the
+      // per-span --font-height/--scale-x/--rotate and --min-font-size.
+      textLayerElement.style.setProperty('--total-scale-factor', `${effectiveScale}`)
       textLayer = new pdfjs.TextLayer({
         textContentSource: textContent,
         container: textLayerElement,
         viewport,
       })
+      textLayerElement.style.width = `${viewport.width}px`
+      textLayerElement.style.height = `${viewport.height}px`
       layerStateRef.current = { textLayer, textDivs: [] }
       renderTask = page.render({ canvasContext: context, canvas, viewport })
       await Promise.all([renderTask.promise, textLayer.render()])
