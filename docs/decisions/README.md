@@ -7,7 +7,7 @@ gains a `Superseded by` line.
 |---|---|---|
 | [0001](0001-domain-scope-cs-ai.md) | v1 scope is CS/AI only; domain-general is a roadmap item | accepted |
 | [0002](0002-orchestration-langgraph.md) | Orchestration is a plain LangGraph `StateGraph` | superseded in part by 0007 (chat agents) |
-| [0003](0003-orkg-thin-adapter.md) | Thin in-repo ORKG adapter, no shared package with AMA-KBQA | accepted |
+| [0003](0003-orkg-thin-adapter.md) | ORKG gets a thin adapter in this repo, not a shared package with an earlier KBQA project | accepted |
 | [0004](0004-llm-provider-and-budget.md) | API-only LLM via OpenRouter, DeepSeek direct as cost fallback; $10/review ceiling | accepted |
 | [0005](0005-graph-store.md) | Graph store is Neo4j (M0 spike: both stores at parity) | accepted |
 | [0006](0006-v1-graph-scope.md) | v1 graph: works, citations, authors, merged keyword concepts; the graph is the agents' map | accepted (amended 2026-09-26) |

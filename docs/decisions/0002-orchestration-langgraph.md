@@ -11,8 +11,9 @@ The pipeline (stages 0-8 in `$PORTOLAN_NOTES_DIR/architecture.md`) is a fixed gr
 resume-from-last-completed-stage requirement, and a mandatory human confirmation of the review
 protocol between stage 0 and stage 1. The alternative considered was the Claude Agent SDK.
 
-Prior art on this machine: AMA-KBQA and ORCA both run plain `StateGraph`; `deepagents` was
-rejected there for non-removable middleware and dependency conflicts
+Prior art from earlier projects: a prior in-house KBQA project and an earlier agent project
+both run plain `StateGraph`; `deepagents` was rejected there for non-removable middleware
+and dependency conflicts
 (recorded in the private design notes).
 
 ## Decision
@@ -32,6 +33,6 @@ Plain LangGraph `StateGraph`. No `deepagents`, no agent framework on top.
   low, matching spec decision 3.
 - Tool-use loops that *are* genuinely open-ended (the ORKG querying step, the gap verification
   search) are implemented as bounded loops inside their own node with a hard iteration cap and
-  a "stop and synthesize" trigger — the lesson carried from the AMA-KBQA SciQA work.
+  a "stop and synthesize" trigger — the lesson carried from the earlier KBQA project's SciQA work.
 - LangGraph is not yet a dependency in `backend/pyproject.toml`; it is added at M1, when the
   first stage node is written. M0 needs no orchestration.
