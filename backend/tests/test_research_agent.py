@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -11,10 +12,11 @@ from typing import Any
 import pytest
 from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
 from langchain_core.messages import AIMessage
+from langgraph.checkpoint.sqlite import SqliteSaver
 from pydantic import Field
 
 from portolan.agent.ask import AgentEvent, AgentLimitReached
-from portolan.agent.research import ResearchAgent
+from portolan.agent.research import ResearchAgent, ResearchPlanExpired, _research_checkpointer
 from portolan.api.runs import RunRegistry
 from portolan.documents.store import DocumentStore
 from portolan.graph.memory import InMemoryResearchGraph
@@ -164,6 +166,7 @@ def _harness(
     *,
     max_tool_calls: int = 12,
     block: bool = False,
+    checkpointer: Any | None = None,
 ) -> Harness:
     graph = InMemoryResearchGraph()
     project = graph.create_project("Research agent test")
@@ -193,9 +196,18 @@ def _harness(
         runs=runs,
         sources_factory=lambda *args, **kwargs: sources,
         runner_factory=runner_factory,
+        checkpointer=checkpointer,
     )
     agent.bind_project(project.id)
     return Harness(agent, graph, runs, control, model, project.id, openalex)
+
+
+def _sqlite_checkpointer(path: Path) -> SqliteSaver:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(path, check_same_thread=False)
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("PRAGMA busy_timeout=5000")
+    return SqliteSaver(connection)
 
 
 def _value(source: Any, name: str, default: Any = None) -> Any:
@@ -230,6 +242,19 @@ def _args(query: str = "graph retrieval") -> dict[str, Any]:
         "acquire_pdfs": False,
         "rationale": "Start with the central literature and follow one citation hop.",
     }
+
+
+def test_research_checkpointer_is_shared_and_configures_sqlite(tmp_path: Path) -> None:
+    first_settings = Settings(store="memory", data_dir=tmp_path / "data")
+    same_path_settings = Settings(store="memory", data_dir=tmp_path / "unused" / ".." / "data")
+
+    first = _research_checkpointer(first_settings)
+    second = _research_checkpointer(same_path_settings)
+
+    assert first is second
+    assert first_settings.research_checkpoints_path.is_file()
+    assert first.conn.execute("PRAGMA journal_mode").fetchone() == ("wal",)
+    assert first.conn.execute("PRAGMA busy_timeout").fetchone() == (5000,)
 
 
 def test_research_plan_pauses_and_approve_runs_harvest(tmp_path: Path) -> None:
@@ -345,6 +370,93 @@ def test_research_reject_does_not_submit_a_run(tmp_path: Path) -> None:
         assert _tool_names(harness.model) == ["preview_search", "run_research"]
     finally:
         harness.close()
+
+
+def test_research_plan_resumes_from_sqlite_after_restart(tmp_path: Path) -> None:
+    database = tmp_path / "injected.sqlite3"
+    first_saver = _sqlite_checkpointer(database)
+    harness: Harness | None = None
+    restarted_saver: SqliteSaver | None = None
+    restarted_runs: RunRegistry | None = None
+    try:
+        harness = _harness(
+            tmp_path,
+            [
+                _call("preview_search", {"query": "graph retrieval", "limit": 3}, 1),
+                _call("run_research", _args(), 2),
+            ],
+            checkpointer=first_saver,
+        )
+        assert harness.agent.checkpointer is first_saver
+        assert not (tmp_path / "checkpoints" / "research.sqlite3").exists()
+        pending = harness.agent.run(
+            "Map the literature",
+            [],
+            lambda event: None,
+            cancel=None,
+            thread_id="research-restart",
+        )
+        assert _value(pending, "status") == "awaiting_approval"
+        first_saver.conn.close()
+
+        restarted_saver = _sqlite_checkpointer(database)
+        settings = Settings(
+            store="memory",
+            data_dir=tmp_path,
+            openrouter_api_key="test-key",
+            chat_max_tool_calls=12,
+        )
+        restart_model = ScriptedModel(
+            responses=[
+                AIMessage(content="I did not start a harvest because the plan was rejected.")
+            ]
+        )
+
+        def runner_factory(*args: Any, **kwargs: Any) -> FakeRunner:
+            return FakeRunner(harness.control)
+
+        restarted_runs = RunRegistry(harness.graph, settings, runner_factory)
+        restarted_agent = ResearchAgent(
+            harness.graph,
+            DocumentStore(tmp_path / "documents"),
+            settings,
+            model=restart_model,
+            runs=restarted_runs,
+            sources_factory=lambda *args, **kwargs: ResearchSources(harness.openalex),
+            runner_factory=runner_factory,
+            checkpointer=restarted_saver,
+            project_id=harness.project_id,
+        )
+
+        with pytest.raises(ResearchPlanExpired, match="plan expired"):
+            restarted_agent.resume(
+                "missing-research-thread",
+                "approve",
+                edited_args=None,
+                message=None,
+                on_event=lambda event: None,
+                cancel=None,
+            )
+
+        final = restarted_agent.resume(
+            "research-restart",
+            "reject",
+            edited_args=None,
+            message="Narrow the field first.",
+            on_event=lambda event: None,
+            cancel=None,
+        )
+        assert _value(final, "status") == "answered"
+        assert "did not start a harvest" in _value(final, "answer_markdown")
+        assert harness.control.requests == []
+    finally:
+        first_saver.conn.close()
+        if restarted_runs is not None:
+            restarted_runs.shutdown()
+        if restarted_saver is not None:
+            restarted_saver.conn.close()
+        if harness is not None:
+            harness.close()
 
 
 def test_research_tool_call_budget_is_enforced(tmp_path: Path) -> None:

@@ -120,7 +120,7 @@ def load_inputs(
         if not path.exists():
             raise FileNotFoundError(
                 f"{path} is missing — run eval/golden/build_golden.py first "
-                f"(it rebuilds offline from the committed cache)."
+                f"(offline from the local cache; --refresh populates it)."
             )
     works = _unwrap(json.loads(works_path.read_text(encoding="utf-8")), "works")
     citations = _unwrap(json.loads(citations_path.read_text(encoding="utf-8")), "citations")

@@ -79,6 +79,13 @@ class Settings:
         return self.data_dir / "runs"
 
     @property
+    def research_checkpoints_path(self) -> Path:
+        """SQLite database holding resumable Research-mode plans."""
+
+        assert self.data_dir is not None
+        return self.data_dir / "checkpoints" / "research.sqlite3"
+
+    @property
     def http_cache_dir(self) -> Path:
         """Directory used by source adapters for HTTP response caching."""
 

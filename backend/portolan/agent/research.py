@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import inspect
+import sqlite3
 import threading
 import time
 from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from deepagents import create_deep_agent
@@ -13,7 +15,7 @@ from deepagents.backends.filesystem import FilesystemBackend
 from deepagents.middleware.filesystem import FilesystemPermission
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.types import Command
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -55,9 +57,31 @@ class ResearchPlanExpired(RuntimeError):
     """The checkpointer no longer contains the interrupted research plan."""
 
 
-# Pending interrupts survive HTTP requests in this process. A backend restart drops
-# them; the persisted chat plan then reports "plan expired" on resume.
-_CHECKPOINTER = InMemorySaver()
+# Pending interrupts are stored in SQLite under each Settings.data_dir, so plans
+# survive backend restarts. Missing checkpoint rows still report "plan expired".
+_CHECKPOINTERS: dict[Path, SqliteSaver] = {}
+_CHECKPOINTERS_LOCK = threading.Lock()
+
+
+def _research_checkpointer(settings: Settings) -> SqliteSaver:
+    """Return the process-wide SQLite saver for this application's data directory."""
+
+    path = settings.research_checkpoints_path.resolve()
+    with _CHECKPOINTERS_LOCK:
+        if saver := _CHECKPOINTERS.get(path):
+            return saver
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+        connection = sqlite3.connect(path, check_same_thread=False)
+        try:
+            connection.execute("PRAGMA journal_mode=WAL")
+            connection.execute("PRAGMA busy_timeout=5000")
+            saver = SqliteSaver(connection)
+        except BaseException:
+            connection.close()
+            raise
+        _CHECKPOINTERS[path] = saver
+        return saver
 
 
 class _CancelProxy:
@@ -103,7 +127,9 @@ class ResearchAgent:
         self.runs = runs
         self.sources_factory = sources_factory
         self.runner_factory = runner_factory
-        self.checkpointer = checkpointer if checkpointer is not None else _CHECKPOINTER
+        self.checkpointer = (
+            checkpointer if checkpointer is not None else _research_checkpointer(settings)
+        )
         self.project_id = project_id
         self.model = self._configured_model(model)
         self.agent: Any = None

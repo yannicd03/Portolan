@@ -2,7 +2,7 @@
 #
 # Topic: knowledge-graph question answering and retrieval-augmented generation over
 # structured knowledge. Chosen because it is a CS/AI topic the user knows well
-# (AMA-KBQA precedent), it has a real citation backbone spanning 2013-2024, and it
+# (prior KBQA experience), it has a real citation backbone spanning 2013-2024, and it
 # exercises every layer of the ontology: a dense Problem x Method x Dataset x Metric
 # structure, surveys, preprints, and a peer-reviewed non-arXiv paper.
 #

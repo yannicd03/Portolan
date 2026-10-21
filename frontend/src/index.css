@@ -407,6 +407,9 @@ textarea.research-composer-input { resize: vertical; min-height: 52px; }
 .pdf-page-canvas { position: absolute; inset: 0; display: block; max-width: none; }
 .pdf-viewer__text-layer { position: absolute; inset: 0; overflow: hidden; color: transparent; cursor: text; line-height: 1; text-align: initial; text-size-adjust: none; transform-origin: 0 0; user-select: text; forced-color-adjust: none; }
 .pdf-viewer__text-layer span, .pdf-viewer__text-layer br { position: absolute; color: transparent; white-space: pre; cursor: text; transform-origin: 0% 0%; }
+/* pdf.js 6 text-layer sizing (mirrors pdfjs-dist/web/pdf_viewer.css); without it glyph widths drift and highlights land late. */
+.pdf-viewer__text-layer > :not(.markedContent), .pdf-viewer__text-layer .markedContent span:not(.markedContent) { z-index: 1; font-size: calc(var(--total-scale-factor) * var(--min-font-size, 1) * var(--font-height, 0)); transform: rotate(var(--rotate, 0deg)) scaleX(var(--scale-x, 1)) scale(calc(1 / var(--min-font-size, 1))); }
+.pdf-viewer__text-layer .markedContent { display: contents; }
 .pdf-viewer__text-layer ::selection { background: rgba(33, 108, 121, .28); }
 .pdf-hit { border-radius: 2px; background: rgba(255, 208, 64, .7); color: transparent; }
 .pdf-page-error { position: absolute; inset: 12px; margin: 0; padding: 8px; color: var(--error); background: color-mix(in srgb, var(--surface) 90%, transparent); font-size: 12px; }

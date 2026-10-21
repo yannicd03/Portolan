@@ -4,7 +4,7 @@ This directory contains the reproducible M0 fixture: the 23 curated CS/AI papers
 `seeds.yaml`, their verified bibliographic records, and the citation edges between them.
 The fixture is consumed by both graph-store implementations and by the 14 competency
 questions. The generated JSON artifacts are intentionally not part of this change; the
-orchestrator creates them from the committed source-response cache.
+orchestrator creates them from the local source-response cache.
 
 ## Build
 
@@ -14,16 +14,17 @@ From the repository's `backend/` directory, the normal offline build is:
 uv run python ../eval/golden/build_golden.py
 ```
 
-To populate or refresh the committed response cache from the live APIs, run:
+To populate or refresh the local, gitignored response cache from the live APIs, run:
 
 ```bash
 uv run python ../eval/golden/build_golden.py --refresh --cache-dir ../eval/golden/cache
 ```
 
 The command writes `works.json`, `citations.json`, and `resolution_report.md` beside this
-README. `--only KEY` limits a run to one seed. The default is offline: a missing cached
-response is an error, so CI never reaches an external service. `--no-arxiv` skips the
-optional arXiv enrichment, and `--with-intents` enables per-paper citation-intent
+README. `--only KEY` limits a run to one seed. The default is offline and requires a
+populated local cache: a missing cached response is an error, so CI never reaches an
+external service. `--no-arxiv` skips the optional arXiv enrichment, and `--with-intents`
+enables per-paper citation-intent
 enrichment only when `SEMANTIC_SCHOLAR_API_KEY` is set. `--allow-failures` still writes
 the artifacts and report for inspection, but the process exits non-zero.
 
@@ -56,9 +57,11 @@ and cannot turn an otherwise verified seed into a failure.
 ## Cache and known gaps
 
 The cache contains the raw response body and a small metadata record for every source,
-endpoint, and sorted-parameter combination. It is committed because it makes the M0
-fixture auditable and reproducible offline, while still retaining enough metadata to
-explain when and where a field was fetched. Credentials are never stored in the cache.
+endpoint, and sorted-parameter combination. It is local and gitignored. The cache makes the
+M0 fixture auditable and reproducible offline, while still retaining enough metadata to
+explain when and where a field was fetched. Populate or refresh it by running
+`build_golden.py --refresh`; offline runs require a populated local cache. Credentials are
+never stored in the cache.
 
 OpenAlex is deliberately absent until a paid API key exists. A cold keyless refresh of
 the 23-seed set makes exactly 7 source requests in the successful, no-retry path:
