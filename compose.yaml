@@ -65,6 +65,11 @@ services:
       # Not NEO4J_*: the image maps every NEO4J_* variable to a config setting and
       # refuses to start on unknown ones. Only the healthcheck reads this.
       HEALTHCHECK_PASSWORD: ${NEO4J_PASSWORD}
+      # Explicit caps: unset, Neo4j sizes heap and page cache from the host's RAM, which
+      # crowds out everything else on a small shared server.
+      NEO4J_server_memory_heap_initial__size: ${PORTOLAN_NEO4J_HEAP:-512m}
+      NEO4J_server_memory_heap_max__size: ${PORTOLAN_NEO4J_HEAP:-512m}
+      NEO4J_server_memory_pagecache_size: ${PORTOLAN_NEO4J_PAGECACHE:-512m}
     volumes:
       - neo4j-data:/data
     ports:
