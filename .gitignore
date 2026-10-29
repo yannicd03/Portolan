@@ -29,3 +29,6 @@ frontend/dist/
 
 # Eval: frozen candidate pools (contain third-party abstracts)
 eval/recall/pools/
+
+# Host-only basic-auth user file (compose.public.yaml)
+deploy/htpasswd

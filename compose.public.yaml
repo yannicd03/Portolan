@@ -1,0 +1,11 @@
+# Public deployment behind a tunnel that terminates TLS (e.g. Cloudflare Tunnel), with HTTP
+# basic auth in front of the whole site. Usage:
+#   mkdir -p deploy && printf '%s:%s\n' "$USER" "$(openssl passwd -apr1 "$PASSWORD")" > deploy/htpasswd
+#   docker compose -f compose.yaml -f compose.public.yaml up --build -d
+# Only the frontend (nginx) is meant to be reached through the tunnel; the backend and Neo4j
+# ports stay on the host's loopback interface for SSH access.
+services:
+  frontend:
+    volumes:
+      - ./frontend/nginx-optional/basic-auth.conf:/etc/nginx/snippets/server/basic-auth.conf:ro
+      - ./deploy/htpasswd:/etc/nginx/htpasswd:ro

@@ -14,5 +14,7 @@ FROM nginx:1.30-alpine AS runtime
 LABEL org.opencontainers.image.source="https://github.com/yannicd03/Portolan" \
       org.opencontainers.image.title="portolan-frontend"
 COPY --link nginx.conf /etc/nginx/conf.d/default.conf
+# Deployment overlays drop server-level snippets here (see compose.public.yaml).
+RUN mkdir -p /etc/nginx/snippets/server
 COPY --link --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
