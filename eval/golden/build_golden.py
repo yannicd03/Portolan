@@ -680,7 +680,12 @@ def _matching_enrichment(
 def _enrich_with_arxiv(
     works: Mapping[str, dict[str, Any]], arxiv_adapter: Any
 ) -> dict[str, list[str]]:
-    """Optionally fill abstract/categories; arXiv errors are seed warnings only."""
+    """Prefer arXiv abstracts and fill empty categories; arXiv errors are warnings only.
+
+    arXiv metadata, abstracts included, is published under CC0 1.0, so an arXiv abstract
+    replaces the Semantic Scholar one whenever the matched arXiv record has one. The
+    Semantic Scholar abstract is kept when arXiv returns no record or no abstract.
+    """
 
     method_names = ("lookup_many", "batch_lookup", "lookup_batch")
     arxiv_works = {
@@ -715,7 +720,9 @@ def _enrich_with_arxiv(
         return warnings
 
     used: set[int] = set()
-    fetched_at = datetime.now(UTC).isoformat()
+    # Adapters report the response's fetch time (the cache sidecar's on an offline build);
+    # build time is only a fallback for adapters that do not.
+    fallback_fetched_at = datetime.now(UTC).isoformat()
     for key, work in arxiv_works.items():
         match = _matching_enrichment(work, records, used)
         if match is None:
@@ -726,9 +733,9 @@ def _enrich_with_arxiv(
         index, record = match
         used.add(index)
         provenance = work.setdefault("provenance", {})
-        record_fetched_at = _fetched_at(record) or fetched_at
+        record_fetched_at = _fetched_at(record) or fallback_fetched_at
         abstract = record.get("abstract")
-        if abstract and not work.get("abstract"):
+        if abstract:
             work["abstract"] = abstract
             provenance["abstract"] = {"source": "arxiv", "fetched_at": record_fetched_at}
         categories = record.get("categories") or record.get("category")
@@ -876,11 +883,21 @@ def _request_summary(adapters: Mapping[str, Any], fallback: Mapping[str, int]) -
     return f"HTTP requests: {request_text} (total={total}); cache hits: {cache_text}."
 
 
-def create_adapters(cache_dir: Path, offline: bool) -> dict[str, Any]:
-    """Construct source adapters without shared global state."""
+def create_adapters(
+    cache_dir: Path, offline: bool, *, refresh_arxiv: bool = False
+) -> dict[str, Any]:
+    """Construct source adapters without shared global state.
 
+    ``refresh_arxiv`` lets only the arXiv adapter make live requests while the other
+    sources stay on the cache, so arXiv enrichment can be refreshed without
+    re-fetching Semantic Scholar.
+    """
+
+    arxiv_offline = offline and not refresh_arxiv
     return {
-        "arxiv": ArxivAdapter(cache_dir=cache_dir, offline=offline, refresh=not offline),
+        "arxiv": ArxivAdapter(
+            cache_dir=cache_dir, offline=arxiv_offline, refresh=not arxiv_offline
+        ),
         "semanticscholar": SemanticScholarAdapter(
             cache_dir=cache_dir, offline=offline, refresh=not offline
         ),
@@ -946,6 +963,7 @@ def build_golden(
     cache_dir: Path,
     *,
     refresh: bool = False,
+    refresh_arxiv: bool = False,
     only: str | None = None,
     allow_failures: bool = False,
     allow_regression: bool = False,
@@ -955,12 +973,16 @@ def build_golden(
 ) -> BuildResult:
     """Resolve seeds, verify them, and write the three golden-set artifacts."""
 
+    if refresh_arxiv and no_arxiv:
+        raise ValueError("refresh_arxiv and no_arxiv are mutually exclusive")
     seeds = _load_seeds(seed_path)
     if only is not None:
         seeds = [seed for seed in seeds if seed.get("key") == only]
         if not seeds:
             seeds = [{"key": only, "title": "", "year": 0, "expect": {}}]
-    adapter_bundle = dict(adapters or create_adapters(cache_dir, offline=not refresh))
+    adapter_bundle = dict(
+        adapters or create_adapters(cache_dir, offline=not refresh, refresh_arxiv=refresh_arxiv)
+    )
     resolutions = _resolve_seeds(seeds, adapter_bundle["semanticscholar"])
     works: dict[str, dict[str, Any]] = {}
     failures: list[str] = []
@@ -1062,6 +1084,13 @@ app = typer.Typer(add_completion=False, no_args_is_help=False)
 @app.command()
 def main(
     refresh: Annotated[bool, typer.Option("--refresh", help="Permit live API requests.")] = False,
+    refresh_arxiv: Annotated[
+        bool,
+        typer.Option(
+            "--refresh-arxiv",
+            help="Permit live arXiv requests only; other sources are served from the cache.",
+        ),
+    ] = False,
     cache_dir: Annotated[
         Path, typer.Option("--cache-dir", help="Response-cache directory.")
     ] = DEFAULT_CACHE_DIR,
@@ -1101,6 +1130,7 @@ def main(
         output_dir,
         cache_dir,
         refresh=refresh,
+        refresh_arxiv=refresh_arxiv,
         only=only,
         allow_failures=allow_failures,
         allow_regression=allow_regression,

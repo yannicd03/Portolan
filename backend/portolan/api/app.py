@@ -26,6 +26,7 @@ from ..settings import Settings
 from .chat import build_chat_router
 from .insights import build_insights_router
 from .models import (
+    ConceptWorksResponse,
     HealthResponse,
     LocateResponse,
     ProjectAnalysis,
@@ -365,6 +366,20 @@ def create_app(
         with lock:
             _project_or_404(graph_instance, project_id)
             return graph_instance.search_works(project_id, q, limit=limit)
+
+    @app.get(
+        "/api/projects/{project_id}/concepts/{concept_id:path}",
+        response_model=ConceptWorksResponse,
+    )
+    def project_concept(project_id: str, concept_id: str, request: Request) -> ConceptWorksResponse:
+        graph_instance, lock, _ = _state(request)
+        with lock:
+            _project_or_404(graph_instance, project_id)
+            concept = graph_instance.get_concept(concept_id)
+            if concept is None:
+                raise HTTPException(status_code=404, detail="concept not found")
+            works = graph_instance.works_by_concept(concept_id, project_id)
+        return ConceptWorksResponse(concept=concept, work_ids=[work.id for work in works])
 
     @app.get("/api/works/{work_id:path}", response_model=WorkResponse)
     def get_work(work_id: str, request: Request, project: str | None = None) -> WorkResponse:

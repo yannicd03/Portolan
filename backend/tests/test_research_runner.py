@@ -8,12 +8,14 @@ from collections.abc import Mapping
 from copy import deepcopy
 from datetime import UTC, datetime
 from io import BytesIO
+from pathlib import Path
 from threading import Event
 from typing import Any
 
 import pytest
 from pypdf import PdfWriter
 
+from portolan.adapters.base import OfflineCacheMissError
 from portolan.documents import DocumentStore, FetchResult, PdfCandidate
 from portolan.graph.memory import InMemoryResearchGraph
 from portolan.graph.models import Inclusion, WorkNode
@@ -201,6 +203,40 @@ class FakeArxiv:
     lookup = lookup_by_id
 
 
+class FakeArxivBatch:
+    """arXiv adapter fake that returns canonical (version-free) records in one batch."""
+
+    def __init__(self, records: list[dict[str, Any]], *, error: Exception | None = None) -> None:
+        self.records = records
+        self.error = error
+        self.lookup_calls: list[list[str]] = []
+
+    def lookup_many(self, identifiers: list[str]) -> list[dict[str, Any]]:
+        self.lookup_calls.append(list(identifiers))
+        if self.error is not None:
+            raise self.error
+        wanted = set(identifiers)
+        return [deepcopy(item) for item in self.records if item["identifiers"]["arxiv"] in wanted]
+
+
+def arxiv_record(arxiv_id: str, abstract: str) -> dict[str, Any]:
+    return {
+        "source": "arxiv",
+        "identifiers": {"arxiv": arxiv_id, "url": f"https://arxiv.org/abs/{arxiv_id}"},
+        "title": "Ignored arXiv title",
+        "year": 2024,
+        "abstract": abstract,
+        "venue": None,
+        "publication_types": ["preprint"],
+        "open_access_pdf_url": f"https://arxiv.org/pdf/{arxiv_id}.pdf",
+        "tldr": None,
+        "raw": {"id": arxiv_id},
+        "raw_body": "<feed/>",
+        "categories": ["cs.CL"],
+        "primary_category": "cs.CL",
+    }
+
+
 class FakeFetcher:
     def __init__(self, store: DocumentStore) -> None:
         self.store = store
@@ -230,7 +266,7 @@ def make_runner(
     store: DocumentStore | None = None,
     fetcher: FakeFetcher | None = None,
     semanticscholar: FakeSemanticScholar | None = None,
-    arxiv: FakeArxiv | None = None,
+    arxiv: FakeArxiv | FakeArxivBatch | None = None,
 ) -> ResearchRunner:
     sources = ResearchSources(openalex, semanticscholar=semanticscholar, arxiv=arxiv)
     return ResearchRunner(
@@ -769,6 +805,111 @@ def test_unresolved_seed_warning_and_cancel() -> None:
     cancel.set()
     with pytest.raises(RunCancelled):
         runner.run(project.id, ResearchRequest(seeds=["W1"]), cancel=cancel)
+
+
+def _arxiv_enrichment_run(
+    arxiv: FakeArxivBatch | None,
+) -> tuple[InMemoryResearchGraph, str, Any]:
+    seed = record("W1", "Seed paper", arxiv="2401.00001")
+    bare = record("W2", "Bare preprint", arxiv="2401.00002v2")
+    bare["abstract"] = None
+    prefixed = record("W3", "Prefixed preprint", arxiv="arXiv:2401.00003v1")
+    prefixed["abstract"] = ""
+    plain = record("W4", "No arxiv id")
+    plain["abstract"] = None
+    source = FakeOpenAlex([seed, bare, prefixed, plain], search=["W2", "W3", "W4"])
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("arXiv")
+    report = make_runner(graph, source, arxiv=arxiv).run(
+        project.id,
+        ResearchRequest(
+            seeds=["W1"],
+            query="paper",
+            snowball_depth=0,
+            max_works=4,
+            min_score=0.0,
+            acquire_pdfs=False,
+        ),
+    )
+    return graph, project.id, report
+
+
+def test_arxiv_enrichment_fills_missing_abstracts_in_one_batch() -> None:
+    arxiv = FakeArxivBatch(
+        [
+            arxiv_record("2401.00001", "arXiv seed abstract"),
+            arxiv_record("2401.00002", "arXiv preprint abstract"),
+            arxiv_record("2401.00003", "arXiv prefixed abstract"),
+        ]
+    )
+
+    graph, project_id, report = _arxiv_enrichment_run(arxiv)
+
+    # Only the abstract-less works with an arXiv id are looked up, version-free and once.
+    assert arxiv.lookup_calls == [["2401.00002", "2401.00003"]]
+    works = {work.openalex_id: work for work in graph.project_works(project_id)}
+    assert works["W1"].abstract == "Research on seed paper."
+    assert works["W2"].abstract == "arXiv preprint abstract"
+    assert works["W3"].abstract == "arXiv prefixed abstract"
+    assert works["W4"].abstract is None
+    # Empty fields only: the OpenAlex title is kept.
+    assert works["W2"].title == "Bare preprint"
+    assert not any("arXiv" in warning for warning in report.warnings)
+
+
+def test_arxiv_enrichment_merges_only_empty_fields() -> None:
+    arxiv = FakeArxivBatch([arxiv_record("2401.00002", "arXiv abstract")])
+    runner = make_runner(InMemoryResearchGraph(), FakeOpenAlex([]), arxiv=arxiv)
+    bare = record("W2", "Bare preprint", arxiv="2401.00002v3")
+    bare["abstract"] = None
+    duplicate = record("W5", "Unmerged duplicate", arxiv="https://arxiv.org/abs/2401.00002v1")
+    duplicate["abstract"] = None
+    candidate = _Candidate(key="W2", record=bare, depth=0, discovered_via="search")
+    other = _Candidate(key="W5", record=duplicate, depth=0, discovered_via="search")
+    warnings: list[str] = []
+
+    runner._enrich_arxiv([candidate, other], warnings, None)
+
+    # Both versioned spellings collapse to one version-free lookup id.
+    assert arxiv.lookup_calls == [["2401.00002"]]
+    assert other.record["abstract"] == "arXiv abstract"
+
+    assert candidate.record["abstract"] == "arXiv abstract"
+    assert candidate.record["categories"] == ["cs.CL"]
+    assert candidate.record["primary_category"] == "cs.CL"
+    assert candidate.record["title"] == "Bare preprint"
+    assert candidate.record["venue"] == "Test Journal"
+    assert candidate.record["identifiers"]["arxiv"] == "2401.00002v3"
+    assert "raw_body" not in candidate.record
+    assert warnings == []
+
+
+def test_arxiv_enrichment_failure_warns_and_run_succeeds() -> None:
+    arxiv = FakeArxivBatch([], error=RuntimeError("arXiv is down"))
+
+    graph, project_id, report = _arxiv_enrichment_run(arxiv)
+
+    assert len(arxiv.lookup_calls) == 1
+    assert report.included == 4
+    assert "arXiv enrichment failed: arXiv is down" in report.warnings
+    works = {work.openalex_id: work for work in graph.project_works(project_id)}
+    assert works["W2"].abstract is None
+
+
+def test_arxiv_enrichment_offline_cache_miss_propagates() -> None:
+    arxiv = FakeArxivBatch([], error=OfflineCacheMissError("arxiv", "query", "key", Path("cache")))
+
+    with pytest.raises(OfflineCacheMissError):
+        _arxiv_enrichment_run(arxiv)
+
+
+def test_arxiv_enrichment_without_adapter_is_noop() -> None:
+    graph, project_id, report = _arxiv_enrichment_run(None)
+
+    assert report.included == 4
+    assert not any("arXiv" in warning for warning in report.warnings)
+    works = {work.openalex_id: work for work in graph.project_works(project_id)}
+    assert works["W2"].abstract is None
 
 
 def test_progress_updates_inside_long_stages() -> None:

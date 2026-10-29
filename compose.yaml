@@ -8,6 +8,11 @@
 
 name: portolan
 
+# Links shown on this project's page in Arcane (docker compose ignores x- keys).
+x-arcane:
+  urls:
+    - http://localhost:9031
+
 services:
   backend:
     build:

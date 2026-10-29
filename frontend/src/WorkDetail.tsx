@@ -1,4 +1,7 @@
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { segmentAbstract } from './abstractTerms'
 import type {
+  Concept,
   FrontierWork,
   GapHypothesis,
   ProjectAnalysis,
@@ -22,7 +25,22 @@ interface WorkDetailProps {
   /** Gaps naming this work as evidence. */
   gaps?: readonly GapHypothesis[]
   onSelectGap?: (gapId: string) => void
+  /** The concept whose works are focused on the map, if any. */
+  focusedConceptId?: string | null
+  /** Focus a concept's works on the map, or clear the focus with null. */
+  onFocusConcept?: (concept: Concept | null) => void
+  /** Project works per concept, loaded on demand for the concept cards. */
+  conceptWorks?: ReadonlyMap<string, ConceptWorksEntry>
+  onLoadConceptWorks?: (conceptId: string) => void
 }
+
+export type ConceptWorksEntry =
+  | { status: 'loading' }
+  | { status: 'ready'; workIds: readonly string[] }
+  | { status: 'error' }
+
+const CARD_WIDTH = 260
+const MAX_CARD_ALIASES = 6
 
 const ROLE_TITLES: Record<WorkRole, string> = {
   foundational: 'Frequently cited by other works in this project.',
@@ -35,6 +53,98 @@ const ROLE_TITLES: Record<WorkRole, string> = {
 function externalLink(value: string, baseUrl: string): string {
   if (/^https?:\/\//i.test(value)) return value
   return `${baseUrl}${value.replace(/^(?:doi:|arxiv:)/i, '')}`
+}
+
+function conceptWorksText(entry: ConceptWorksEntry | undefined): string {
+  if (!entry || entry.status === 'loading') return 'Counting works in this project…'
+  if (entry.status === 'error') return 'Work count unavailable.'
+  const count = entry.workIds.length
+  return `${count} ${count === 1 ? 'work' : 'works'} in this project`
+}
+
+/** A concept mention or chip: hover/focus shows a card, click toggles its map focus. */
+function ConceptTerm({
+  concept,
+  text,
+  className,
+  focused,
+  works,
+  onOpen,
+  onToggle,
+}: {
+  concept: Concept
+  text: string
+  className: string
+  focused: boolean
+  works: ConceptWorksEntry | undefined
+  onOpen: (conceptId: string) => void
+  onToggle: (concept: Concept) => void
+}) {
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const cardId = useId()
+  const [cardStyle, setCardStyle] = useState<CSSProperties | null>(null)
+
+  useEffect(() => {
+    if (!cardStyle) return
+    // The card is fixed-positioned to escape the scrolling abstract; hide it once the term moves.
+    const close = () => setCardStyle(null)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [cardStyle])
+
+  const open = () => {
+    const rect = buttonRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - CARD_WIDTH - 8))
+    const below = rect.bottom + 140 < window.innerHeight
+    setCardStyle(below
+      ? { left, top: rect.bottom + 4 }
+      : { left, bottom: window.innerHeight - rect.top + 4 })
+    onOpen(concept.id)
+  }
+  const close = () => setCardStyle(null)
+  const aliases = concept.aliases.filter((alias) => alias.toLowerCase() !== concept.label.toLowerCase())
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        className={className}
+        type="button"
+        aria-pressed={focused}
+        aria-describedby={cardStyle ? cardId : undefined}
+        onMouseEnter={open}
+        onMouseLeave={close}
+        onFocus={open}
+        onBlur={close}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') close()
+        }}
+        onClick={() => onToggle(concept)}
+      >
+        {text}
+      </button>
+      {cardStyle ? (
+        <span className="concept-card" id={cardId} role="tooltip" style={cardStyle}>
+          <span className="concept-card__label">{concept.label}</span>
+          {aliases.length > 0 ? (
+            <span className="concept-card__aliases">
+              Also: {aliases.slice(0, MAX_CARD_ALIASES).join(', ')}
+              {aliases.length > MAX_CARD_ALIASES ? ` +${aliases.length - MAX_CARD_ALIASES} more` : ''}
+            </span>
+          ) : null}
+          <span className="concept-card__count">{conceptWorksText(works)}</span>
+          <span className="concept-card__hint">
+            {focused ? 'Click to clear the map focus.' : 'Click to show these works on the map.'}
+          </span>
+        </span>
+      ) : null}
+    </>
+  )
 }
 
 function SummaryList({
@@ -81,8 +191,33 @@ export function WorkDetail({
   frontierWork = null,
   gaps = [],
   onSelectGap,
+  focusedConceptId = null,
+  onFocusConcept,
+  conceptWorks,
+  onLoadConceptWorks,
 }: WorkDetailProps) {
   const work = detail.work
+  const concepts = useMemo(() => detail.concepts.map(({ concept }) => concept), [detail.concepts])
+  const conceptsById = useMemo(() => new Map(concepts.map((concept) => [concept.id, concept])), [concepts])
+  const abstractSegments = useMemo(
+    () => (work.abstract ? segmentAbstract(work.abstract, concepts) : []),
+    [concepts, work.abstract],
+  )
+  const toggleConcept = (concept: Concept) => {
+    onFocusConcept?.(focusedConceptId === concept.id ? null : concept)
+  }
+  const renderConcept = (concept: Concept, text: string, className: string, key: string) => (
+    <ConceptTerm
+      key={key}
+      concept={concept}
+      text={text}
+      className={className}
+      focused={focusedConceptId === concept.id}
+      works={conceptWorks?.get(concept.id)}
+      onOpen={(conceptId) => onLoadConceptWorks?.(conceptId)}
+      onToggle={toggleConcept}
+    />
+  )
   const workAnalysis = analysis?.works[work.id]
   const cluster = analysis?.clusters.find((item) => item.id === workAnalysis?.cluster)
   const documentSha = work.document_sha256
@@ -192,10 +327,11 @@ export function WorkDetail({
         <section className="work-detail__section">
           <h3>Concepts</h3>
           <div className="work-detail__chips">
-            {detail.concepts.map(({ concept }) => (
-              <span className="work-detail__chip" key={concept.id}>
-                {concept.label}
-              </span>
+            {concepts.map((concept) => renderConcept(
+              concept,
+              concept.label,
+              'work-detail__chip work-detail__concept-chip',
+              concept.id,
             ))}
           </div>
         </section>
@@ -204,7 +340,14 @@ export function WorkDetail({
       {work.abstract ? (
         <section className="work-detail__section">
           <h3>Abstract</h3>
-          <p className="work-detail__abstract">{work.abstract}</p>
+          <p className="work-detail__abstract">
+            {abstractSegments.map((segment, index) => {
+              const concept = segment.kind === 'term' ? conceptsById.get(segment.conceptId) : undefined
+              return concept
+                ? renderConcept(concept, segment.text, 'concept-term', `term-${index}`)
+                : segment.text
+            })}
+          </p>
         </section>
       ) : null}
 

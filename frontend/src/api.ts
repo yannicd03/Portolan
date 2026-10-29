@@ -147,6 +147,12 @@ export interface WorkConcept {
   score: number
 }
 
+/** A concept and the ids of the project's works tagged with it. */
+export interface ConceptWorks {
+  concept: Concept
+  work_ids: string[]
+}
+
 export interface WorkDetail {
   work: Work
   cites: WorkSummary[]
@@ -500,6 +506,11 @@ export const api = {
   work: (workId: string, projectId: string): Promise<WorkDetail> =>
     request<WorkDetail>(
       `/api/works/${encodePathWithSlashes(workId)}?project=${encodeURIComponent(projectId)}`,
+    ),
+
+  conceptWorks: (projectId: string, conceptId: string): Promise<ConceptWorks> =>
+    request<ConceptWorks>(
+      `/api/projects/${encodeURIComponent(projectId)}/concepts/${encodePathWithSlashes(conceptId)}`,
     ),
 
   startRun: (projectId: string, input: RunRequest): Promise<Run> =>

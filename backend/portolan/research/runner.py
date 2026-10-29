@@ -1648,6 +1648,60 @@ class ResearchRunner:
                 if value and not target_ids.get(kind):
                     target_ids[kind] = value
 
+    def _enrich_arxiv(
+        self,
+        included: Sequence[_Candidate],
+        warnings: list[str],
+        cancel: Event | None,
+    ) -> None:
+        """Fill abstracts (and other empty fields) of arXiv works OpenAlex under-serves."""
+
+        adapter = self.sources.arxiv
+        if adapter is None:
+            return
+        lookup_many = getattr(adapter, "lookup_many", None)
+        if not callable(lookup_many):
+            return
+        lookup_ids: list[str] = []
+        targets: dict[str, list[_Candidate]] = {}
+        for candidate in included:
+            self._check_cancel(cancel)
+            if not _is_empty(candidate.record.get("abstract")):
+                continue
+            identifiers = candidate.record.get("identifiers")
+            identifiers = identifiers if isinstance(identifiers, Mapping) else {}
+            arxiv_id = _normalise_arxiv(
+                candidate.record.get("arxiv_id") or identifiers.get("arxiv")
+            )
+            if not arxiv_id:
+                continue
+            # Old-style ids (``math.AG/...``) are case-sensitive upstream; match casefolded.
+            if arxiv_id.casefold() not in targets:
+                lookup_ids.append(arxiv_id)
+            targets.setdefault(arxiv_id.casefold(), []).append(candidate)
+        if not lookup_ids:
+            return
+        try:
+            records = lookup_many(lookup_ids)
+        except OfflineCacheMissError:
+            raise
+        except Exception as exc:  # best effort enrichment
+            warnings.append(f"arXiv enrichment failed: {exc}")
+            return
+        for record in records:
+            self._check_cancel(cancel)
+            if not isinstance(record, Mapping):
+                continue
+            identifiers = record.get("identifiers")
+            identifiers = identifiers if isinstance(identifiers, Mapping) else {}
+            arxiv_id = _normalise_arxiv(record.get("arxiv_id") or identifiers.get("arxiv"))
+            if arxiv_id is None:
+                continue
+            # Raw Atom payloads are cache material, not record fields worth keeping.
+            fields = {key: value for key, value in record.items() if key not in ("raw", "raw_body")}
+            for target in targets.get(arxiv_id.casefold(), []):
+                target.record = _merge_record(target.record, fields)
+
     @staticmethod
     def _work_node(record: Mapping[str, Any], keyword_min_score: float) -> WorkNode:
         identifiers = record.get("identifiers")
@@ -1719,6 +1773,7 @@ class ResearchRunner:
         progress: Callable[[RunProgress], None] | None = None,
     ) -> tuple[int, int, set[str]]:
         self._enrich(included, warnings, cancel)
+        self._enrich_arxiv(included, warnings, cancel)
         authors: set[str] = set()
         included_ids: dict[str, str] = {}
         for index, candidate in enumerate(included, start=1):

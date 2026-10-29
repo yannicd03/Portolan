@@ -259,7 +259,7 @@ papers:
 
 def test_cli_zero_exit_for_verified_subset(tmp_path: Path, monkeypatch: Any) -> None:
     seed_path, bundle = _three_seed_fixture(tmp_path)
-    monkeypatch.setattr(builder, "create_adapters", lambda cache_dir, offline: bundle)
+    monkeypatch.setattr(builder, "create_adapters", lambda cache_dir, offline, **_: bundle)
     output_dir = tmp_path / "cli-out"
     result = CliRunner().invoke(
         builder.app,
@@ -380,6 +380,145 @@ papers:
     assert "arxiv enrichment warning" in report
 
 
+def _single_arxiv_seed(tmp_path: Path) -> Path:
+    seed_path = tmp_path / "seeds.yaml"
+    seed_path.write_text(
+        """\
+version: 1
+papers:
+  - key: alpha
+    title: "Alpha Retrieval"
+    year: 2020
+    arxiv: "1000.00001"
+    expect: {source_tier: preprint, is_survey: false}
+""",
+        encoding="utf-8",
+    )
+    return seed_path
+
+
+def _arxiv_record(arxiv_id: str, title: str, year: int, abstract: str | None) -> dict[str, Any]:
+    return {
+        "identifiers": {"arxiv": arxiv_id},
+        "title": title,
+        "year": year,
+        "abstract": abstract,
+        "categories": ["cs.CL", "cs.AI"],
+        "fetched_at": "2026-10-01T00:00:00+00:00",
+    }
+
+
+def test_arxiv_abstract_overrides_semantic_scholar_with_provenance(tmp_path: Path) -> None:
+    seed_path = _single_arxiv_seed(tmp_path)
+    s2_record = _work("1000.00001", "s2-alpha", "Alpha Retrieval", 2020)
+    s2_record["categories"] = []
+    arxiv_record = _arxiv_record("1000.00001", "Alpha Retrieval", 2020, "The arXiv abstract.")
+    bundle = {
+        "arxiv": FakeArxiv({"1000.00001": arxiv_record}),
+        "semanticscholar": FakeSemanticScholar(batch_results=[s2_record]),
+        "crossref": FakeCrossref(),
+    }
+    output_dir = tmp_path / "out"
+    result = builder.build_golden(seed_path, output_dir, tmp_path / "cache", adapters=bundle)
+
+    assert result.ok
+    work = json.loads((output_dir / "works.json").read_text(encoding="utf-8"))["alpha"]
+    assert work["abstract"] == "The arXiv abstract."
+    assert work["provenance"]["abstract"] == {
+        "source": "arxiv",
+        "fetched_at": "2026-10-01T00:00:00+00:00",
+    }
+    assert work["categories"] == ["cs.CL", "cs.AI"]
+    assert work["provenance"]["categories"]["source"] == "arxiv"
+    # Fields arXiv does not supply keep their Semantic Scholar provenance.
+    assert work["provenance"]["title"]["source"] == "semanticscholar"
+    assert work["provenance"]["tldr"]["source"] == "semanticscholar"
+
+
+def test_semantic_scholar_abstract_kept_when_arxiv_has_none(tmp_path: Path) -> None:
+    seed_path = _single_arxiv_seed(tmp_path)
+    s2_record = _work("1000.00001", "s2-alpha", "Alpha Retrieval", 2020)
+    arxiv_record = _arxiv_record("1000.00001", "Alpha Retrieval", 2020, None)
+    bundle = {
+        "arxiv": FakeArxiv({"1000.00001": arxiv_record}),
+        "semanticscholar": FakeSemanticScholar(batch_results=[s2_record]),
+        "crossref": FakeCrossref(),
+    }
+    result = builder.build_golden(seed_path, tmp_path / "out", tmp_path / "cache", adapters=bundle)
+
+    assert result.ok
+    work = result.works["alpha"]
+    assert work["abstract"] == "Abstract for Alpha Retrieval."
+    assert work["provenance"]["abstract"]["source"] == "semanticscholar"
+
+
+def test_semantic_scholar_abstract_kept_when_arxiv_record_missing(tmp_path: Path) -> None:
+    seed_path = _single_arxiv_seed(tmp_path)
+    s2_record = _work("1000.00001", "s2-alpha", "Alpha Retrieval", 2020)
+    bundle = {
+        "arxiv": FakeArxiv({}),
+        "semanticscholar": FakeSemanticScholar(batch_results=[s2_record]),
+        "crossref": FakeCrossref(),
+    }
+    result = builder.build_golden(seed_path, tmp_path / "out", tmp_path / "cache", adapters=bundle)
+
+    assert result.ok
+    work = result.works["alpha"]
+    assert work["abstract"] == "Abstract for Alpha Retrieval."
+    assert work["provenance"]["abstract"]["source"] == "semanticscholar"
+    assert "no record matched its arXiv identifier" in result.report
+
+
+def test_semantic_scholar_abstract_kept_when_arxiv_errors(tmp_path: Path) -> None:
+    seed_path = _single_arxiv_seed(tmp_path)
+
+    class FailingArxiv(FakeArxiv):
+        def lookup_many(self, arxiv_ids: list[str]) -> list[dict[str, Any]]:
+            raise RuntimeError("offline cache miss for source='arxiv'")
+
+    s2_record = _work("1000.00001", "s2-alpha", "Alpha Retrieval", 2020)
+    bundle = {
+        "arxiv": FailingArxiv({}),
+        "semanticscholar": FakeSemanticScholar(batch_results=[s2_record]),
+        "crossref": FakeCrossref(),
+    }
+    result = builder.build_golden(seed_path, tmp_path / "out", tmp_path / "cache", adapters=bundle)
+
+    assert result.ok
+    work = result.works["alpha"]
+    assert work["abstract"] == "Abstract for Alpha Retrieval."
+    assert work["provenance"]["abstract"]["source"] == "semanticscholar"
+    assert "arxiv enrichment warning" in result.report
+
+
+def test_create_adapters_refresh_arxiv_keeps_other_sources_offline(tmp_path: Path) -> None:
+    adapters = builder.create_adapters(tmp_path, offline=True, refresh_arxiv=True)
+    assert adapters["arxiv"].client.offline is False
+    assert adapters["arxiv"].client.refresh is True
+    assert adapters["semanticscholar"].client.offline is True
+    assert adapters["crossref"].client.offline is True
+
+    default = builder.create_adapters(tmp_path, offline=True)
+    assert default["arxiv"].client.offline is True
+
+
+def test_cli_refresh_arxiv_is_passed_to_adapter_factory(tmp_path: Path, monkeypatch: Any) -> None:
+    seed_path, bundle = _three_seed_fixture(tmp_path)
+    calls: list[dict[str, Any]] = []
+
+    def factory(cache_dir: Path, offline: bool, **kwargs: Any) -> dict[str, Any]:
+        calls.append({"offline": offline, **kwargs})
+        return bundle
+
+    monkeypatch.setattr(builder, "create_adapters", factory)
+    result = CliRunner().invoke(
+        builder.app,
+        ["--seeds", str(seed_path), "--output-dir", str(tmp_path / "out"), "--refresh-arxiv"],
+    )
+    assert result.exit_code == 0, result.stdout
+    assert calls == [{"offline": True, "refresh_arxiv": True}]
+
+
 def test_no_arxiv_skips_optional_enrichment(tmp_path: Path) -> None:
     seed_path, bundle = _three_seed_fixture(tmp_path)
     result = builder.build_golden(
@@ -437,7 +576,7 @@ papers:
         ),
         "crossref": FakeCrossref(),
     }
-    monkeypatch.setattr(builder, "create_adapters", lambda cache_dir, offline: bundle)
+    monkeypatch.setattr(builder, "create_adapters", lambda cache_dir, offline, **_: bundle)
     result = CliRunner().invoke(
         builder.app,
         ["--seeds", str(seed_path), "--output-dir", str(tmp_path / "out")],

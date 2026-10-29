@@ -100,6 +100,13 @@ class ConceptMembership(ApiModel):
     score: float
 
 
+class ConceptWorksResponse(ApiModel):
+    """A concept and the ids of the project's works tagged with it."""
+
+    concept: ConceptNode
+    work_ids: list[str]
+
+
 class WorkResponse(ApiModel):
     work: WorkNode
     cites: list[WorkSummary]
@@ -181,6 +188,7 @@ __all__ = [
     "AnalysisWork",
     "AuthorMembership",
     "ConceptMembership",
+    "ConceptWorksResponse",
     "GraphView",
     "HealthResponse",
     "LocateHit",

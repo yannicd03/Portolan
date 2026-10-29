@@ -8,7 +8,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Attention Is All You Need
 - matched title: Attention is All you Need
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## bert — PASS
 
@@ -16,7 +16,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
 - matched title: BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## realm — PASS
 
@@ -24,7 +24,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: REALM: Retrieval-Augmented Language Model Pre-Training
 - matched title: REALM: Retrieval-Augmented Language Model Pre-Training
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## dpr — PASS
 
@@ -32,7 +32,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Dense Passage Retrieval for Open-Domain Question Answering
 - matched title: Dense Passage Retrieval for Open-Domain Question Answering
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## rag — PASS
 
@@ -40,7 +40,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks
 - matched title: Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## fid — PASS
 
@@ -48,7 +48,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering
 - matched title: Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## webqsp — FAILURE
 
@@ -64,7 +64,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: The Web as a Knowledge-Base for Answering Complex Questions
 - matched title: The Web as a Knowledge-Base for Answering Complex Questions
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## cot — PASS
 
@@ -72,7 +72,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Chain-of-Thought Prompting Elicits Reasoning in Large Language Models
 - matched title: Chain of Thought Prompting Elicits Reasoning in Large Language Models
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## react — PASS
 
@@ -80,7 +80,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: ReAct: Synergizing Reasoning and Acting in Language Models
 - matched title: ReAct: Synergizing Reasoning and Acting in Language Models
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## structgpt — PASS
 
@@ -88,7 +88,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: StructGPT: A General Framework for Large Language Model to Reason over Structured Data
 - matched title: StructGPT: A General Framework for Large Language Model to Reason over Structured Data
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## kaping — FAILURE
 
@@ -104,7 +104,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph
 - matched title: Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## rog — PASS
 
@@ -112,7 +112,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning
 - matched title: Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## g_retriever — PASS
 
@@ -120,7 +120,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering
 - matched title: G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## self_rag — PASS
 
@@ -128,7 +128,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection
 - matched title: Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## lost_in_the_middle — PASS
 
@@ -136,7 +136,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Lost in the Middle: How Language Models Use Long Contexts
 - matched title: Lost in the Middle: How Language Models Use Long Contexts
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## graphrag — PASS
 
@@ -144,7 +144,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: From Local to Global: A Graph RAG Approach to Query-Focused Summarization
 - matched title: From Local to Global: A Graph RAG Approach to Query-Focused Summarization
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## hipporag — FAILURE
 
@@ -160,7 +160,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: LightRAG: Simple and Fast Retrieval-Augmented Generation
 - matched title: LightRAG: Simple and Fast Retrieval-Augmented Generation
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## llm_kg_roadmap — PASS
 
@@ -168,7 +168,7 @@ Title threshold: 0.92; year tolerance: +/-1.
 - requested title: Unifying Large Language Models and Knowledge Graphs: A Roadmap
 - matched title: Unifying Large Language Models and Knowledge Graphs: A Roadmap
 - normalized-title similarity: 1.000
-- warning: arxiv enrichment warning: offline cache miss for source='arxiv', endpoint='https://export.arxiv.org/api/query', key=e000fe65697890f69cea5222356ab8fde7ae48a0b72b5b43c203f10cc249f252; looked in ../eval/golden/cache
+- warning: none
 
 ## graphrag_survey — FAILURE
 
@@ -195,4 +195,4 @@ Title threshold: 0.92; year tolerance: +/-1.
 
 ## Request summary
 
-- HTTP requests: semanticscholar=0, arxiv=0, crossref=0 (total=0); cache hits: semanticscholar=2, arxiv=0, crossref=0.
+- HTTP requests: semanticscholar=0, arxiv=0, crossref=0 (total=0); cache hits: semanticscholar=2, arxiv=1, crossref=0.

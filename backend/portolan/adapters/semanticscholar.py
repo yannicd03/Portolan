@@ -18,7 +18,7 @@ from urllib.parse import quote
 
 import httpx
 
-from .base import HttpClient, canonical_arxiv_id, normalized_record
+from .base import HttpClient, canonical_arxiv_id, normalized_record, response_fetched_at
 
 
 def _as_list(value: Any) -> list[Any]:
@@ -148,7 +148,7 @@ class SemanticScholarAdapter:
 
     def _get(
         self, path: str, *, params: Mapping[str, Any], cache_params: Mapping[str, Any]
-    ) -> tuple[Any, str]:
+    ) -> tuple[Any, str, str | None]:
         response = self.client.get(
             self.source,
             f"{self.endpoint}/{path.lstrip('/')}",
@@ -160,7 +160,7 @@ class SemanticScholarAdapter:
         )
         self._record_http_result(response)
         try:
-            return response.json(), response.text
+            return response.json(), response.text, response_fetched_at(response)
         except ValueError as exc:
             raise ValueError("Semantic Scholar returned malformed JSON") from exc
 
@@ -171,7 +171,7 @@ class SemanticScholarAdapter:
         params: Mapping[str, Any],
         payload: Mapping[str, Any],
         cache_params: Mapping[str, Any],
-    ) -> tuple[Any, str]:
+    ) -> tuple[Any, str, str | None]:
         response = self.client.post(
             self.source,
             f"{self.endpoint}/{path.lstrip('/')}",
@@ -184,7 +184,7 @@ class SemanticScholarAdapter:
         )
         self._record_http_result(response)
         try:
-            return response.json(), response.text
+            return response.json(), response.text, response_fetched_at(response)
         except ValueError as exc:
             raise ValueError("Semantic Scholar returned malformed JSON") from exc
 
@@ -202,7 +202,11 @@ class SemanticScholarAdapter:
 
     @classmethod
     def _record_from_paper(
-        cls, item: Mapping[str, Any], *, raw_body: str | None = None
+        cls,
+        item: Mapping[str, Any],
+        *,
+        raw_body: str | None = None,
+        fetched_at: str | None = None,
     ) -> dict[str, Any]:
         open_access = item.get("openAccessPdf") or item.get("open_access_pdf") or {}
         if not isinstance(open_access, Mapping):
@@ -222,6 +226,7 @@ class SemanticScholarAdapter:
             tldr=tldr,
             raw=dict(item),
             raw_body=raw_body,
+            fetched_at=fetched_at,
         )
         if "references" in item:
             record["references"] = cls._batch_references(item.get("references"))
@@ -393,7 +398,7 @@ class SemanticScholarAdapter:
             chunk = normalized_ids[offset : offset + self.batch_limit]
             params = {"fields": self.paper_fields}
             cache_params = {"fields": self.paper_fields, "ids": sorted(chunk)}
-            payload, raw_body = self._post(
+            payload, raw_body, fetched_at = self._post(
                 "paper/batch",
                 params=params,
                 payload={"ids": chunk},
@@ -401,7 +406,9 @@ class SemanticScholarAdapter:
             )
             for item in self._items(payload):
                 if item is not None:
-                    records.append(self._record_from_paper(item, raw_body=raw_body))
+                    records.append(
+                        self._record_from_paper(item, raw_body=raw_body, fetched_at=fetched_at)
+                    )
         return self.enrich_with_intents(records, with_intents=with_intents)
 
     def lookup_by_id(self, identifier: str, *, with_intents: bool = False) -> dict[str, Any] | None:
@@ -416,9 +423,11 @@ class SemanticScholarAdapter:
             "limit": max(1, int(limit)),
             "fields": self.paper_fields,
         }
-        payload, raw_body = self._get("paper/search", params=params, cache_params=params)
+        payload, raw_body, fetched_at = self._get(
+            "paper/search", params=params, cache_params=params
+        )
         return [
-            self._record_from_paper(item, raw_body=raw_body)
+            self._record_from_paper(item, raw_body=raw_body, fetched_at=fetched_at)
             for item in self._items(payload)
             if item is not None
         ]
@@ -446,7 +455,7 @@ class SemanticScholarAdapter:
             "limit": max(1, int(limit)),
             "offset": max(0, int(offset)),
         }
-        payload, raw_body = self._get(path, params=params, cache_params=params)
+        payload, raw_body, fetched_at = self._get(path, params=params, cache_params=params)
         data = payload.get("data", []) if isinstance(payload, Mapping) else payload
         if not isinstance(data, list):
             return []
@@ -457,7 +466,7 @@ class SemanticScholarAdapter:
                 continue
             related = item.get(other_key)
             paper = (
-                self._record_from_paper(related, raw_body=raw_body)
+                self._record_from_paper(related, raw_body=raw_body, fetched_at=fetched_at)
                 if isinstance(related, Mapping)
                 else None
             )

@@ -116,6 +116,17 @@ a { color: var(--accent); }
 .work-detail__chips, .work-detail__links { display: flex; flex-wrap: wrap; gap: 5px; }
 .work-detail__chip, .work-detail__link { display: inline-block; padding: 3px 7px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface-soft); font-size: 11px; }
 .work-detail__abstract { max-height: 160px; margin: 0; overflow-y: auto; color: var(--text-soft); font-size: 12px; white-space: pre-wrap; }
+.work-detail__concept-chip { color: var(--text); line-height: inherit; }
+.work-detail__concept-chip:hover { border-color: var(--accent); }
+.work-detail__concept-chip[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.concept-term { display: inline; margin: 0; padding: 0 1px; border: 0; border-bottom: 1px dotted var(--accent); border-radius: 2px; background: transparent; color: var(--text); font: inherit; line-height: inherit; text-align: inherit; }
+.concept-term:hover { background: var(--accent-soft); }
+.concept-term[aria-pressed='true'] { border-bottom-style: solid; background: var(--accent-soft); color: var(--accent); }
+.work-detail__concept-chip:focus-visible, .concept-term:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.concept-card { position: fixed; z-index: 20; display: grid; gap: 3px; width: max-content; max-width: 260px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); box-shadow: 0 4px 14px rgb(0 0 0 / .12); color: var(--text); font-size: 11px; line-height: 1.4; white-space: normal; pointer-events: none; }
+.concept-card__label { font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
+.concept-card__aliases, .concept-card__hint { color: var(--text-soft); overflow-wrap: anywhere; }
+.concept-card__hint { font-size: 10px; }
 .work-detail__list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .work-detail__list-button { display: grid; gap: 2px; width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-soft); color: var(--text); text-align: left; font-size: 11px; }
 .work-detail__list-button:hover { border-color: var(--accent); }
@@ -167,6 +178,8 @@ a { color: var(--accent); }
 .citation-map__gap-link:focus-visible .citation-map__gap-hit { stroke: var(--accent-soft); }
 .citation-map__gap-link--active .citation-map__gap-line { opacity: 1; stroke-width: 3.2; }
 .graph-panel__drawer-toggle { margin-left: auto; }
+.graph-panel__concept-focus { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 5px 8px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-soft); font-size: 11px; }
+.graph-panel__concept-focus-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .graph-panel__hover-card { position: absolute; top: 10px; left: 10px; z-index: 2; width: min(260px, calc(100% - 20px)); padding: 9px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); box-shadow: 0 4px 14px rgb(0 0 0 / .12); pointer-events: none; }
 .graph-panel__hover-title { margin: 0 0 6px; font-size: 11px; font-weight: 650; line-height: 1.3; overflow-wrap: anywhere; }
 .graph-panel__drawer { flex: 0 1 auto; max-height: 40%; min-height: 0; overflow-y: auto; border-top: 1px solid var(--border); background: var(--surface); }
@@ -405,7 +418,7 @@ textarea.research-composer-input { resize: vertical; min-height: 52px; }
 .pdf-viewer__pages { display: flex; min-width: 100%; flex-direction: column; align-items: center; gap: 18px; padding: 20px 16px 36px; }
 .pdf-page-shell { position: relative; flex: none; min-width: 260px; overflow: hidden; background: #fff; box-shadow: 0 2px 12px rgba(20, 38, 40, .16); }
 .pdf-page-canvas { position: absolute; inset: 0; display: block; max-width: none; }
-.pdf-viewer__text-layer { position: absolute; inset: 0; overflow: hidden; color: transparent; cursor: text; line-height: 1; text-align: initial; text-size-adjust: none; transform-origin: 0 0; user-select: text; forced-color-adjust: none; }
+.pdf-viewer__text-layer { position: absolute; inset: 0; overflow: clip; color: transparent; cursor: text; line-height: 1; text-align: initial; text-size-adjust: none; transform-origin: 0 0; user-select: text; forced-color-adjust: none; }
 .pdf-viewer__text-layer span, .pdf-viewer__text-layer br { position: absolute; color: transparent; white-space: pre; cursor: text; transform-origin: 0% 0%; }
 /* pdf.js 6 text-layer sizing (mirrors pdfjs-dist/web/pdf_viewer.css); without it glyph widths drift and highlights land late. */
 .pdf-viewer__text-layer > :not(.markedContent), .pdf-viewer__text-layer .markedContent span:not(.markedContent) { z-index: 1; font-size: calc(var(--total-scale-factor) * var(--min-font-size, 1) * var(--font-height, 0)); transform: rotate(var(--rotate, 0deg)) scaleX(var(--scale-x, 1)) scale(calc(1 / var(--min-font-size, 1))); }

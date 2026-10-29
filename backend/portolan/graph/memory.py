@@ -190,6 +190,10 @@ class InMemoryResearchGraph:
         work = self._works.get(id)
         return None if work is None else _model_copy(work)
 
+    def get_concept(self, id: str) -> ConceptNode | None:
+        concept = self._concepts.get(id)
+        return None if concept is None else _model_copy(concept)
+
     def include_work(self, inclusion: Inclusion) -> None:
         project_id = _text(inclusion.project_id)
         work_id = _text(inclusion.work_id)

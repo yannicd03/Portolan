@@ -13,6 +13,10 @@ The adapters in this package return a deliberately small, source-neutral record:
     Optional access and summary fields.
 ``source``
     The adapter source name.
+``fetched_at``
+    ISO-8601 time the underlying response was fetched from the source: the
+    cache sidecar's time on a cache hit, so offline rebuilds keep the original
+    provenance.  ``None`` when the response did not come through ``HttpClient``.
 ``raw`` / ``raw_body``
     The source-native parsed payload and the exact response body, respectively.
 
@@ -57,6 +61,9 @@ DEFAULT_SOURCE_INTERVALS: dict[str, float] = {
 EXTRA_RETRY_STATUSES: dict[str, frozenset[int]] = {
     "arxiv": frozenset({406}),
 }
+
+#: Response header carrying the source fetch time (cache sidecar ``fetched_at``).
+FETCHED_AT_HEADER = "X-PTL-Fetched-At"
 
 
 def _jsonable(value: Any) -> Any:
@@ -369,10 +376,13 @@ class HttpClient:
             metadata_url,
             params=params if "?" not in metadata_url else None,
         )
+        headers = {"X-PTL-Cache": "HIT"}
+        if entry.metadata.get("fetched_at"):
+            headers[FETCHED_AT_HEADER] = str(entry.metadata["fetched_at"])
         return httpx.Response(
             status_code=status,
             content=entry.body,
-            headers={"X-PTL-Cache": "HIT"},
+            headers=headers,
             request=request,
         )
 
@@ -477,7 +487,7 @@ class HttpClient:
             headers=headers,
             timeout=timeout,
         )
-        self.cache.put(
+        entry = self.cache.put(
             source,
             endpoint,
             cache_key_params,
@@ -485,6 +495,7 @@ class HttpClient:
             url=str(response.url),
             status=response.status_code,
         )
+        response.headers[FETCHED_AT_HEADER] = str(entry.metadata["fetched_at"])
         return response
 
     def _before_sleep(self, retry_state: RetryCallState) -> None:
@@ -551,6 +562,12 @@ class HttpClient:
     fetch = request
 
 
+def response_fetched_at(response: httpx.Response) -> str | None:
+    """Return the source fetch time ``HttpClient`` attached to a response, if any."""
+
+    return response.headers.get(FETCHED_AT_HEADER) or None
+
+
 def clean_text(value: Any) -> str | None:
     """Normalize whitespace and lightweight markup in source text."""
 
@@ -614,6 +631,7 @@ def normalized_record(
     tldr: Any,
     raw: Any,
     raw_body: str | None = None,
+    fetched_at: str | None = None,
 ) -> dict[str, Any]:
     """Build the common plain-dict record returned by every adapter."""
 
@@ -635,6 +653,7 @@ def normalized_record(
         "source": source,
         "raw": raw,
         "raw_body": raw_body,
+        "fetched_at": fetched_at,
     }
 
 

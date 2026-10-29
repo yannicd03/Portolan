@@ -143,3 +143,8 @@ The code keeps exactly two documented inherent losses in `EXPORT_INHERENT_LOSSES
 All other triple differences are mapping defects. The live export-parity pytest compares the
 fresh Oxigraph and Neo4j golden graphs after normalizing only the decimal narrowing above and
 reports missing and extra triples grouped by predicate.
+
+`parity/export_neo4j_live.ttl` and `parity/export_oxigraph_live.ttl` are frozen M0 export
+records. When the golden abstracts switched to the arXiv (CC0) versions, only their four changed
+`dcterms:abstract` literals (`bert`, `fid`, `graphrag`, `llm_kg_roadmap`) were replaced in place
+with the new `works.json` text; nothing else in them was regenerated.

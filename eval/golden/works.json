@@ -1,7 +1,9 @@
 {
   "bert": {
-    "abstract": "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models (Peters et al., 2018a; Radford et al., 2018), BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial task-specific architecture modifications. BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5 (7.7 point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement).",
-    "categories": [],
+    "abstract": "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models, BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial task-specific architecture modifications. BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5% (7.7% point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement).",
+    "categories": [
+      "cs.CL"
+    ],
     "identifiers": {
       "acl": "N19-1423",
       "arxiv": "1810.04805",
@@ -16,59 +18,59 @@
     "open_access_pdf_url": "https://doi.org/10.18653/v1/n19-1423",
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.662129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -717,7 +719,7 @@
         "title": "We provide examples of the pre-training tasks in the following"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.662129+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "df2b0e26d0599ce3e70df8a9da02e51594e0e992",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -728,7 +730,11 @@
   },
   "complexwebquestions": {
     "abstract": "Answering complex questions is a time-consuming activity for humans that requires reasoning and integration of information. Recent work on reading comprehension made headway in answering simple questions, but tackling complex questions is still an ongoing research challenge. Conversely, semantic parsers have been successful at handling compositionality, but only when the information resides in a target knowledge-base. In this paper, we present a novel framework for answering broad and complex questions, assuming answering simple questions is possible using a search engine and a reading comprehension model. We propose to decompose complex questions into a sequence of simple questions, and compute the final answer from the sequence of answers. To illustrate the viability of our approach, we create a new dataset of complex questions, ComplexWebQuestions, and present a model that decomposes questions and interacts with the web to compute an answer. We empirically demonstrate that question decomposition improves performance from 20.8 precision@1 to 27.5 precision@1 on this new dataset.",
-    "categories": [],
+    "categories": [
+      "cs.CL",
+      "cs.AI",
+      "cs.LG"
+    ],
     "identifiers": {
       "acl": "N18-1059",
       "arxiv": "1803.06643",
@@ -743,59 +749,59 @@
     "open_access_pdf_url": "https://www.aclweb.org/anthology/N18-1059.pdf",
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.662936+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -1318,7 +1324,7 @@
         "title": "We sample 100 random development set questions and check whether Google returns a box that contains one of the correct answers"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.662936+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "c8725f13be7434b69738491c66b45c9225258253",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -1329,7 +1335,10 @@
   },
   "cot": {
     "abstract": "We explore how generating a chain of thought -- a series of intermediate reasoning steps -- significantly improves the ability of large language models to perform complex reasoning. In particular, we show how such reasoning abilities emerge naturally in sufficiently large language models via a simple method called chain of thought prompting, where a few chain of thought demonstrations are provided as exemplars in prompting. Experiments on three large language models show that chain of thought prompting improves performance on a range of arithmetic, commonsense, and symbolic reasoning tasks. The empirical gains can be striking. For instance, prompting a 540B-parameter language model with just eight chain of thought exemplars achieves state of the art accuracy on the GSM8K benchmark of math word problems, surpassing even finetuned GPT-3 with a verifier.",
-    "categories": [],
+    "categories": [
+      "cs.CL",
+      "cs.AI"
+    ],
     "identifiers": {
       "arxiv": "2201.11903",
       "corpusid": "246411621",
@@ -1342,59 +1351,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.663142+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -2496,7 +2505,7 @@
         "title": "2022. Can rationalization improve robustness?"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.663142+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "1b6e810ce0afd0dd093f789d2b2742d047e316d5",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -2507,7 +2516,9 @@
   },
   "dpr": {
     "abstract": "Open-domain question answering relies on efficient passage retrieval to select candidate contexts, where traditional sparse vector space models, such as TF-IDF or BM25, are the de facto method. In this work, we show that retrieval can be practically implemented using dense representations alone, where embeddings are learned from a small number of questions and passages by a simple dual-encoder framework. When evaluated on a wide range of open-domain QA datasets, our dense retriever outperforms a strong Lucene-BM25 system largely by 9%-19% absolute in terms of top-20 passage retrieval accuracy, and helps our end-to-end QA system establish new state-of-the-art on multiple open-domain QA benchmarks.",
-    "categories": [],
+    "categories": [
+      "cs.CL"
+    ],
     "identifiers": {
       "acl": "2020.emnlp-main.550",
       "arxiv": "2004.04906",
@@ -2522,59 +2533,59 @@
     "open_access_pdf_url": "https://www.aclweb.org/anthology/2020.emnlp-main.550.pdf",
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.662438+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -3162,7 +3173,7 @@
         "title": "The TREC-8 Question Answering Track Report"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.662438+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "b26f2037f769d5ffc5f7bdcec2de8da28ec14bee",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -3172,8 +3183,11 @@
     "year": 2020
   },
   "fid": {
-    "abstract": "Generative models for open domain question answering have proven to be competitive, without resorting to external knowledge. While promising, this approach requires to use models with billions of parameters, which are expensive to train and query. In this paper, we investigate how much these models can benefit from retrieving text passages, potentially containing evidence. We obtain state-of-the-art results on the Natural Questions and TriviaQA open benchmarks. Interestingly, we observe that the performance of this method significantly improves when increasing the number of retrieved passages. This is evidence that sequence-to-sequence models offers a flexible framework to efficiently aggregate and combine evidence from multiple passages.",
-    "categories": [],
+    "abstract": "Generative models for open domain question answering have proven to be competitive, without resorting to external knowledge. While promising, this approach requires to use models with billions of parameters, which are expensive to train and query. In this paper, we investigate how much these models can benefit from retrieving text passages, potentially containing evidence. We obtain state-of-the-art results on the Natural Questions and TriviaQA open benchmarks. Interestingly, we observe that the performance of this method significantly improves when increasing the number of retrieved passages. This is evidence that generative models are good at aggregating and combining evidence from multiple passages.",
+    "categories": [
+      "cs.CL",
+      "cs.LG"
+    ],
     "identifiers": {
       "acl": "2021.eacl-main.74",
       "arxiv": "2007.01282",
@@ -3188,59 +3202,59 @@
     "open_access_pdf_url": "https://doi.org/10.18653/v1/2021.eacl-main.74",
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.662768+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -3637,7 +3651,7 @@
         "title": ", David Grang - ier , Jason Weston , and Michael Auli . 2019 . ELI 5 : Long form question answering"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.662768+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "ea8c46e193d5121e440daf96edfd15a47151c293",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -3648,7 +3662,9 @@
   },
   "g_retriever": {
     "abstract": "Given a graph with textual attributes, we enable users to `chat with their graph': that is, to ask questions about the graph using a conversational interface. In response to a user's questions, our method provides textual replies and highlights the relevant parts of the graph. While existing works integrate large language models (LLMs) and graph neural networks (GNNs) in various ways, they mostly focus on either conventional graph tasks (such as node, edge, and graph classification), or on answering simple graph queries on small or synthetic graphs. In contrast, we develop a flexible question-answering framework targeting real-world textual graphs, applicable to multiple applications including scene graph understanding, common sense reasoning, and knowledge graph reasoning. Toward this goal, we first develop a Graph Question Answering (GraphQA) benchmark with data collected from different tasks. Then, we propose our G-Retriever method, introducing the first retrieval-augmented generation (RAG) approach for general textual graphs, which can be fine-tuned to enhance graph understanding via soft prompting. To resist hallucination and to allow for textual graphs that greatly exceed the LLM's context window size, G-Retriever performs RAG over a graph by formulating this task as a Prize-Collecting Steiner Tree optimization problem. Empirical evaluations show that our method outperforms baselines on textual graph tasks from multiple domains, scales well with larger graph sizes, and mitigates hallucination.~\\footnote{Our codes and datasets are available at: \\url{https://github.com/XiaoxinHe/G-Retriever}}",
-    "categories": [],
+    "categories": [
+      "cs.LG"
+    ],
     "identifiers": {
       "arxiv": "2402.07630",
       "corpusid": "267626823",
@@ -3661,59 +3677,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.664385+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -4290,7 +4306,7 @@
         "title": "We demonstrate the interaction capabilities of G-Retriever with creative questions on datasets: ExplaGraphs , SceneGraphs , and WebQSP"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.664385+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "a41d4a3b005c8ec4f821e6ee96672d930ca9596c",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -4300,8 +4316,12 @@
     "year": 2024
   },
   "graphrag": {
-    "abstract": "The use of retrieval-augmented generation (RAG) to retrieve relevant information from an external knowledge source enables large language models (LLMs) to answer questions over private and/or previously unseen document collections. However, RAG fails on global questions directed at an entire text corpus, such as\"What are the main themes in the dataset?\", since this is inherently a query-focused summarization (QFS) task, rather than an explicit retrieval task. Prior QFS methods, meanwhile, do not scale to the quantities of text indexed by typical RAG systems. To combine the strengths of these contrasting methods, we propose GraphRAG, a graph-based approach to question answering over private text corpora that scales with both the generality of user questions and the quantity of source text. Our approach uses an LLM to build a graph index in two stages: first, to derive an entity knowledge graph from the source documents, then to pregenerate community summaries for all groups of closely related entities. Given a question, each community summary is used to generate a partial response, before all partial responses are again summarized in a final response to the user. For a class of global sensemaking questions over datasets in the 1 million token range, we show that GraphRAG leads to substantial improvements over a conventional RAG baseline for both the comprehensiveness and diversity of generated answers.",
-    "categories": [],
+    "abstract": "The use of retrieval-augmented generation (RAG) to retrieve relevant information from an external knowledge source enables large language models (LLMs) to answer questions over private and/or previously unseen document collections. However, RAG fails on global questions directed at an entire text corpus, such as \"What are the main themes in the dataset?\", since this is inherently a query-focused summarization (QFS) task, rather than an explicit retrieval task. Prior QFS methods, meanwhile, do not scale to the quantities of text indexed by typical RAG systems. To combine the strengths of these contrasting methods, we propose GraphRAG, a graph-based approach to question answering over private text corpora that scales with both the generality of user questions and the quantity of source text. Our approach uses an LLM to build a graph index in two stages: first, to derive an entity knowledge graph from the source documents, then to pregenerate community summaries for all groups of closely related entities. Given a question, each community summary is used to generate a partial response, before all partial responses are again summarized in a final response to the user. For a class of global sensemaking questions over datasets in the 1 million token range, we show that GraphRAG leads to substantial improvements over a conventional RAG baseline for both the comprehensiveness and diversity of generated answers.",
+    "categories": [
+      "cs.CL",
+      "cs.AI",
+      "cs.IR"
+    ],
     "identifiers": {
       "arxiv": "2404.16130",
       "corpusid": "269363075",
@@ -4313,59 +4333,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.664950+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -4940,7 +4960,7 @@
         "title": "Graphs"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.664950+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "c1799bf28d1ae93e1631be5b59196ee1e568f538",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -4951,7 +4971,10 @@
   },
   "lightrag": {
     "abstract": "Retrieval-Augmented Generation (RAG) systems enhance large language models (LLMs) by integrating external knowledge sources, enabling more accurate and contextually relevant responses tailored to user needs. However, existing RAG systems have significant limitations, including reliance on flat data representations and inadequate contextual awareness, which can lead to fragmented answers that fail to capture complex inter-dependencies. To address these challenges, we propose LightRAG, which incorporates graph structures into text indexing and retrieval processes. This innovative framework employs a dual-level retrieval system that enhances comprehensive information retrieval from both low-level and high-level knowledge discovery. Additionally, the integration of graph structures with vector representations facilitates efficient retrieval of related entities and their relationships, significantly improving response times while maintaining contextual relevance. This capability is further enhanced by an incremental update algorithm that ensures the timely integration of new data, allowing the system to remain effective and responsive in rapidly changing data environments. Extensive experimental validation demonstrates considerable improvements in retrieval accuracy and efficiency compared to existing approaches. We have made our LightRAG open-source and available at the link: https://github.com/HKUDS/LightRAG",
-    "categories": [],
+    "categories": [
+      "cs.IR",
+      "cs.AI"
+    ],
     "identifiers": {
       "arxiv": "2410.05779",
       "corpusid": "273227829",
@@ -4964,59 +4987,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.671123+00:00",
+        "fetched_at": "2026-09-22T14:50:57.988996+00:00",
         "source": "semanticscholar"
       }
     },
@@ -5233,7 +5256,7 @@
         "title": "2024. Memorag: Moving towards next-gen rag via memory-inspired knowledge discovery"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.671123+00:00",
+    "retrieved_at": "2026-09-22T14:50:57.988996+00:00",
     "s2_id": "1ea143c34b9bc359780f79ba4d68dee68bcc1129",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -5243,8 +5266,11 @@
     "year": 2024
   },
   "llm_kg_roadmap": {
-    "abstract": "Large language models (LLMs), such as ChatGPT and GPT4, are making new waves in the field of natural language processing and artificial intelligence, due to their emergent ability and generalizability. However, LLMs are black-box models, which often fall short of capturing and accessing factual knowledge. In contrast, Knowledge Graphs (KGs), Wikipedia, and Huapu for example, are structured knowledge models that explicitly store rich factual knowledge. KGs can enhance LLMs by providing external knowledge for inference and interpretability. Meanwhile, KGs are difficult to construct and evolve by nature, which challenges the existing methods in KGs to generate new facts and represent unseen knowledge. Therefore, it is complementary to unify LLMs and KGs together and, simultaneously, leverage their advantages. In this article, we present a forward-looking roadmap for the unification of LLMs and KGs. Our roadmap consists of three general frameworks, namely: 1) KG-enhanced LLMs, which incorporate KGs during the pre-training and inference phases of LLMs, or for the purpose of enhancing understanding of the knowledge learned by LLMs; 2) LLM-augmented KGs, that leverage LLMs for different KG tasks such as embedding, completion, construction, graph-to-text generation, and question answering; and 3) Synergized LLMs + KGs, in which LLMs and KGs play equal roles and work in a mutually beneficial way to enhance both LLMs and KGs for bidirectional reasoning driven by both data and knowledge. We review and summarize existing efforts within these three frameworks in our roadmap and pinpoint their future research directions.",
-    "categories": [],
+    "abstract": "Large language models (LLMs), such as ChatGPT and GPT4, are making new waves in the field of natural language processing and artificial intelligence, due to their emergent ability and generalizability. However, LLMs are black-box models, which often fall short of capturing and accessing factual knowledge. In contrast, Knowledge Graphs (KGs), Wikipedia and Huapu for example, are structured knowledge models that explicitly store rich factual knowledge. KGs can enhance LLMs by providing external knowledge for inference and interpretability. Meanwhile, KGs are difficult to construct and evolving by nature, which challenges the existing methods in KGs to generate new facts and represent unseen knowledge. Therefore, it is complementary to unify LLMs and KGs together and simultaneously leverage their advantages. In this article, we present a forward-looking roadmap for the unification of LLMs and KGs. Our roadmap consists of three general frameworks, namely, 1) KG-enhanced LLMs, which incorporate KGs during the pre-training and inference phases of LLMs, or for the purpose of enhancing understanding of the knowledge learned by LLMs; 2) LLM-augmented KGs, that leverage LLMs for different KG tasks such as embedding, completion, construction, graph-to-text generation, and question answering; and 3) Synergized LLMs + KGs, in which LLMs and KGs play equal roles and work in a mutually beneficial way to enhance both LLMs and KGs for bidirectional reasoning driven by both data and knowledge. We review and summarize existing efforts within these three frameworks in our roadmap and pinpoint their future research directions.",
+    "categories": [
+      "cs.CL",
+      "cs.AI"
+    ],
     "identifiers": {
       "arxiv": "2306.08302",
       "corpusid": "259165563",
@@ -5257,59 +5283,59 @@
     "open_access_pdf_url": "http://arxiv.org/pdf/2306.08302",
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.665129+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -8299,7 +8325,7 @@
         "title": "Distilling KGs from LLMs West et al"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.665129+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "9e8b7b0d4c628c12b6a65ab56ac5f33a35eff2e6",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -8310,7 +8336,9 @@
   },
   "lost_in_the_middle": {
     "abstract": "While recent language models have the ability to take long contexts as input, relatively little is known about how well they use longer context. We analyze the performance of language models on two tasks that require identifying relevant information in their input contexts: multi-document question answering and key-value retrieval. We find that performance can degrade significantly when changing the position of relevant information, indicating that current language models do not robustly make use of information in long input contexts. In particular, we observe that performance is often highest when relevant information occurs at the beginning or end of the input context, and significantly degrades when models must access relevant information in the middle of long contexts, even for explicitly long-context models. Our analysis provides a better understanding of how language models use their input context and provides new evaluation protocols for future long-context language models.",
-    "categories": [],
+    "categories": [
+      "cs.CL"
+    ],
     "identifiers": {
       "acl": "2024.tacl-1.9",
       "arxiv": "2307.03172",
@@ -8324,59 +8352,59 @@
     "open_access_pdf_url": "https://doi.org/10.1162/tacl_a_00638",
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.664757+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -8938,7 +8966,7 @@
         "title": "Bo Peng"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.664757+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "1733eb7792f7a43dd21f51f4d1017a1bffd217b5",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -8949,7 +8977,10 @@
   },
   "rag": {
     "abstract": "Large pre-trained language models have been shown to store factual knowledge in their parameters, and achieve state-of-the-art results when fine-tuned on downstream NLP tasks. However, their ability to access and precisely manipulate knowledge is still limited, and hence on knowledge-intensive tasks, their performance lags behind task-specific architectures. Additionally, providing provenance for their decisions and updating their world knowledge remain open research problems. Pre-trained models with a differentiable access mechanism to explicit non-parametric memory can overcome this issue, but have so far been only investigated for extractive downstream tasks. We explore a general-purpose fine-tuning recipe for retrieval-augmented generation (RAG) -- models which combine pre-trained parametric and non-parametric memory for language generation. We introduce RAG models where the parametric memory is a pre-trained seq2seq model and the non-parametric memory is a dense vector index of Wikipedia, accessed with a pre-trained neural retriever. We compare two RAG formulations, one which conditions on the same retrieved passages across the whole generated sequence, the other can use different passages per token. We fine-tune and evaluate our models on a wide range of knowledge-intensive NLP tasks and set the state-of-the-art on three open domain QA tasks, outperforming parametric seq2seq models and task-specific retrieve-and-extract architectures. For language generation tasks, we find that RAG models generate more specific, diverse and factual language than a state-of-the-art parametric-only seq2seq baseline.",
-    "categories": [],
+    "categories": [
+      "cs.CL",
+      "cs.LG"
+    ],
     "identifiers": {
       "arxiv": "2005.11401",
       "corpusid": "218869575",
@@ -8962,59 +8993,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.662591+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -9747,7 +9778,7 @@
         "title": "Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.662591+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "659bf9ce7175e1ec266ff54359e2bd76e0b7ff31",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -9758,7 +9789,11 @@
   },
   "react": {
     "abstract": "While large language models (LLMs) have demonstrated impressive capabilities across tasks in language understanding and interactive decision making, their abilities for reasoning (e.g. chain-of-thought prompting) and acting (e.g. action plan generation) have primarily been studied as separate topics. In this paper, we explore the use of LLMs to generate both reasoning traces and task-specific actions in an interleaved manner, allowing for greater synergy between the two: reasoning traces help the model induce, track, and update action plans as well as handle exceptions, while actions allow it to interface with external sources, such as knowledge bases or environments, to gather additional information. We apply our approach, named ReAct, to a diverse set of language and decision making tasks and demonstrate its effectiveness over state-of-the-art baselines, as well as improved human interpretability and trustworthiness over methods without reasoning or acting components. Concretely, on question answering (HotpotQA) and fact verification (Fever), ReAct overcomes issues of hallucination and error propagation prevalent in chain-of-thought reasoning by interacting with a simple Wikipedia API, and generates human-like task-solving trajectories that are more interpretable than baselines without reasoning traces. On two interactive decision making benchmarks (ALFWorld and WebShop), ReAct outperforms imitation and reinforcement learning methods by an absolute success rate of 34% and 10% respectively, while being prompted with only one or two in-context examples. Project site with code: https://react-lm.github.io",
-    "categories": [],
+    "categories": [
+      "cs.CL",
+      "cs.AI",
+      "cs.LG"
+    ],
     "identifiers": {
       "arxiv": "2210.03629",
       "corpusid": "252762395",
@@ -9770,59 +9805,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.663358+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -10350,7 +10385,7 @@
         "title": "Nature's Turn Freeze-Dried Fruit Snacks -Banana Crisps -Perfect For School Lunches or an On-The-Go Snack -No Sugar Added"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.663358+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "99832586d55f540f603637e458a292406a0ed75d",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -10361,7 +10396,10 @@
   },
   "realm": {
     "abstract": "Language model pre-training has been shown to capture a surprising amount of world knowledge, crucial for NLP tasks such as question answering. However, this knowledge is stored implicitly in the parameters of a neural network, requiring ever-larger networks to cover more facts. To capture knowledge in a more modular and interpretable way, we augment language model pre-training with a latent knowledge retriever, which allows the model to retrieve and attend over documents from a large corpus such as Wikipedia, used during pre-training, fine-tuning and inference. For the first time, we show how to pre-train such a knowledge retriever in an unsupervised manner, using masked language modeling as the learning signal and backpropagating through a retrieval step that considers millions of documents. We demonstrate the effectiveness of Retrieval-Augmented Language Model pre-training (REALM) by fine-tuning on the challenging task of Open-domain Question Answering (Open-QA). We compare against state-of-the-art models for both explicit and implicit knowledge storage on three popular Open-QA benchmarks, and find that we outperform all previous methods by a significant margin (4-16% absolute accuracy), while also providing qualitative benefits such as interpretability and modularity.",
-    "categories": [],
+    "categories": [
+      "cs.CL",
+      "cs.LG"
+    ],
     "identifiers": {
       "arxiv": "2002.08909",
       "corpusid": "211204736",
@@ -10374,59 +10412,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.662287+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -10892,7 +10930,7 @@
         "title": "Improving language understanding with unsupervised learning"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.662287+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "832fff14d2ed50eb7969c4c4b976c35776548f56",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -10903,7 +10941,10 @@
   },
   "rog": {
     "abstract": "Large language models (LLMs) have demonstrated impressive reasoning abilities in complex tasks. However, they lack up-to-date knowledge and experience hallucinations during reasoning, which can lead to incorrect reasoning processes and diminish their performance and trustworthiness. Knowledge graphs (KGs), which capture vast amounts of facts in a structured format, offer a reliable source of knowledge for reasoning. Nevertheless, existing KG-based LLM reasoning methods only treat KGs as factual knowledge bases and overlook the importance of their structural information for reasoning. In this paper, we propose a novel method called reasoning on graphs (RoG) that synergizes LLMs with KGs to enable faithful and interpretable reasoning. Specifically, we present a planning-retrieval-reasoning framework, where RoG first generates relation paths grounded by KGs as faithful plans. These plans are then used to retrieve valid reasoning paths from the KGs for LLMs to conduct faithful reasoning. Furthermore, RoG not only distills knowledge from KGs to improve the reasoning ability of LLMs through training but also allows seamless integration with any arbitrary LLMs during inference. Extensive experiments on two benchmark KGQA datasets demonstrate that RoG achieves state-of-the-art performance on KG reasoning tasks and generates faithful and interpretable reasoning results.",
-    "categories": [],
+    "categories": [
+      "cs.CL",
+      "cs.AI"
+    ],
     "identifiers": {
       "arxiv": "2310.01061",
       "corpusid": "263605944",
@@ -10916,59 +10957,59 @@
     "open_access_pdf_url": "https://arxiv.org/pdf/2310.01061",
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.664148+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -11726,7 +11767,7 @@
         "title": "Position paper: What can large language models tell us about time series analysis"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.664148+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "b47e96762351b2dbf7e863ece4640df6194bcc0c",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -11749,59 +11790,59 @@
     "open_access_pdf_url": "https://www.nature.com/articles/s41598-023-33607-z.pdf",
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.665437+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -12335,7 +12376,7 @@
         "title": "Why metas latest large language model only survived three days online | mit technology review"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.665437+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "fc7f626f37f3cf7751523a99bc3f0fac10ec89cf",
     "source_api": "semanticscholar",
     "source_tier": "peerReviewed",
@@ -12346,7 +12387,11 @@
   },
   "self_rag": {
     "abstract": "Despite their remarkable capabilities, large language models (LLMs) often produce responses containing factual inaccuracies due to their sole reliance on the parametric knowledge they encapsulate. Retrieval-Augmented Generation (RAG), an ad hoc approach that augments LMs with retrieval of relevant knowledge, decreases such issues. However, indiscriminately retrieving and incorporating a fixed number of retrieved passages, regardless of whether retrieval is necessary, or passages are relevant, diminishes LM versatility or can lead to unhelpful response generation. We introduce a new framework called Self-Reflective Retrieval-Augmented Generation (Self-RAG) that enhances an LM's quality and factuality through retrieval and self-reflection. Our framework trains a single arbitrary LM that adaptively retrieves passages on-demand, and generates and reflects on retrieved passages and its own generations using special tokens, called reflection tokens. Generating reflection tokens makes the LM controllable during the inference phase, enabling it to tailor its behavior to diverse task requirements. Experiments show that Self-RAG (7B and 13B parameters) significantly outperforms state-of-the-art LLMs and retrieval-augmented models on a diverse set of tasks. Specifically, Self-RAG outperforms ChatGPT and retrieval-augmented Llama2-chat on Open-domain QA, reasoning and fact verification tasks, and it shows significant gains in improving factuality and citation accuracy for long-form generations relative to these models.",
-    "categories": [],
+    "categories": [
+      "cs.CL",
+      "cs.AI",
+      "cs.LG"
+    ],
     "identifiers": {
       "arxiv": "2310.11511",
       "corpusid": "264288947",
@@ -12358,59 +12403,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.664582+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -12992,7 +13037,7 @@
         "title": "A Simulation Framework"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.664582+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "ddbd8fe782ac98e9c64dd98710687a962195dd9b",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -13003,7 +13048,9 @@
   },
   "structgpt": {
     "abstract": "In this paper, we study how to improve the zero-shot reasoning ability of large language models~(LLMs) over structured data in a unified way. Inspired by the study on tool augmentation for LLMs, we develop an \\emph{Iterative Reading-then-Reasoning~(IRR)} approach for solving question answering tasks based on structured data, called \\textbf{StructGPT}. In our approach, we construct the specialized function to collect relevant evidence from structured data (\\ie \\emph{reading}), and let LLMs concentrate the reasoning task based on the collected information (\\ie \\emph{reasoning}). Specially, we propose an \\emph{invoking-linearization-generation} procedure to support LLMs in reasoning on the structured data with the help of the external interfaces. By iterating this procedures with provided interfaces, our approach can gradually approach the target answer to a given query. Extensive experiments conducted on three types of structured data demonstrate the effectiveness of our approach, which can significantly boost the performance of ChatGPT and achieve comparable performance against the full-data supervised-tuning baselines. Our codes and data are publicly available at~\\url{https://github.com/RUCAIBox/StructGPT}.",
-    "categories": [],
+    "categories": [
+      "cs.CL"
+    ],
     "identifiers": {
       "arxiv": "2305.09645",
       "corpusid": "258714753",
@@ -13016,59 +13063,59 @@
     "open_access_pdf_url": "http://arxiv.org/pdf/2305.09645",
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.663731+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -13652,7 +13699,7 @@
         "title": "2022. Evaluating the text-to-sql capabilities of large language models"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.663731+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "e0f27336698c84709bd60b6b7f4ce588cbae66bf",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -13663,7 +13710,9 @@
   },
   "think_on_graph": {
     "abstract": "Although large language models (LLMs) have achieved significant success in various tasks, they often struggle with hallucination problems, especially in scenarios requiring deep and responsible reasoning. These issues could be partially addressed by introducing external knowledge graphs (KG) in LLM reasoning. In this paper, we propose a new LLM-KG integrating paradigm ``$\\hbox{LLM}\\otimes\\hbox{KG}$'' which treats the LLM as an agent to interactively explore related entities and relations on KGs and perform reasoning based on the retrieved knowledge. We further implement this paradigm by introducing a new approach called Think-on-Graph (ToG), in which the LLM agent iteratively executes beam search on KG, discovers the most promising reasoning paths, and returns the most likely reasoning results. We use a number of well-designed experiments to examine and illustrate the following advantages of ToG: 1) compared with LLMs, ToG has better deep reasoning power; 2) ToG has the ability of knowledge traceability and knowledge correctability by leveraging LLMs reasoning and expert feedback; 3) ToG provides a flexible plug-and-play framework for different LLMs, KGs and prompting strategies without any additional training cost; 4) the performance of ToG with small LLM models could exceed large LLM such as GPT-4 in certain scenarios and this reduces the cost of LLM deployment and application. As a training-free method with lower computational cost and better generality, ToG achieves overall SOTA in 6 out of 9 datasets where most previous SOTAs rely on additional training.",
-    "categories": [],
+    "categories": [
+      "cs.CL"
+    ],
     "identifiers": {
       "arxiv": "2307.07697",
       "corpusid": "263333907",
@@ -13675,59 +13724,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.663943+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -14575,7 +14624,7 @@
         "title": "def get_tail_entities_given_head_and_relation(self, head_qid: str, relation_pid: str) -> tp"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.663943+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "c7184f9a914dbfbad59faa5aeaf9ba7019dfcf74",
     "source_api": "semanticscholar",
     "source_tier": "preprint",
@@ -14586,7 +14635,10 @@
   },
   "transformer": {
     "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.",
-    "categories": [],
+    "categories": [
+      "cs.CL",
+      "cs.LG"
+    ],
     "identifiers": {
       "arxiv": "1706.03762",
       "corpusid": "13756489",
@@ -14599,59 +14651,59 @@
     "open_access_pdf_url": null,
     "provenance": {
       "abstract": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "categories": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
-        "source": "semanticscholar"
+        "fetched_at": "2026-10-25T12:27:49.835117+00:00",
+        "source": "arxiv"
       },
       "identifiers": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "isSurvey": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "open_access_pdf_url": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "publication_types": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "references": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "retrieved_at": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_api": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "source_tier": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "title": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "tldr": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "venue": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       },
       "year": {
-        "fetched_at": "2026-09-22T14:52:37.661914+00:00",
+        "fetched_at": "2026-09-22T14:51:39.241990+00:00",
         "source": "semanticscholar"
       }
     },
@@ -15081,7 +15133,7 @@
         "title": "Le , Ilya Sutskever , Oriol Vinyals , and Lukasz Kaiser . Multitask sequence to sequence learning"
       }
     ],
-    "retrieved_at": "2026-09-22T14:52:37.661914+00:00",
+    "retrieved_at": "2026-09-22T14:51:39.241990+00:00",
     "s2_id": "204e3073870fae3d05bcbc2f6a8e263d9b72e776",
     "source_api": "semanticscholar",
     "source_tier": "preprint",

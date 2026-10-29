@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api'
 import type {
+  Concept,
   GapHypothesis,
   GapUpdateInput,
   GraphNode,
@@ -21,7 +22,7 @@ import { FrontierBars, FrontierList } from './FrontierPanel'
 import { GapBoard } from './GapBoard'
 import { bridgingLinks, conceptLabeler, gapFocusWorkIds, gapsByWork } from './insights'
 import { Timeline, type YearRange } from './Timeline'
-import { WorkDetail } from './WorkDetail'
+import { WorkDetail, type ConceptWorksEntry } from './WorkDetail'
 
 const LENSES: readonly { id: MapLens; label: string; title: string }[] = [
   { id: 'landscape', label: 'Landscape', title: 'All works, sized by citations.' },
@@ -83,6 +84,10 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
   const [drawerOpen, setDrawerOpen] = useState(true)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [showAllClusters, setShowAllClusters] = useState(false)
+  const [focusedConcept, setFocusedConcept] = useState<Concept | null>(null)
+  const [conceptWorks, setConceptWorks] = useState<ReadonlyMap<string, ConceptWorksEntry>>(new Map())
+  // Bumped whenever the concept cache resets so late responses for an old graph are dropped.
+  const conceptEpoch = useRef(0)
   const mapRef = useRef<CitationMapHandle>(null)
   const handledWorkRequest = useRef<number | null>(null)
 
@@ -100,6 +105,9 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
       setDetailError(null)
       setFocusedClusterId(null)
       setShowAllClusters(false)
+      conceptEpoch.current += 1
+      setFocusedConcept(null)
+      setConceptWorks(new Map())
     })
 
     api.projectGraph(projectId, { authors: showAuthors, concepts: showConcepts })
@@ -252,11 +260,20 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
     () => new Set(searchResults.map((result) => result.id)),
     [searchResults],
   )
-  const highlightIds = useMemo(
-    () => new Set([...highlightedWorkIds, ...(query.trim() ? searchIds : selectedLinkedWorks)]),
-    [highlightedWorkIds, query, searchIds, selectedLinkedWorks],
+  const focusedConceptWorks = focusedConcept ? conceptWorks.get(focusedConcept.id) : undefined
+  const conceptFocusIds = useMemo(
+    () => (focusedConceptWorks?.status === 'ready' ? new Set(focusedConceptWorks.workIds) : null),
+    [focusedConceptWorks],
   )
-  const highlightingActive = highlightIds.size > 0 || Boolean(query.trim())
+  // A focused concept takes precedence over search and linked-work highlighting.
+  const highlightIds = useMemo(
+    () => new Set([
+      ...highlightedWorkIds,
+      ...(conceptFocusIds ?? (query.trim() ? searchIds : selectedLinkedWorks)),
+    ]),
+    [conceptFocusIds, highlightedWorkIds, query, searchIds, selectedLinkedWorks],
+  )
+  const highlightingActive = highlightIds.size > 0 || Boolean(query.trim()) || conceptFocusIds !== null
   const hasWorks = graph?.nodes.some((node) => node.kind === 'work') ?? false
 
   useEffect(() => {
@@ -280,6 +297,25 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
       active = false
     }
   }, [projectId, selectedNode])
+
+  const loadConceptWorks = (conceptId: string) => {
+    const existing = conceptWorks.get(conceptId)
+    if (existing && existing.status !== 'error') return
+    const epoch = conceptEpoch.current
+    const store = (entry: ConceptWorksEntry) => {
+      if (conceptEpoch.current !== epoch) return
+      setConceptWorks((current) => new Map(current).set(conceptId, entry))
+    }
+    store({ status: 'loading' })
+    api.conceptWorks(projectId, conceptId)
+      .then((result) => store({ status: 'ready', workIds: result.work_ids }))
+      .catch(() => store({ status: 'error' }))
+  }
+
+  const focusConcept = (concept: Concept | null) => {
+    setFocusedConcept(concept)
+    if (concept) loadConceptWorks(concept.id)
+  }
 
   const selectNode = (id: string | null) => {
     setSelectedId(id)
@@ -521,6 +557,23 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
             ))}
           </ul>
         ) : null}
+        {focusedConcept ? (
+          <div className="graph-panel__concept-focus" role="status">
+            <span className="graph-panel__concept-focus-text">
+              Concept: <strong>{focusedConcept.label}</strong>
+              {focusedConceptWorks?.status === 'ready'
+                ? ` · ${focusedConceptWorks.workIds.length} ${focusedConceptWorks.workIds.length === 1 ? 'work' : 'works'}`
+                : focusedConceptWorks?.status === 'error' ? ' · works unavailable' : ' · loading…'}
+            </span>
+            <button
+              className="graph-panel__control"
+              type="button"
+              onClick={() => setFocusedConcept(null)}
+            >
+              Clear
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className="graph-panel__canvas-wrap">
@@ -603,6 +656,10 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
               frontierWork={frontierById.get(detail.work.id) ?? null}
               gaps={gapsForWork.get(detail.work.id) ?? []}
               onSelectGap={openGap}
+              focusedConceptId={focusedConcept?.id ?? null}
+              onFocusConcept={focusConcept}
+              conceptWorks={conceptWorks}
+              onLoadConceptWorks={loadConceptWorks}
             />
           ) : null}
         </section>

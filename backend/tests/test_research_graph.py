@@ -138,6 +138,8 @@ def test_authors_and_concepts_replaced(graph: InMemoryResearchGraph | Neo4jResea
     c = graph.upsert_concept(ConceptNode(id="graph", label="Graph", aliases=["network"]))
     c = graph.upsert_concept(ConceptNode(id="graph", label="Graph", aliases=["network", "graphs"]))
     assert c.aliases == ["graphs", "network"]
+    assert graph.get_concept(c.id) == c
+    assert graph.get_concept("missing") is None
     graph.set_authors(w.id, [(a.id, 1), (b.id, 2)])
     graph.set_concepts(w.id, [(c.id, 0.7)])
     assert [item.id for item in graph.works_by_concept(c.id, p.id)] == [w.id]

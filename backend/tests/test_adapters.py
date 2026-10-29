@@ -781,3 +781,98 @@ def test_crossref_doi_and_bibliographic_title_query(tmp_path: Path) -> None:
         == "SciQA: a Scientific Question Answering Benchmark for Scholarly Knowledge"
     )
     assert _identifier(exact, "doi") == "10.1038/s41598-023-33607-z"
+
+
+def _stamp_cache_sidecars(cache_dir: Path, fetched_at: str) -> int:
+    """Rewrite every cache sidecar's ``fetched_at``, as if fetched at that time."""
+
+    stamped = 0
+    for path in cache_dir.glob("*.json"):
+        metadata = json.loads(path.read_text(encoding="utf-8"))
+        metadata["fetched_at"] = fetched_at
+        path.write_text(json.dumps(metadata), encoding="utf-8")
+        stamped += 1
+    return stamped
+
+
+def _sidecar_fetched_at(cache_dir: Path) -> set[str]:
+    return {
+        json.loads(path.read_text(encoding="utf-8"))["fetched_at"]
+        for path in cache_dir.glob("*.json")
+    }
+
+
+def test_records_carry_response_fetch_time_live_and_from_cache(tmp_path: Path) -> None:
+    """Live records carry the time written to the cache; cached ones carry the stored time.
+
+    Offline rebuilds of the golden fixture rely on this so provenance keeps the original
+    fetch time instead of the build time.
+    """
+
+    fixtures = {
+        "export.arxiv.org": (_read_fixture("arxiv_lookup.xml"), "application/atom+xml"),
+        "api.crossref.org": (_read_fixture("crossref_work.json"), "application/json"),
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host in fixtures:
+            payload, content_type = fixtures[request.url.host]
+        elif request.url.path.endswith("/paper/batch"):
+            payload, content_type = _read_fixture("semanticscholar_batch.json"), "application/json"
+        else:
+            payload = _read_fixture("semanticscholar_title_search.json")
+            content_type = "application/json"
+        return _payload_response(request, payload, content_type)
+
+    def lookups(client: Any) -> dict[str, list[dict[str, Any]]]:
+        s2 = semanticscholar_module.SemanticScholarAdapter(client=client, api_key="")
+        arxiv = arxiv_module.ArxivAdapter(client=client)
+        crossref = crossref_module.CrossrefAdapter(client=client)
+        return {
+            "s2_batch": s2.lookup_many(["arXiv:1706.03762"]),
+            "s2_title": s2.search_title("Attention Is All You Need"),
+            "arxiv_id_list": arxiv.lookup_many(["1706.03762"]),
+            "crossref_doi": [crossref.lookup_doi("10.1038/s41598-023-33607-z")],
+        }
+
+    cache_dir = tmp_path / "cache"
+    live_client = _make_client(
+        cache_dir,
+        httpx.MockTransport(handler),
+        intervals={"semanticscholar": 0.0, "arxiv": 0.0, "crossref": 0.0},
+    )
+    live = lookups(live_client)
+    written = _sidecar_fetched_at(cache_dir)
+    for name, records in live.items():
+        assert records, name
+        assert all(record["fetched_at"] in written for record in records), name
+
+    cached_time = "2026-09-22T14:19:27.084727+00:00"
+    assert _stamp_cache_sidecars(cache_dir, cached_time) == 4
+    offline_client = _make_client(
+        cache_dir,
+        httpx.MockTransport(
+            lambda request: pytest.fail(f"offline client attempted network access: {request.url}")
+        ),
+        offline=True,
+    )
+    for name, records in lookups(offline_client).items():
+        assert records, name
+        assert {record["fetched_at"] for record in records} == {cached_time}, name
+
+
+def test_cached_response_without_fetch_time_yields_none(tmp_path: Path) -> None:
+    cache = base_module.ResponseCache(tmp_path / "cache")
+    body_path, metadata_path = cache.paths_for("fixture", "https://fixture.test/x", {})
+    body_path.parent.mkdir(parents=True)
+    body_path.write_bytes(b"ok")
+    metadata_path.write_text(json.dumps({"status": 200, "url": "https://fixture.test/x"}))
+    client = _make_client(
+        tmp_path / "cache",
+        httpx.MockTransport(lambda request: pytest.fail("unexpected network access")),
+        offline=True,
+    )
+
+    response = client.get("fixture", "https://fixture.test/x", params={})
+
+    assert base_module.response_fetched_at(response) is None

@@ -13,6 +13,9 @@ gains a `Superseded by` line.
 | [0006](0006-v1-graph-scope.md) | v1 graph: works, citations, authors, merged keyword concepts; the graph is the agents' map | accepted (amended 2026-09-26) |
 | [0007](0007-chat-agents-deepagents.md) | Chat agents run on LangGraph Deep Agents; they read papers as files | accepted |
 | [0008](0008-grounded-concepts-and-structural-analytics.md) | Concepts are grounded in the paper's text (checked keywords + keyphrases); frontier and gaps are structural and transparent | accepted |
+| [0009](0009-project-and-review.md) | How a `Project` relates to the ontology's `Review`; a research run is an activity with its own protocol | proposed |
+| [0010](0010-answer-verification-policy.md) | Answer verification: drop, flag or repair citations whose quote fails the check | proposed |
+| [0011](0011-pdf-storage-and-licence.md) | PDF storage and licence policy: papers stay out of git, licence provenance is kept per document, exports are metadata only | proposed |
 | [0012](0012-anthropic-chat-route.md) | Chat agents can run directly on the Anthropic API (`PORTOLAN_CHAT_PROVIDER`), next to OpenRouter | accepted |
 
 Strategic and cross-project context lives in the private design notes at `$PORTOLAN_NOTES_DIR` (set in `.env`);

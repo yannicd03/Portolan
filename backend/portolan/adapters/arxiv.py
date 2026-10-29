@@ -24,6 +24,7 @@ from .base import (
     clean_text,
     normalized_record,
     parse_year,
+    response_fetched_at,
 )
 
 ATOM_NS = "http://www.w3.org/2005/Atom"
@@ -121,7 +122,7 @@ class ArxivAdapter:
         self.http_requests = 0
         self.cache_hits = 0
 
-    def _get(self, params: Mapping[str, Any]) -> str:
+    def _get(self, params: Mapping[str, Any]) -> tuple[str, str | None]:
         response = self.client.get(
             self.source,
             self.endpoint,
@@ -134,7 +135,7 @@ class ArxivAdapter:
             self.cache_hits += 1
         else:
             self.http_requests += 1
-        return response.text
+        return response.text, response_fetched_at(response)
 
     @staticmethod
     def _parse_entries(body: str) -> list[ET.Element]:
@@ -145,7 +146,9 @@ class ArxivAdapter:
         return list(root.findall(f"{ATOM}entry"))
 
     @classmethod
-    def _record_from_entry(cls, entry: ET.Element, raw_body: str) -> dict[str, Any]:
+    def _record_from_entry(
+        cls, entry: ET.Element, raw_body: str, fetched_at: str | None = None
+    ) -> dict[str, Any]:
         raw = _entry_raw(entry)
         arxiv_id = canonical_arxiv_id(raw.get("id"))
         doi = clean_text(raw.get("doi"))
@@ -189,6 +192,7 @@ class ArxivAdapter:
             tldr=None,
             raw=raw,
             raw_body=raw_body,
+            fetched_at=fetched_at,
         )
         record["categories"] = list(raw.get("categories") or [])
         record["primary_category"] = raw.get("primary_category")
@@ -198,14 +202,16 @@ class ArxivAdapter:
         """Search title terms using arXiv's exact title field query."""
 
         escaped = re.sub(r'(["\\])', r"\\\1", title.strip())
-        body = self._get(
+        body, fetched_at = self._get(
             {
                 "search_query": f'ti:"{escaped}"',
                 "start": 0,
                 "max_results": max(1, int(max_results)),
             }
         )
-        return [self._record_from_entry(entry, body) for entry in self._parse_entries(body)]
+        return [
+            self._record_from_entry(entry, body, fetched_at) for entry in self._parse_entries(body)
+        ]
 
     def lookup_many(self, arxiv_ids: list[str] | tuple[str, ...]) -> list[dict[str, Any]]:
         """Fetch several arXiv records in one ``id_list`` request."""
@@ -219,13 +225,15 @@ class ArxivAdapter:
                 canonical_ids.append(canonical)
         if not canonical_ids:
             return []
-        body = self._get(
+        body, fetched_at = self._get(
             {
                 "id_list": ",".join(canonical_ids),
                 "max_results": len(canonical_ids),
             }
         )
-        return [self._record_from_entry(entry, body) for entry in self._parse_entries(body)]
+        return [
+            self._record_from_entry(entry, body, fetched_at) for entry in self._parse_entries(body)
+        ]
 
     def lookup_by_id(self, arxiv_id: str) -> dict[str, Any] | None:
         """Fetch one arXiv record by identifier, or ``None`` when absent."""

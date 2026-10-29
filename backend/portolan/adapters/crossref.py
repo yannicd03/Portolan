@@ -16,7 +16,7 @@ from urllib.parse import quote
 
 import httpx
 
-from .base import HttpClient, normalized_record, parse_year
+from .base import HttpClient, normalized_record, parse_year, response_fetched_at
 
 
 class CrossrefAdapter:
@@ -73,7 +73,9 @@ class CrossrefAdapter:
             result.setdefault("mailto", self.mailto.removeprefix("mailto:"))
         return result
 
-    def _get(self, path: str, *, params: Mapping[str, Any] | None = None) -> tuple[Any, str]:
+    def _get(
+        self, path: str, *, params: Mapping[str, Any] | None = None
+    ) -> tuple[Any, str, str | None]:
         actual_params = self._params(params)
         response = self.client.get(
             self.source,
@@ -84,7 +86,7 @@ class CrossrefAdapter:
             refresh=self.refresh,
         )
         try:
-            return response.json(), response.text
+            return response.json(), response.text, response_fetched_at(response)
         except ValueError as exc:
             raise ValueError("Crossref returned malformed JSON") from exc
 
@@ -98,7 +100,9 @@ class CrossrefAdapter:
         return payload if "title" in payload or "DOI" in payload else None
 
     @staticmethod
-    def _record_from_work(work: Mapping[str, Any], raw_body: str) -> dict[str, Any]:
+    def _record_from_work(
+        work: Mapping[str, Any], raw_body: str, fetched_at: str | None = None
+    ) -> dict[str, Any]:
         titles = work.get("title") or []
         title = titles[0] if isinstance(titles, list) and titles else titles
         containers = work.get("container-title") or work.get("container_title") or []
@@ -157,6 +161,7 @@ class CrossrefAdapter:
             tldr=None,
             raw=dict(work),
             raw_body=raw_body,
+            fetched_at=fetched_at,
         )
 
     def lookup_doi(self, doi: str) -> dict[str, Any] | None:
@@ -169,14 +174,16 @@ class CrossrefAdapter:
             value = value[4:].strip()
         if not value:
             raise ValueError("DOI must not be empty")
-        payload, raw_body = self._get(f"works/{quote(value, safe='')}")
+        payload, raw_body, fetched_at = self._get(f"works/{quote(value, safe='')}")
         message = self._message(payload)
-        return self._record_from_work(message, raw_body) if message is not None else None
+        if message is None:
+            return None
+        return self._record_from_work(message, raw_body, fetched_at)
 
     def search_title(self, title: str, *, rows: int = 10) -> list[dict[str, Any]]:
         """Search Crossref's bibliographic title query."""
 
-        payload, raw_body = self._get(
+        payload, raw_body, fetched_at = self._get(
             "works",
             params={"query.bibliographic": title, "rows": max(1, int(rows))},
         )
@@ -185,7 +192,9 @@ class CrossrefAdapter:
         if not isinstance(items, list):
             return []
         return [
-            self._record_from_work(item, raw_body) for item in items if isinstance(item, Mapping)
+            self._record_from_work(item, raw_body, fetched_at)
+            for item in items
+            if isinstance(item, Mapping)
         ]
 
     get_by_doi = lookup_doi

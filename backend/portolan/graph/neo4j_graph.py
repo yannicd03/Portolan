@@ -361,6 +361,10 @@ class Neo4jResearchGraph(ResearchGraph):
         records = self._run("MATCH (w:Work {id: $id}) RETURN w{.*} AS work", id=work_id)
         return _work_model(_record_value(records[0], "work")) if records else None
 
+    def get_concept(self, concept_id: str) -> ConceptNode | None:
+        records = self._run("MATCH (c:Concept {id: $id}) RETURN c{.*} AS concept", id=concept_id)
+        return _concept_model(_record_value(records[0], "concept")) if records else None
+
     def include_work(self, inclusion: Inclusion) -> None:
         values = _model_values(
             inclusion,
