@@ -10,6 +10,15 @@ from typing import Literal
 from .graph.base import ResearchGraph
 
 StoreBackend = Literal["neo4j", "memory"]
+ChatProvider = Literal["openrouter", "anthropic"]
+
+# Chat model used when PORTOLAN_CHAT_MODEL is unset, per provider (ADR-0004, ADR-0012).
+DEFAULT_CHAT_MODELS: dict[str, str] = {
+    "openrouter": "deepseek/deepseek-v4-pro",
+    "anthropic": "claude-haiku-5-5",
+}
+ChatEffort = Literal["low", "medium", "high", "xhigh", "max"]
+CHAT_EFFORTS: tuple[ChatEffort, ...] = ("low", "medium", "high", "xhigh", "max")
 
 # backend/portolan/settings.py -> repository root, where ontology/ and eval/ live.
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -40,9 +49,13 @@ class Settings:
     semantic_scholar_api_key: str | None = None
     contact_email: str | None = None
     max_concurrent_runs: int = 1
+    chat_provider: ChatProvider = "openrouter"
     openrouter_api_key: str | None = None
-    chat_model: str = "deepseek/deepseek-v4-pro"
+    chat_model: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    anthropic_api_key: str | None = None
+    anthropic_base_url: str | None = None
+    chat_effort: ChatEffort | None = "high"
     chat_max_tool_calls: int = 40
 
     def __post_init__(self) -> None:
@@ -56,6 +69,14 @@ class Settings:
             raise ValueError("max_concurrent_runs must be at least 1")
         if self.chat_max_tool_calls < 1:
             raise ValueError("chat_max_tool_calls must be at least 1")
+        if self.chat_provider not in DEFAULT_CHAT_MODELS:
+            raise ValueError(
+                f"chat_provider must be 'openrouter' or 'anthropic', got {self.chat_provider!r}"
+            )
+        if not self.chat_model:
+            object.__setattr__(self, "chat_model", DEFAULT_CHAT_MODELS[self.chat_provider])
+        if self.chat_effort is not None and self.chat_effort not in CHAT_EFFORTS:
+            raise ValueError(f"chat_effort must be one of {CHAT_EFFORTS}, got {self.chat_effort!r}")
 
     @property
     def documents_dir(self) -> Path:
@@ -106,6 +127,17 @@ class Settings:
         if store not in ("memory", "neo4j"):
             raise ValueError(f"PORTOLAN_STORE must be 'neo4j' or 'memory', got {store!r}")
 
+        openrouter_api_key = _env("OPENROUTER_API_KEY")
+        anthropic_api_key = _env("ANTHROPIC_API_KEY")
+        # An explicit provider wins; otherwise use Anthropic only when it is the one key set.
+        chat_provider = (_env("PORTOLAN_CHAT_PROVIDER") or "").lower() or (
+            "anthropic" if anthropic_api_key and not openrouter_api_key else "openrouter"
+        )
+        if chat_provider not in DEFAULT_CHAT_MODELS:
+            raise ValueError(
+                f"PORTOLAN_CHAT_PROVIDER must be 'openrouter' or 'anthropic', got {chat_provider!r}"
+            )
+
         data_dir = _env("PORTOLAN_DATA_DIR")
         repo_root = _env("PORTOLAN_REPO_ROOT")
         return cls(
@@ -123,9 +155,13 @@ class Settings:
             semantic_scholar_api_key=_env("SEMANTIC_SCHOLAR_API_KEY"),
             contact_email=_env("PORTOLAN_CONTACT_EMAIL"),
             max_concurrent_runs=int(_env("PORTOLAN_MAX_CONCURRENT_RUNS") or 1),
-            openrouter_api_key=_env("OPENROUTER_API_KEY"),
-            chat_model=_env("PORTOLAN_CHAT_MODEL") or "deepseek/deepseek-v4-pro",
+            chat_provider=chat_provider,  # type: ignore[arg-type]
+            openrouter_api_key=openrouter_api_key,
+            chat_model=_env("PORTOLAN_CHAT_MODEL") or "",
             openrouter_base_url=_env("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1",
+            anthropic_api_key=anthropic_api_key,
+            anthropic_base_url=_env("ANTHROPIC_BASE_URL"),
+            chat_effort=(_env("PORTOLAN_CHAT_EFFORT") or "high").lower(),  # type: ignore[arg-type]
             chat_max_tool_calls=int(_env("PORTOLAN_CHAT_MAX_TOOL_CALLS") or 40),
         )
 
@@ -143,7 +179,9 @@ class Settings:
             f"semantic_scholar_key={'set' if self.semantic_scholar_api_key else 'unset'} "
             f"contact_email={'set' if self.contact_email else 'unset'} "
             f"max_concurrent_runs={self.max_concurrent_runs}"
+            f" chat_provider={self.chat_provider}"
             f" openrouter_key={'set' if self.openrouter_api_key else 'unset'}"
+            f" anthropic_key={'set' if self.anthropic_api_key else 'unset'}"
             f" chat_model={self.chat_model}"
         )
 

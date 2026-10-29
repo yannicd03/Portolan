@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from ..agent.ask import AgentEvent, AskAgent
 from ..agent.chats import ChatMessage, ChatStore, Thread, ThreadSummary
 from ..agent.citations import VerifiedAnswer
+from ..agent.llm import unavailable_reason
 from ..agent.research import ResearchAgent
 from ..documents.store import DocumentStore
 from ..graph.base import ResearchGraph
@@ -56,6 +57,7 @@ class ChatStatus(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     available: bool
+    provider: str
     model: str
     reason: str | None = None
 
@@ -237,11 +239,12 @@ def build_chat_router(
 
     @router.get("/api/chat/status", response_model=ChatStatus)
     def chat_status() -> ChatStatus:
-        available = bool(settings.openrouter_api_key)
+        reason = unavailable_reason(settings, "ask")
         return ChatStatus(
-            available=available,
+            available=reason is None,
+            provider=settings.chat_provider,
             model=settings.chat_model,
-            reason=None if available else "Ask mode needs OPENROUTER_API_KEY",
+            reason=reason,
         )
 
     @router.post("/api/chats/{thread_id}/messages", response_model=None)
@@ -253,11 +256,8 @@ def build_chat_router(
     ) -> StreamingResponse | JSONResponse:
         graph = graph_for(project)
         thread = thread_for(project, thread_id)
-        if not settings.openrouter_api_key:
-            return JSONResponse(
-                status_code=503,
-                content={"detail": f"{body.mode.title()} mode needs OPENROUTER_API_KEY"},
-            )
+        if reason := unavailable_reason(settings, body.mode):
+            return JSONResponse(status_code=503, content={"detail": reason})
         if any(message.plan_status == "pending" for message in thread.messages):
             raise HTTPException(status_code=409, detail="chat thread has a pending plan")
         cancel = reserve(thread_id)
@@ -372,11 +372,8 @@ def build_chat_router(
     ) -> StreamingResponse | JSONResponse:
         graph = graph_for(project)
         thread = thread_for(project, thread_id)
-        if not settings.openrouter_api_key:
-            return JSONResponse(
-                status_code=503,
-                content={"detail": "Research mode needs OPENROUTER_API_KEY"},
-            )
+        if reason := unavailable_reason(settings, "research"):
+            return JSONResponse(status_code=503, content={"detail": reason})
         plan_message = next(
             (message for message in reversed(thread.messages) if message.plan_status == "pending"),
             None,

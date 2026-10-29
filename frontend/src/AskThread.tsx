@@ -111,10 +111,8 @@ function activityEvents(message: ChatMessage): ChatActivityEvent[] {
 
 function unavailableReason(status: ChatStatus | null): string {
   const reason = status?.reason?.trim()
-  if (!reason || reason.includes('OPENROUTER_API_KEY')) {
-    return 'Ask mode needs OPENROUTER_API_KEY in .env.'
-  }
-  return reason
+  if (!reason) return 'Ask mode is unavailable.'
+  return /_API_KEY$/.test(reason) ? `${reason} in .env.` : reason
 }
 
 function ActivityTrail({ events, live = false }: ActivityTrailProps) {

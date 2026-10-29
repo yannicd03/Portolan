@@ -64,7 +64,8 @@ handlers can share one graph object (this matters for the in-memory backend).
 | Chat | `GET /api/chat/status`; `GET/POST /api/projects/{id}/chats`; `GET/DELETE /api/chats/{thread_id}?project=`; `POST /api/chats/{thread_id}/messages?project=` (SSE); `POST /api/chats/{thread_id}/resume?project=` (SSE, plan decision) |
 
 The chat endpoints stream `status`, `answer`, `plan`, `error` and `done` events. Both chat
-modes return 503 when `OPENROUTER_API_KEY` is unset. A thread takes one active answer at a time
+modes return 503 when the configured provider's key (`OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY`) is
+unset; `GET /api/chat/status` reports the provider, model and that reason. A thread takes one active answer at a time
 and refuses new messages while a plan is pending (409).
 
 ## Research pipeline
@@ -206,8 +207,10 @@ and gap modules.
 
 ## Chat agents
 
-Both agents are built with `create_deep_agent` (ADR-0007). The model is a `ChatOpenAI` client
-pointed at OpenRouter (`PORTOLAN_CHAT_MODEL`, temperature 0). The file backend is a read-only
+Both agents are built with `create_deep_agent` (ADR-0007). `agent/llm.py` builds the model for
+`PORTOLAN_CHAT_PROVIDER` (ADR-0012): a `ChatOpenAI` client pointed at OpenRouter (temperature 0),
+or a `ChatAnthropic` client on the Anthropic API (adaptive thinking at `PORTOLAN_CHAT_EFFORT`,
+streaming, server-side refusal fallback on the models that accept it). `PORTOLAN_CHAT_MODEL` picks the model on either route. The file backend is a read-only
 `FilesystemBackend` over the document store: writes are denied, and the shell tool and the
 general-purpose subagent are disabled through a harness profile.
 

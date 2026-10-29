@@ -211,6 +211,7 @@ export interface Run {
 
 export interface ChatStatus {
   available: boolean
+  provider: string
   model: string
   reason: string | null
 }

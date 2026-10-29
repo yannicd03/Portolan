@@ -4,6 +4,7 @@
 - **Date:** 2026-09-22
 - **Decides:** open decision 4 in the design-notes spec (`$PORTOLAN_NOTES_DIR/spec.md`)
 - **Supersedes:** the `architecture.md` suggestion of local `llama-server` screening
+- **Amended by:** ADR-0012 (direct Anthropic route for the chat agents)
 
 ## Context
 

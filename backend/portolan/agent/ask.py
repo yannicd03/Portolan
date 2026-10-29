@@ -23,15 +23,12 @@ from ..documents.store import DocumentStore
 from ..graph.base import ResearchGraph
 from ..settings import Settings
 from .citations import AskAnswer, VerifiedAnswer, verify_citations
+from .llm import AgentUnavailable, build_chat_model
 from .prompts import ASK_PROMPT, PAPER_READER_PROMPT
 from .tools import build_graph_tools
 
 if TYPE_CHECKING:
     from .chats import ChatMessage
-
-
-class AgentUnavailable(RuntimeError):
-    """Ask mode cannot run with the current configuration."""
 
 
 class AgentLimitReached(RuntimeError):
@@ -77,18 +74,7 @@ class AskAgent:
         self.graph = graph
         self.documents = documents
         self.settings = settings
-        if model is None:
-            if not settings.openrouter_api_key:
-                raise AgentUnavailable("Ask mode needs OPENROUTER_API_KEY")
-            from langchain_openai import ChatOpenAI
-
-            model = ChatOpenAI(
-                model=settings.chat_model,
-                base_url=settings.openrouter_base_url,
-                api_key=settings.openrouter_api_key,
-                temperature=0,
-            )
-        self.model = model
+        self.model = model if model is not None else build_chat_model(settings, "ask")
         self.project_id = project_id
         self.agent: Any = None
         if self.project_id is None:

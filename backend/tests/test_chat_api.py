@@ -151,6 +151,7 @@ def test_chat_status_and_missing_key(tmp_path: Path) -> None:
         assert status.status_code == 200
         assert status.json() == {
             "available": False,
+            "provider": "openrouter",
             "model": "deepseek/deepseek-v4-pro",
             "reason": "Ask mode needs OPENROUTER_API_KEY",
         }

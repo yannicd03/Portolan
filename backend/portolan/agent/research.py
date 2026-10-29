@@ -23,6 +23,7 @@ from ..documents.store import DocumentStore
 from ..graph.base import ResearchGraph
 from ..settings import Settings
 from .ask import AgentEvent, AgentLimitReached, AgentUnavailable, _model_profile
+from .llm import build_chat_model
 from .prompts import RESEARCH_PROMPT
 from .tools import build_research_tools
 
@@ -154,16 +155,7 @@ class ResearchAgent:
     def _configured_model(self, model: BaseChatModel | None) -> BaseChatModel:
         if model is not None:
             return model
-        if not self.settings.openrouter_api_key:
-            raise AgentUnavailable("Research mode needs OPENROUTER_API_KEY")
-        from langchain_openai import ChatOpenAI
-
-        return ChatOpenAI(
-            model=self.settings.chat_model,
-            base_url=self.settings.openrouter_base_url,
-            api_key=self.settings.openrouter_api_key,
-            temperature=0,
-        )
+        return build_chat_model(self.settings, "research")
 
     @property
     def last_run_id(self) -> str | None:
