@@ -647,6 +647,7 @@ export function AskThread({ projectId, worksCount, onHighlightedWorkIds, onOpenW
       if (chatError.status === 503) {
         setStatus((current) => ({
           available: false,
+          provider: current?.provider ?? '',
           model: current?.model ?? '',
           reason: chatError.message,
         }))
@@ -749,7 +750,12 @@ export function AskThread({ projectId, worksCount, onHighlightedWorkIds, onOpenW
         setPlanError({ id: messageId, message: errorMessage(reason, 'Unable to resume research.'), retry: true })
       }
       if (chatError.status === 503) {
-        setStatus((current) => ({ available: false, model: current?.model ?? '', reason: chatError.message }))
+        setStatus((current) => ({
+          available: false,
+          provider: current?.provider ?? '',
+          model: current?.model ?? '',
+          reason: chatError.message,
+        }))
       }
       // Refresh either way: a 410 persists the expiry on the plan message.
       await reloadThread(threadId, generation, [0], streamGeneration)
