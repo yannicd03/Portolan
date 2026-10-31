@@ -98,8 +98,9 @@ and emits a `RunProgress` event per stage. It checks for cancellation between st
   included works (0.2), co-citation by the core set (0.25) and citation count (0.10). Seeds are
   always included. Other candidates are picked greedily until `max_works` is reached or the best
   remaining score is below `min_score` (0.15).
-- **write**: Semantic Scholar enrichment, then `Work` upserts (identity is merged by DOI, arXiv,
-  OpenAlex or S2 id), `INCLUDES` edges with `discovered_via`, `depth` and `score`, authors, and
+- **write**: Semantic Scholar enrichment, arXiv enrichment for works still missing an abstract (by
+  arXiv id, then by exact title for up to 20 works per run), then `Work` upserts (identity is merged
+  by DOI, arXiv, OpenAlex or S2 id), `INCLUDES` edges with `discovered_via`, `depth` and `score`, authors, and
   citations among included works.
 - **concepts**: `rebuild_project_concepts` rebuilds the concepts of the **whole project**, not
   just the new works (see the concept pipeline below).

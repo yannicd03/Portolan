@@ -1865,3 +1865,157 @@ def test_explicit_legacy_weights_reproduce_original_score() -> None:
     mixed = HeuristicScreener(token_weight=0.2, semantic_weight=0.3)
     assert mixed.cocitation_norm == "pool_max"
     assert mixed.coupling_weight > 0
+
+
+TITLE = "Hybrid Retrieval for Graph-Augmented Generation"
+
+
+class FakeArxivTitleSearch:
+    """arXiv adapter fake for the title search."""
+
+    def __init__(
+        self, hits: list[dict[str, Any]] | None = None, *, error: Exception | None = None
+    ) -> None:
+        self.hits = hits or []
+        self.error = error
+        self.calls: list[str] = []
+
+    def search_title(self, title: str, *, max_results: int = 10) -> list[dict[str, Any]]:
+        self.calls.append(title)
+        if self.error is not None:
+            raise self.error
+        return deepcopy(self.hits[:max_results])
+
+
+def title_hit(
+    arxiv_id: str = "2401.00009",
+    *,
+    title: str = TITLE,
+    year: int = 2024,
+    doi: str | None = None,
+    authors: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    hit = arxiv_record(arxiv_id, "Abstract found on arXiv")
+    hit["title"] = title
+    hit["year"] = year
+    hit["identifiers"]["doi"] = doi
+    hit["venue"] = "Proc. of a journal ref"
+    hit["raw"]["authors"] = [{"name": name, "orcid": None} for name in authors]
+    return hit
+
+
+def bare_work(title: str = TITLE, **kwargs: Any) -> _Candidate:
+    work = record("W1", title, **kwargs)
+    work["abstract"] = None
+    return _Candidate(key="W1", record=work, depth=0, discovered_via="search")
+
+
+def enrich_by_title(arxiv: FakeArxivTitleSearch, *candidates: _Candidate) -> list[str]:
+    runner = make_runner(InMemoryResearchGraph(), FakeOpenAlex([]), arxiv=arxiv)
+    warnings: list[str] = []
+    runner._enrich_arxiv_by_title(candidates, warnings, None)
+    return warnings
+
+
+def test_title_search_fills_only_what_the_work_is_missing() -> None:
+    candidate = bare_work(authors=[{"name": "Ada Lovelace"}])
+    arxiv = FakeArxivTitleSearch(
+        [
+            title_hit(
+                title="  hybrid retrieval for graph augmented  generation.",
+                authors=("A. Lovelace",),
+            )
+        ]
+    )
+
+    warnings = enrich_by_title(arxiv, candidate)
+
+    assert warnings == []
+    assert arxiv.calls == [TITLE]
+    assert candidate.record["abstract"] == "Abstract found on arXiv"
+    assert candidate.record["identifiers"]["arxiv"] == "2401.00009"
+    assert candidate.record["identifiers"]["openalex"] == "W1"
+    assert candidate.record["open_access_pdf_url"] == "https://arxiv.org/pdf/2401.00009.pdf"
+    assert candidate.record["categories"] == ["cs.CL"]
+    # Weaker evidence than an id match: the bibliographic record stays OpenAlex's.
+    assert candidate.record["title"] == TITLE
+    assert candidate.record["venue"] == "Test Journal"
+    assert candidate.record["publication_types"] == ["article"]
+    assert "raw" not in candidate.record
+
+
+@pytest.mark.parametrize(
+    ("hits", "work"),
+    [
+        pytest.param([title_hit(title=f"{TITLE}: A Survey")], {}, id="longer title"),
+        pytest.param([title_hit(year=2019)], {"year": 2024}, id="year too far away"),
+        pytest.param([title_hit(doi="10.1000/b")], {"doi": "10.1000/a"}, id="different doi"),
+        pytest.param(
+            [title_hit(authors=("Grace Hopper",))],
+            {"authors": [{"name": "Ada Lovelace"}]},
+            id="no shared author",
+        ),
+        pytest.param([title_hit("2401.00009"), title_hit("2401.00010")], {}, id="ambiguous"),
+        pytest.param([], {}, id="no hits"),
+    ],
+)
+def test_title_search_leaves_doubtful_matches_alone(
+    hits: list[dict[str, Any]], work: dict[str, Any]
+) -> None:
+    candidate = bare_work(**work)
+
+    enrich_by_title(FakeArxivTitleSearch(hits), candidate)
+
+    assert candidate.record["abstract"] is None
+    assert candidate.record["identifiers"].get("arxiv") is None
+
+
+def test_title_search_accepts_versions_of_one_preprint_and_a_nearby_year() -> None:
+    candidate = bare_work(year=2025)
+
+    enrich_by_title(
+        FakeArxivTitleSearch([title_hit("2401.00009v1", year=2024), title_hit("2401.00009v2")]),
+        candidate,
+    )
+
+    assert candidate.record["abstract"] == "Abstract found on arXiv"
+
+
+def test_title_search_only_runs_for_works_that_need_it() -> None:
+    has_abstract = bare_work()
+    has_abstract.record["abstract"] = "Already here"
+    has_arxiv_id = bare_work(arxiv="2401.00001")
+    generic_title = bare_work("Introduction")
+    arxiv = FakeArxivTitleSearch([title_hit()])
+
+    enrich_by_title(arxiv, has_abstract, has_arxiv_id, generic_title)
+
+    assert arxiv.calls == []
+
+
+def test_title_search_is_capped_per_run() -> None:
+    candidates = [bare_work(f"{TITLE} part {index}") for index in range(25)]
+    arxiv = FakeArxivTitleSearch()
+
+    warnings = enrich_by_title(arxiv, *candidates)
+
+    assert len(arxiv.calls) == 20
+    assert warnings == ["arXiv title search stopped at 20 of 25 works without an abstract"]
+
+
+def test_title_search_failure_is_a_warning_and_stops_searching() -> None:
+    arxiv = FakeArxivTitleSearch(error=RuntimeError("406 throttled"))
+
+    warnings = enrich_by_title(arxiv, bare_work(), bare_work(f"{TITLE} again"))
+
+    assert arxiv.calls == [TITLE]
+    assert warnings == ["arXiv title search failed: 406 throttled"]
+
+
+def test_title_search_propagates_offline_cache_misses() -> None:
+    arxiv = FakeArxivTitleSearch(
+        error=OfflineCacheMissError("arxiv", "query", "key", Path("cache"))
+    )
+
+    with pytest.raises(OfflineCacheMissError):
+        enrich_by_title(arxiv, bare_work())
