@@ -320,6 +320,31 @@ def test_project_graph_search_and_work_neighborhood(
         assert client.get("/api/works/missing").status_code == 404
 
 
+def test_project_author_lists_only_the_projects_works(
+    graph: InMemoryResearchGraph, tmp_path: Path
+) -> None:
+    project = graph.create_project("Research")
+    other = graph.create_project("Other")
+    first = graph.upsert_work(WorkNode(id="doi:10.1234/b", title="Second work"))
+    second = graph.upsert_work(WorkNode(id="doi:10.1234/a", title="First work"))
+    outside = graph.upsert_work(WorkNode(id="doi:10.1234/d", title="Other project work"))
+    for work in (first, second):
+        graph.include_work(Inclusion(project_id=project.id, work_id=work.id, discovered_via="seed"))
+    graph.include_work(Inclusion(project_id=other.id, work_id=outside.id, discovered_via="seed"))
+    author = graph.upsert_author(AuthorNode(id="author:ada", name="Ada Lovelace"))
+    absent = graph.upsert_author(AuthorNode(id="author:absent", name="Absent Author"))
+    for work in (first, second, outside):
+        graph.set_authors(work.id, [(author.id, 1)])
+
+    with TestClient(create_app(_settings(tmp_path), graph=graph)) as client:
+        response = client.get(f"/api/projects/{project.id}/authors/{author.id}")
+        assert response.status_code == 200
+        assert response.json() == {"work_ids": [second.id, first.id]}
+
+        assert client.get(f"/api/projects/{project.id}/authors/{absent.id}").status_code == 404
+        assert client.get(f"/api/projects/missing/authors/{author.id}").status_code == 404
+
+
 def test_project_concept_lists_the_projects_works(
     graph: InMemoryResearchGraph, tmp_path: Path
 ) -> None:

@@ -153,7 +153,8 @@ Selecting a work opens its detail panel, which shows:
   *hub*, *emerging*, *peripheral*, each explained on hover);
 - its frontier score components, if it is in the frontier window;
 - the gaps it is evidence for (click one to open it on the gap board);
-- identifiers, authors, concepts and the abstract;
+- identifiers, authors, concepts and the abstract (click an author to highlight their works on the
+  map, and click again or use **Clear** to stop);
 - **DOI** and **arXiv** links, and **Open PDF**, which opens the in-app viewer at page 1, plus
   ↗ to open the original PDF in a new tab;
 - the in-project **Cites** and **Cited by** lists. Click an entry to move to that work.

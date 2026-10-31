@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api'
 import type {
+  Author,
   Concept,
   GapHypothesis,
   GapUpdateInput,
@@ -55,6 +56,9 @@ function errorMessage(reason: unknown): string {
   return reason instanceof Error ? reason.message : 'The graph request failed.'
 }
 
+/** Author work lists share the concept cache; the prefix keeps their keys apart. */
+const authorWorksKey = (authorId: string) => `author:${authorId}`
+
 export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWorkRequest }: GraphPanelProps) {
   const [graph, setGraph] = useState<ProjectGraph | null>(null)
   const [analysis, setAnalysis] = useState<ProjectAnalysis | null>(null)
@@ -85,6 +89,7 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [showAllClusters, setShowAllClusters] = useState(false)
   const [focusedConcept, setFocusedConcept] = useState<Concept | null>(null)
+  const [focusedAuthor, setFocusedAuthor] = useState<Author | null>(null)
   const [conceptWorks, setConceptWorks] = useState<ReadonlyMap<string, ConceptWorksEntry>>(new Map())
   // Bumped whenever the concept cache resets so late responses for an old graph are dropped.
   const conceptEpoch = useRef(0)
@@ -107,6 +112,7 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
       setShowAllClusters(false)
       conceptEpoch.current += 1
       setFocusedConcept(null)
+      setFocusedAuthor(null)
       setConceptWorks(new Map())
     })
 
@@ -260,12 +266,13 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
     () => new Set(searchResults.map((result) => result.id)),
     [searchResults],
   )
-  const focusedConceptWorks = focusedConcept ? conceptWorks.get(focusedConcept.id) : undefined
+  const focusKey = focusedAuthor ? authorWorksKey(focusedAuthor.id) : focusedConcept?.id
+  const focusedConceptWorks = focusKey ? conceptWorks.get(focusKey) : undefined
   const conceptFocusIds = useMemo(
     () => (focusedConceptWorks?.status === 'ready' ? new Set(focusedConceptWorks.workIds) : null),
     [focusedConceptWorks],
   )
-  // A focused concept takes precedence over search and linked-work highlighting.
+  // A focused concept or author takes precedence over search and linked-work highlighting.
   const highlightIds = useMemo(
     () => new Set([
       ...highlightedWorkIds,
@@ -298,23 +305,41 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
     }
   }, [projectId, selectedNode])
 
-  const loadConceptWorks = (conceptId: string) => {
-    const existing = conceptWorks.get(conceptId)
+  const loadFocusWorks = (key: string, fetchWorkIds: () => Promise<{ work_ids: string[] }>) => {
+    const existing = conceptWorks.get(key)
     if (existing && existing.status !== 'error') return
     const epoch = conceptEpoch.current
     const store = (entry: ConceptWorksEntry) => {
       if (conceptEpoch.current !== epoch) return
-      setConceptWorks((current) => new Map(current).set(conceptId, entry))
+      setConceptWorks((current) => new Map(current).set(key, entry))
     }
     store({ status: 'loading' })
-    api.conceptWorks(projectId, conceptId)
+    fetchWorkIds()
       .then((result) => store({ status: 'ready', workIds: result.work_ids }))
       .catch(() => store({ status: 'error' }))
   }
 
+  const loadConceptWorks = (conceptId: string) => {
+    loadFocusWorks(conceptId, () => api.conceptWorks(projectId, conceptId))
+  }
+
   const focusConcept = (concept: Concept | null) => {
+    setFocusedAuthor(null)
     setFocusedConcept(concept)
     if (concept) loadConceptWorks(concept.id)
+  }
+
+  const focusAuthor = (author: Author | null) => {
+    setFocusedConcept(null)
+    setFocusedAuthor(author)
+    if (author) {
+      loadFocusWorks(authorWorksKey(author.id), () => api.authorWorks(projectId, author.id))
+    }
+  }
+
+  const clearFocus = () => {
+    setFocusedConcept(null)
+    setFocusedAuthor(null)
   }
 
   const selectNode = (id: string | null) => {
@@ -557,10 +582,11 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
             ))}
           </ul>
         ) : null}
-        {focusedConcept ? (
+        {focusedConcept || focusedAuthor ? (
           <div className="graph-panel__concept-focus" role="status">
             <span className="graph-panel__concept-focus-text">
-              Concept: <strong>{focusedConcept.label}</strong>
+              {focusedAuthor ? 'Author' : 'Concept'}:{' '}
+              <strong>{focusedAuthor?.name ?? focusedConcept?.label}</strong>
               {focusedConceptWorks?.status === 'ready'
                 ? ` · ${focusedConceptWorks.workIds.length} ${focusedConceptWorks.workIds.length === 1 ? 'work' : 'works'}`
                 : focusedConceptWorks?.status === 'error' ? ' · works unavailable' : ' · loading…'}
@@ -568,7 +594,7 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
             <button
               className="graph-panel__control"
               type="button"
-              onClick={() => setFocusedConcept(null)}
+              onClick={clearFocus}
             >
               Clear
             </button>
@@ -661,6 +687,8 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
               onFocusConcept={focusConcept}
               conceptWorks={conceptWorks}
               onLoadConceptWorks={loadConceptWorks}
+              focusedAuthorId={focusedAuthor?.id ?? null}
+              onFocusAuthor={focusAuthor}
             />
           ) : null}
         </section>
