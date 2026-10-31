@@ -466,6 +466,26 @@ def test_title_normalization_cleans_markup_and_whitespace() -> None:
     assert _normalize_title("<i>Attention</i> Is All You Need") == "Attention Is All You Need"
 
 
+def test_arxiv_title_search_strips_characters_arxiv_rejects(tmp_path: Path) -> None:
+    """arXiv answers 400 to a backslash-escaped quote inside a phrase."""
+
+    queries: list[str] = []
+    search_xml = _read_fixture("arxiv_title_search.xml")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        queries.append(request.url.params["search_query"])
+        return _payload_response(request, search_xml, "application/atom+xml")
+
+    adapter = _make_adapter(
+        arxiv_module,
+        _make_client(tmp_path / "cache", httpx.MockTransport(handler), intervals={"arxiv": 0.0}),
+    )
+
+    adapter.search_title(' "Why Should I Trust You?": Back\\slash ')
+
+    assert queries == ['ti:"Why Should I Trust You? : Back slash"']
+
+
 def test_arxiv_lookup_and_title_search_return_common_records(tmp_path: Path) -> None:
     lookup_xml = _read_fixture("arxiv_lookup.xml")
     search_xml = _read_fixture("arxiv_title_search.xml")

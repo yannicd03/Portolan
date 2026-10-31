@@ -201,10 +201,11 @@ class ArxivAdapter:
     def search_title(self, title: str, *, max_results: int = 10) -> list[dict[str, Any]]:
         """Search title terms using arXiv's exact title field query."""
 
-        escaped = re.sub(r'(["\\])', r"\\\1", title.strip())
+        # arXiv has no escape for a quote inside a phrase and answers 400 to a backslash.
+        phrase = " ".join(re.sub(r'["\\]', " ", title).split())
         body, fetched_at = self._get(
             {
-                "search_query": f'ti:"{escaped}"',
+                "search_query": f'ti:"{phrase}"',
                 "start": 0,
                 "max_results": max(1, int(max_results)),
             }

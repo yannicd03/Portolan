@@ -23,12 +23,31 @@ from portolan.graph import (
     ResearchGraph,
     WorkNode,
 )
+from portolan.graph.base import normalize_title
 
 from .models import ResearchRequest, RunCancelled, RunProgress, RunReport
 from .screening import HeuristicScreener, Screener, ScreeningSelection
 from .sources import ResearchSources
 
 _LOG = logging.getLogger(__name__)
+
+# arXiv title search (ADR-0008 follow-up). The adapter spaces requests 5 s apart, so this caps
+# the time one run can spend here at under two minutes.
+_ARXIV_TITLE_SEARCH_LIMIT = 20
+_ARXIV_TITLE_SEARCH_RESULTS = 5
+# Shorter titles ("Introduction") are too generic for a title match to identify a paper.
+_ARXIV_TITLE_MIN_WORDS = 4
+# A preprint usually precedes its venue version, sometimes by a year or two.
+_ARXIV_TITLE_YEAR_WINDOW = 2
+# A title match is weaker evidence than an identifier, so it only adds what the work is missing
+# and leaves bibliographic fields such as the venue and publication type alone.
+_ARXIV_TITLE_FIELDS = (
+    "abstract",
+    "identifiers",
+    "open_access_pdf_url",
+    "categories",
+    "primary_category",
+)
 
 # API budget.  With the default request (max_works=100, snowball_depth=2,
 # forward_per_work=20, core_search_hits=10, chase_top=20) and S seeds, one run
@@ -239,6 +258,71 @@ def _merge_record(left: Mapping[str, Any], right: Mapping[str, Any]) -> dict[str
         if _is_empty(merged.get(key)) and not _is_empty(value):
             merged[key] = copy.deepcopy(value)
     return merged
+
+
+def _title_words(value: Any) -> list[str]:
+    """Return a title's words, ignoring case, spacing and punctuation."""
+
+    return re.findall(r"\w+", normalize_title(str(value or "")))
+
+
+def _author_surnames(authors: Any) -> set[str]:
+    if not isinstance(authors, Sequence) or isinstance(authors, (str, bytes)):
+        return set()
+    surnames: set[str] = set()
+    for author in authors:
+        name = (
+            author.get("name") or author.get("display_name")
+            if isinstance(author, Mapping)
+            else None
+        )
+        words = _title_words(name)
+        if words:
+            surnames.add(words[-1])
+    return surnames
+
+
+def _arxiv_title_match(
+    record: Mapping[str, Any], hits: Iterable[Mapping[str, Any]]
+) -> Mapping[str, Any] | None:
+    """Return the one search hit that is clearly this work, or None.
+
+    A wrong match would attach another paper's abstract to the work, so anything less than
+    a single unambiguous hit is left alone.
+    """
+
+    title = _title_words(record.get("title"))
+    identifiers = record.get("identifiers")
+    identifiers = identifiers if isinstance(identifiers, Mapping) else {}
+    doi = _normalise_doi(record.get("doi") or identifiers.get("doi"))
+    surnames = _author_surnames(record.get("authors"))
+    matches: dict[str, Mapping[str, Any]] = {}
+    for hit in hits:
+        if not isinstance(hit, Mapping) or _title_words(hit.get("title")) != title:
+            continue
+        hit_identifiers = hit.get("identifiers")
+        hit_identifiers = hit_identifiers if isinstance(hit_identifiers, Mapping) else {}
+        arxiv_id = _normalise_arxiv(hit.get("arxiv_id") or hit_identifiers.get("arxiv"))
+        if arxiv_id is None:
+            continue
+        year, hit_year = record.get("year"), hit.get("year")
+        try:
+            if abs(int(year) - int(hit_year)) > _ARXIV_TITLE_YEAR_WINDOW:  # type: ignore[arg-type]
+                continue
+        except (TypeError, ValueError):
+            pass  # a missing year proves nothing either way
+        hit_doi = _normalise_doi(hit.get("doi") or hit_identifiers.get("doi"))
+        if doi and hit_doi and doi != hit_doi:
+            continue
+        raw = hit.get("raw")
+        hit_authors = hit.get("authors") or (
+            raw.get("authors") if isinstance(raw, Mapping) else None
+        )
+        hit_surnames = _author_surnames(hit_authors)
+        if surnames and hit_surnames and not surnames & hit_surnames:
+            continue
+        matches[arxiv_id.casefold()] = hit
+    return next(iter(matches.values())) if len(matches) == 1 else None
 
 
 def _year_allowed(record: Mapping[str, Any], request: ResearchRequest) -> bool:
@@ -1702,6 +1786,51 @@ class ResearchRunner:
             for target in targets.get(arxiv_id.casefold(), []):
                 target.record = _merge_record(target.record, fields)
 
+    def _enrich_arxiv_by_title(
+        self,
+        included: Sequence[_Candidate],
+        warnings: list[str],
+        cancel: Event | None,
+    ) -> None:
+        """Find abstract-less works with no arXiv id on arXiv by their exact title."""
+
+        adapter = self.sources.arxiv
+        search_title = getattr(adapter, "search_title", None)
+        if not callable(search_title):
+            return
+        missing: list[_Candidate] = []
+        for candidate in included:
+            record = candidate.record
+            identifiers = record.get("identifiers")
+            identifiers = identifiers if isinstance(identifiers, Mapping) else {}
+            if (
+                _is_empty(record.get("abstract"))
+                and not _normalise_arxiv(record.get("arxiv_id") or identifiers.get("arxiv"))
+                and len(_title_words(record.get("title"))) >= _ARXIV_TITLE_MIN_WORDS
+            ):
+                missing.append(candidate)
+        for candidate in missing[:_ARXIV_TITLE_SEARCH_LIMIT]:
+            self._check_cancel(cancel)
+            try:
+                hits = search_title(
+                    str(candidate.record["title"]), max_results=_ARXIV_TITLE_SEARCH_RESULTS
+                )
+            except OfflineCacheMissError:
+                raise
+            except Exception as exc:  # best effort enrichment
+                warnings.append(f"arXiv title search failed: {exc}")
+                return
+            match = _arxiv_title_match(candidate.record, hits)
+            if match is None or _is_empty(match.get("abstract")):
+                continue
+            fields = {key: match[key] for key in _ARXIV_TITLE_FIELDS if key in match}
+            candidate.record = _merge_record(candidate.record, fields)
+        if len(missing) > _ARXIV_TITLE_SEARCH_LIMIT:
+            warnings.append(
+                f"arXiv title search stopped at {_ARXIV_TITLE_SEARCH_LIMIT} of "
+                f"{len(missing)} works without an abstract"
+            )
+
     @staticmethod
     def _work_node(record: Mapping[str, Any], keyword_min_score: float) -> WorkNode:
         identifiers = record.get("identifiers")
@@ -1774,6 +1903,7 @@ class ResearchRunner:
     ) -> tuple[int, int, set[str]]:
         self._enrich(included, warnings, cancel)
         self._enrich_arxiv(included, warnings, cancel)
+        self._enrich_arxiv_by_title(included, warnings, cancel)
         authors: set[str] = set()
         included_ids: dict[str, str] = {}
         for index, candidate in enumerate(included, start=1):
