@@ -17,6 +17,7 @@ gains a `Superseded by` line.
 | [0010](0010-answer-verification-policy.md) | Answer verification: drop, flag or repair citations whose quote fails the check | proposed |
 | [0011](0011-pdf-storage-and-licence.md) | PDF storage and licence policy: papers stay out of git, licence provenance is kept per document, exports are metadata only | proposed |
 | [0012](0012-anthropic-chat-route.md) | Chat agents can run directly on the Anthropic API (`PORTOLAN_CHAT_PROVIDER`), next to OpenRouter | accepted |
+| [0013](0013-kit-chat-route.md) | Claude is the default chat route; the KIT ki-toolbox is an opt-in route | accepted |
 
 Strategic and cross-project context lives in the private design notes at `$PORTOLAN_NOTES_DIR` (set in `.env`);
 these ADRs are the per-repo, implementation-level record.

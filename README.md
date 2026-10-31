@@ -65,13 +65,15 @@ Compose passes the whole `.env` file to the backend. The variables that matter:
 | `OPENALEX_API_KEY` | strongly recommended | OpenAlex is the resolver, search and snowball source. Without a key, requests are anonymous: they are throttled under load and have a small daily budget, which a single run can exhaust. |
 | `SEMANTIC_SCHOLAR_API_KEY` | optional | Authenticated Semantic Scholar enrichment of included works (runs anonymously without it). |
 | `PORTOLAN_CONTACT_EMAIL` | recommended | Enables the Unpaywall adapter (more open-access PDFs). It is also added as `mailto:` to the User-Agent of PDF downloads. |
-| `OPENROUTER_API_KEY` | for chat | Enables Ask and Plan-research chat. Without it (or `ANTHROPIC_API_KEY`) the chat shows "Ask mode is unavailable". |
-| `ANTHROPIC_API_KEY` | for chat, alternative | Runs the chat agents directly on the Anthropic API instead of OpenRouter. Used when `PORTOLAN_CHAT_PROVIDER=anthropic`, or automatically when it is the only chat key set. |
-| `PORTOLAN_CHAT_PROVIDER` | optional | `openrouter` (default) or `anthropic`. |
-| `PORTOLAN_CHAT_MODEL` | optional | Model id for the chat agents (default `deepseek/deepseek-v4-pro` on OpenRouter, `claude-haiku-5-5` on Anthropic). |
+| `OPENROUTER_API_KEY` | for chat, alternative | Runs the chat agents through OpenRouter. Used when `PORTOLAN_CHAT_PROVIDER=openrouter`, or automatically when `ANTHROPIC_API_KEY` is not set. |
+| `ANTHROPIC_API_KEY` | for chat | Enables Ask and Plan-research chat on Claude, the default route. Without a chat key the chat shows "Ask mode is unavailable". |
+| `KIT_API_KEY` | for chat, opt-in | Runs the chat agents on the KIT ki-toolbox, but only with `PORTOLAN_CHAT_PROVIDER=kit`. Less reliable than Claude, see ADR-0013. |
+| `PORTOLAN_CHAT_PROVIDER` | optional | `anthropic` (default), `openrouter` (default when it is the only key of the two) or `kit`. |
+| `PORTOLAN_CHAT_MODEL` | optional | Model id for the chat agents (default `claude-haiku-5-5` on Anthropic, `deepseek/deepseek-v4-pro` on OpenRouter, `kit.deepseek-v4-flash` on KIT). |
 | `PORTOLAN_CHAT_EFFORT` | optional | Anthropic only: reasoning effort `low`, `medium`, `high` (default), `xhigh` or `max`. |
 | `OPENROUTER_BASE_URL` | optional | OpenAI-compatible endpoint (default `https://openrouter.ai/api/v1`). |
 | `ANTHROPIC_BASE_URL` | optional | Alternative Anthropic API endpoint, e.g. a proxy (default: the Anthropic API). |
+| `KIT_BASE_URL` | optional | Alternative KIT endpoint (default `https://ki-toolbox.scc.kit.edu/api/v1`). |
 | `PORTOLAN_CHAT_MAX_TOOL_CALLS` | optional | Tool-call budget per Ask turn (default 40). |
 | `PORTOLAN_MAX_CONCURRENT_RUNS` | optional | Research runs executed in parallel across projects (default 1; one active run per project). |
 | `PORTOLAN_SEED_GOLDEN` | optional | Load the demo project into an empty database. |
