@@ -10,12 +10,13 @@ from typing import Literal
 from .graph.base import ResearchGraph
 
 StoreBackend = Literal["neo4j", "memory"]
-ChatProvider = Literal["openrouter", "anthropic"]
+ChatProvider = Literal["openrouter", "anthropic", "kit"]
 
-# Chat model used when PORTOLAN_CHAT_MODEL is unset, per provider (ADR-0004, ADR-0012).
+# Chat model used when PORTOLAN_CHAT_MODEL is unset, per provider (ADR-0004, ADR-0012, ADR-0013).
 DEFAULT_CHAT_MODELS: dict[str, str] = {
     "openrouter": "deepseek/deepseek-v4-pro",
     "anthropic": "claude-haiku-5-5",
+    "kit": "kit.deepseek-v4-flash",
 }
 ChatEffort = Literal["low", "medium", "high", "xhigh", "max"]
 CHAT_EFFORTS: tuple[ChatEffort, ...] = ("low", "medium", "high", "xhigh", "max")
@@ -55,6 +56,8 @@ class Settings:
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     anthropic_api_key: str | None = None
     anthropic_base_url: str | None = None
+    kit_api_key: str | None = None
+    kit_base_url: str = "https://ki-toolbox.scc.kit.edu/api/v1"
     chat_effort: ChatEffort | None = "high"
     chat_max_tool_calls: int = 40
 
@@ -71,7 +74,8 @@ class Settings:
             raise ValueError("chat_max_tool_calls must be at least 1")
         if self.chat_provider not in DEFAULT_CHAT_MODELS:
             raise ValueError(
-                f"chat_provider must be 'openrouter' or 'anthropic', got {self.chat_provider!r}"
+                f"chat_provider must be one of {sorted(DEFAULT_CHAT_MODELS)}, "
+                f"got {self.chat_provider!r}"
             )
         if not self.chat_model:
             object.__setattr__(self, "chat_model", DEFAULT_CHAT_MODELS[self.chat_provider])
@@ -129,13 +133,15 @@ class Settings:
 
         openrouter_api_key = _env("OPENROUTER_API_KEY")
         anthropic_api_key = _env("ANTHROPIC_API_KEY")
-        # An explicit provider wins; otherwise use Anthropic only when it is the one key set.
+        # An explicit provider wins. Otherwise chat runs on Claude, unless OpenRouter is the only
+        # key that could serve it. KIT is opt-in: its key alone never selects it (ADR-0013).
         chat_provider = (_env("PORTOLAN_CHAT_PROVIDER") or "").lower() or (
-            "anthropic" if anthropic_api_key and not openrouter_api_key else "openrouter"
+            "openrouter" if openrouter_api_key and not anthropic_api_key else "anthropic"
         )
         if chat_provider not in DEFAULT_CHAT_MODELS:
             raise ValueError(
-                f"PORTOLAN_CHAT_PROVIDER must be 'openrouter' or 'anthropic', got {chat_provider!r}"
+                f"PORTOLAN_CHAT_PROVIDER must be one of {sorted(DEFAULT_CHAT_MODELS)}, "
+                f"got {chat_provider!r}"
             )
 
         data_dir = _env("PORTOLAN_DATA_DIR")
@@ -161,6 +167,8 @@ class Settings:
             openrouter_base_url=_env("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1",
             anthropic_api_key=anthropic_api_key,
             anthropic_base_url=_env("ANTHROPIC_BASE_URL"),
+            kit_api_key=_env("KIT_API_KEY"),
+            kit_base_url=_env("KIT_BASE_URL") or "https://ki-toolbox.scc.kit.edu/api/v1",
             chat_effort=(_env("PORTOLAN_CHAT_EFFORT") or "high").lower(),  # type: ignore[arg-type]
             chat_max_tool_calls=int(_env("PORTOLAN_CHAT_MAX_TOOL_CALLS") or 40),
         )
@@ -182,6 +190,7 @@ class Settings:
             f" chat_provider={self.chat_provider}"
             f" openrouter_key={'set' if self.openrouter_api_key else 'unset'}"
             f" anthropic_key={'set' if self.anthropic_api_key else 'unset'}"
+            f" kit_key={'set' if self.kit_api_key else 'unset'}"
             f" chat_model={self.chat_model}"
         )
 

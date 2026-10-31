@@ -3,6 +3,7 @@
 - **Status:** accepted
 - **Date:** 2026-10-28
 - **Amends:** ADR-0004 (OpenRouter as the only gateway)
+- **Amended by:** ADR-0013 (Claude replaces OpenRouter as the default chat route)
 - **Related:** ADR-0007 (chat agents on Deep Agents), Linear YAN-325
 
 ## Context

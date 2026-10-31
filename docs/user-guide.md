@@ -69,8 +69,9 @@ to seeds and included works, co-citation by the core set, and citation count.
 
 The Ask tab holds chat **threads** for the project. Use the *Thread* dropdown to switch threads,
 **New thread** to start one, and **Delete** to remove the current one. Threads are saved on the
-server and survive restarts. The chat needs `OPENROUTER_API_KEY`, or `ANTHROPIC_API_KEY` to run
-it on Claude directly. Without one, the tab shows *Ask mode is unavailable* and the reason.
+server and survive restarts. The chat needs `ANTHROPIC_API_KEY` to run on Claude, the default, or
+`OPENROUTER_API_KEY`. `KIT_API_KEY` works too, but only with `PORTOLAN_CHAT_PROVIDER=kit`. Without a
+usable key, the tab shows *Ask mode is unavailable* and the reason.
 
 The composer has two modes: **Ask** and **Plan research**. Enter sends and Shift+Enter adds a
 new line. **Stop** cancels an answer that is still streaming. While the agent works, an activity
