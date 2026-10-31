@@ -597,6 +597,7 @@ export function GraphPanel({ projectId, refreshToken, highlightedWorkIds, openWo
             selectedId={selectedId}
             highlightedIds={highlightIds}
             highlightingActive={highlightingActive}
+            highlightOnly={conceptFocusIds !== null}
             yearFilter={yearFilter}
             onSelect={selectFromMap}
           />

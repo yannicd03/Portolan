@@ -139,6 +139,11 @@ Per ADR-0008, `rebuild_project_concepts_with_report` works like this:
 
 `portolan project rebuild-concepts` runs the same function for an existing project.
 
+`portolan project classify-concepts` asks a small OpenRouter model (`PORTOLAN_CONCEPT_MODEL`) which
+concept labels name something specific, and stores the answer as `Concept.linkable`. Only the
+abstract links read it: `false` hides the link, and `null` (not judged) keeps it. Rebuilds leave the
+property alone. It runs on demand, not in the pipeline, so a model failure can't affect a harvest.
+
 ## Graph schema (Neo4j)
 
 Defined by ADR-0006 and amended by ADR-0008 (where concepts come from).

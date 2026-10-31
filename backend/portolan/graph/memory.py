@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Any
 
@@ -294,6 +294,20 @@ class InMemoryResearchGraph:
             for concept_id, score in concepts
             if concept_id in self._concepts
         }
+
+    def set_concept_linkable(self, verdicts: Mapping[str, bool]) -> None:
+        for concept_id, linkable in verdicts.items():
+            concept = self._concepts.get(concept_id)
+            if concept is not None:
+                self._concepts[concept_id] = concept.model_copy(update={"linkable": linkable})
+
+    def project_concepts(self, project_id: str) -> list[ConceptNode]:
+        concept_ids = {
+            concept_id
+            for work_id in self._included_work_ids(project_id)
+            for concept_id in self._concepts_by_work.get(work_id, {})
+        }
+        return [_model_copy(self._concepts[concept_id]) for concept_id in sorted(concept_ids)]
 
     def set_document(self, work_id: str, sha256: str, source_url: str | None) -> None:
         work = self._works.get(work_id)

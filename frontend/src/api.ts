@@ -140,6 +140,8 @@ export interface Concept {
   id: string
   label: string
   aliases: string[]
+  /** Whether abstracts link this term; null until it has been judged (YAN-721). */
+  linkable?: boolean | null
 }
 
 export interface WorkConcept {

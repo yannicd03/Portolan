@@ -214,3 +214,14 @@ docker compose exec backend portolan project rebuild-concepts <project-id>
 The command prints `kept=… filtered=… ungrounded=… text_phrases=…`. Reload the map to see the
 new clusters and labels. `portolan project list` prints the project ids, and the id also
 appears in the browser URL.
+
+Concepts are linked inside abstracts. Frequent ordinary words can slip through, so a small model
+can judge which terms are worth linking:
+
+```bash
+docker compose exec backend portolan project classify-concepts <project-id>
+```
+
+This needs `OPENROUTER_API_KEY`. It only judges concepts that have no verdict yet, and `--all`
+judges every concept again. A term the model rejects stays a concept on the map and in the work's
+concept list; it just isn't linked in abstracts any more. Until a term is judged, it stays linked.

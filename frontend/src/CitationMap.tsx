@@ -84,6 +84,8 @@ export interface CitationMapProps {
   selectedId: string | null
   highlightedIds?: ReadonlySet<string>
   highlightingActive?: boolean
+  /** Emphasise only the highlighted works, not the selected work's neighbours. */
+  highlightOnly?: boolean
   yearFilter?: YearRange | null
   onSelect: (id: string | null) => void
 }
@@ -293,6 +295,7 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
     selectedId,
     highlightedIds,
     highlightingActive = false,
+    highlightOnly = false,
     yearFilter = null,
     onSelect,
   },
@@ -303,6 +306,7 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
   const selectedRef = useRef<string | null>(selectedId)
   const highlightedRef = useRef<ReadonlySet<string>>(highlightedIds ?? new Set<string>())
   const highlightingActiveRef = useRef(highlightingActive)
+  const highlightOnlyRef = useRef(highlightOnly)
   const yearFilterRef = useRef<YearRange | null>(yearFilter)
   const yearVisibleRef = useRef<ReadonlySet<string>>(visibleNodeIds(data, yearFilter))
   const colorModeRef = useRef<CitationMapColorMode>(colorMode)
@@ -327,8 +331,9 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
     selectedRef.current = selectedId
     highlightedRef.current = highlightedIds ?? new Set<string>()
     highlightingActiveRef.current = highlightingActive
+    highlightOnlyRef.current = highlightOnly
     rendererRef.current?.refresh()
-  }, [highlightedIds, highlightingActive, selectedId])
+  }, [highlightedIds, highlightingActive, highlightOnly, selectedId])
 
   useEffect(() => {
     colorModeRef.current = colorMode
@@ -401,7 +406,9 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
       const focused = highlightedRef.current
       const isSelected = node === selected
       const isFocused = focused.has(node)
-      const isNeighbour = selected ? neighbours.get(selected)?.has(node) ?? false : false
+      const isNeighbour = selected && !highlightOnlyRef.current
+        ? neighbours.get(selected)?.has(node) ?? false
+        : false
       const hasYearFilter = yearFilterRef.current !== null
       const isYearVisible = yearVisibleRef.current.has(node)
       const clusterWorkIds = focusedClusterWorkIdsRef.current
@@ -468,12 +475,9 @@ export const CitationMap = forwardRef<CitationMapHandle, CitationMapProps>(funct
       const hasClusterFocus = focusedClusterIdRef.current !== null
       const hasMainPathFocus = mainPathActiveRef.current
       const hasSearchFocus = highlightingActiveRef.current || focused.size > 0
-      const connectsSearch = (
-        focused.has(source)
-        || focused.has(target)
-        || selected === source
-        || selected === target
-      )
+      const connectsSelected = !highlightOnlyRef.current
+        && (selected === source || selected === target)
+      const connectsSearch = focused.has(source) || focused.has(target) || connectsSelected
       const connectsCluster = clusterWorkIds.has(source) || clusterWorkIds.has(target)
       const hasYearFilter = yearFilterRef.current !== null
       const sourceIsVisible = yearVisibleRef.current.has(source)

@@ -159,6 +159,37 @@ def project_rebuild_concepts(
         _close(graph)
 
 
+@project_app.command("classify-concepts")
+def project_classify_concepts(
+    project_id: Annotated[str, typer.Argument(help="Project id.")],
+    all_concepts: Annotated[
+        bool, typer.Option("--all", help="Judge every concept again, not only new ones.")
+    ] = False,
+) -> None:
+    """Judge which of a project's concepts abstracts should link, using a small model."""
+
+    from portolan.concepts.linkable import classify_project_concepts
+
+    settings = Settings.from_env()
+    if not settings.openrouter_api_key:
+        typer.echo("classify-concepts needs OPENROUTER_API_KEY", err=True)
+        raise typer.Exit(code=1)
+    graph = make_graph(settings)
+    try:
+        _ensure_schema(graph)
+        if graph.get_project(project_id) is None:
+            typer.echo(f"project not found: {project_id}", err=True)
+            raise typer.Exit(code=1)
+        report = classify_project_concepts(graph, project_id, settings, redo=all_concepts)
+        typer.echo(
+            f"judged={report.judged} linkable={report.linkable} "
+            f"not_linkable={report.not_linkable} failed={report.failed} "
+            f"already_judged={report.skipped}"
+        )
+    finally:
+        _close(graph)
+
+
 @documents_app.command("backfill-outlines")
 def documents_backfill_outlines(
     rebuild: Annotated[bool, typer.Option(help="Rebuild existing outlines too.")] = False,

@@ -60,6 +60,7 @@ class Settings:
     kit_base_url: str = "https://ki-toolbox.scc.kit.edu/api/v1"
     chat_effort: ChatEffort | None = "high"
     chat_max_tool_calls: int = 40
+    concept_model: str = "deepseek/deepseek-v4-flash"
 
     def __post_init__(self) -> None:
         if self.store not in ("neo4j", "memory"):
@@ -171,6 +172,7 @@ class Settings:
             kit_base_url=_env("KIT_BASE_URL") or "https://ki-toolbox.scc.kit.edu/api/v1",
             chat_effort=(_env("PORTOLAN_CHAT_EFFORT") or "high").lower(),  # type: ignore[arg-type]
             chat_max_tool_calls=int(_env("PORTOLAN_CHAT_MAX_TOOL_CALLS") or 40),
+            concept_model=_env("PORTOLAN_CONCEPT_MODEL") or "deepseek/deepseek-v4-flash",
         )
 
     def describe(self) -> str:

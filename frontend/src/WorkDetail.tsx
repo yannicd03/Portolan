@@ -200,7 +200,11 @@ export function WorkDetail({
   const concepts = useMemo(() => detail.concepts.map(({ concept }) => concept), [detail.concepts])
   const conceptsById = useMemo(() => new Map(concepts.map((concept) => [concept.id, concept])), [concepts])
   const abstractSegments = useMemo(
-    () => (work.abstract ? segmentAbstract(work.abstract, concepts) : []),
+    () => (
+      work.abstract
+        ? segmentAbstract(work.abstract, concepts.filter((concept) => concept.linkable !== false))
+        : []
+    ),
     [concepts, work.abstract],
   )
   const toggleConcept = (concept: Concept) => {
