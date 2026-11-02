@@ -31,6 +31,7 @@ import hashlib
 import html
 import json
 import re
+import threading
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -47,7 +48,9 @@ DEFAULT_SOURCE_INTERVALS: dict[str, float] = {
     # arXiv asks for one request per 3 seconds; measured 2026-09-22, bursts at that rate still
     # draw 406s partway through a run, so the floor is 5s with 406 treated as a throttle signal.
     "arxiv": 5.0,
-    "semanticscholar": 1.0,
+    # Semantic Scholar's key allows 1 request/s cumulative across all endpoints and asks
+    # clients to stay below it; the margin absorbs clock jitter on their side.
+    "semanticscholar": 1.1,
     "crossref": 1.0,
     # Conservative floors for the OpenAlex and Unpaywall APIs.
     "openalex": 0.1,
@@ -188,6 +191,35 @@ class ResponseCache:
         return CacheEntry(body=body, metadata=metadata)
 
 
+class _RequestSchedule:
+    """Thread-safe record of the last reserved request slot per source."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._last: dict[str, float] = {}
+
+    def reserve(self, source: str, interval: float, now: float) -> float:
+        """Reserve the next free slot for ``source`` and return its start time.
+
+        The slot is claimed under the lock but the caller sleeps outside it, so
+        concurrent callers queue up one interval apart instead of all firing
+        once the previous request's interval has passed.
+        """
+
+        with self._lock:
+            previous = self._last.get(source)
+            target = now if previous is None or not interval else max(now, previous + interval)
+            self._last[source] = target
+            return target
+
+
+#: Source rate limits apply per API key or IP, not per adapter instance: a research run,
+#: an insights request and a chat tool call each build their own adapters, so limiters
+#: on the real monotonic clock share this process-wide schedule.  A limiter with an
+#: injected clock keeps a private schedule, which keeps tests isolated.
+_PROCESS_SCHEDULE = _RequestSchedule()
+
+
 class RateLimiter:
     """Per-source minimum-interval limiter with injectable time functions."""
 
@@ -207,7 +239,7 @@ class RateLimiter:
         self.default_interval = float(default_interval)
         self.clock = clock
         self.sleep = sleep
-        self._last_request: dict[str, float] = {}
+        self._schedule = _PROCESS_SCHEDULE if clock is time.monotonic else _RequestSchedule()
 
     def interval_for(self, source: str) -> float:
         if source in self.intervals:
@@ -220,16 +252,12 @@ class RateLimiter:
     def wait(self, source: str) -> None:
         interval = self.interval_for(source)
         now = float(self.clock())
-        previous = self._last_request.get(source)
-        if previous is not None and interval:
-            target = previous + interval
-            if now < target:
-                delay = target - now
-                self.sleep(delay)
-                # Injectable sleeps often only record their argument.  Recording
-                # the scheduled time keeps the limiter deterministic in that case.
-                now = target
-        self._last_request[source] = now
+        # The schedule records the reserved slot rather than the clock after sleeping:
+        # injectable sleeps often only record their argument, so this keeps the
+        # limiter deterministic in tests.
+        target = self._schedule.reserve(source, interval, now)
+        if target > now:
+            self.sleep(target - now)
 
 
 def parse_retry_after(value: str | None, *, now: Callable[[], float] = time.time) -> float | None:
