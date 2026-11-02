@@ -140,6 +140,8 @@ export interface Concept {
   id: string
   label: string
   aliases: string[]
+  /** Whether abstracts link this term; null until it has been judged (YAN-721). */
+  linkable?: boolean | null
 }
 
 export interface WorkConcept {
@@ -148,6 +150,10 @@ export interface WorkConcept {
 }
 
 /** A concept and the ids of the project's works tagged with it. */
+export interface AuthorWorks {
+  work_ids: string[]
+}
+
 export interface ConceptWorks {
   concept: Concept
   work_ids: string[]
@@ -506,6 +512,11 @@ export const api = {
   work: (workId: string, projectId: string): Promise<WorkDetail> =>
     request<WorkDetail>(
       `/api/works/${encodePathWithSlashes(workId)}?project=${encodeURIComponent(projectId)}`,
+    ),
+
+  authorWorks: (projectId: string, authorId: string): Promise<AuthorWorks> =>
+    request<AuthorWorks>(
+      `/api/projects/${encodeURIComponent(projectId)}/authors/${encodePathWithSlashes(authorId)}`,
     ),
 
   conceptWorks: (projectId: string, conceptId: string): Promise<ConceptWorks> =>

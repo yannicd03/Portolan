@@ -468,6 +468,20 @@ class Neo4jResearchGraph(ResearchGraph):
         )
         return _concept_model(_record_value(records[0], "concept")) if records else concept
 
+    def set_concept_linkable(self, verdicts: Mapping[str, bool]) -> None:
+        self._run(
+            "UNWIND $rows AS row MATCH (c:Concept {id: row.id}) SET c.linkable = row.linkable",
+            rows=[{"id": key, "linkable": value} for key, value in verdicts.items()],
+        )
+
+    def project_concepts(self, project_id: str) -> list[ConceptNode]:
+        records = self._run(
+            "MATCH (:Project {id: $project_id})-[:INCLUDES]->(:Work)-[:HAS_CONCEPT]->(c:Concept) "
+            "RETURN DISTINCT c{.*} AS concept ORDER BY concept.id",
+            project_id=project_id,
+        )
+        return [_concept_model(_record_value(record, "concept")) for record in records]
+
     def set_concepts(self, work_id: str, concepts: Sequence[tuple[str, float]]) -> None:
         self._run("MATCH (w:Work {id: $work_id})-[r:HAS_CONCEPT]->() DELETE r", work_id=work_id)
         rows = [{"concept_id": concept_id, "score": score} for concept_id, score in concepts]

@@ -153,7 +153,8 @@ Selecting a work opens its detail panel, which shows:
   *hub*, *emerging*, *peripheral*, each explained on hover);
 - its frontier score components, if it is in the frontier window;
 - the gaps it is evidence for (click one to open it on the gap board);
-- identifiers, authors, concepts and the abstract;
+- identifiers, authors, concepts and the abstract (click an author to highlight their works on the
+  map, and click again or use **Clear** to stop);
 - **DOI** and **arXiv** links, and **Open PDF**, which opens the in-app viewer at page 1, plus
   ↗ to open the original PDF in a new tab;
 - the in-project **Cites** and **Cited by** lists. Click an entry to move to that work.
@@ -214,3 +215,14 @@ docker compose exec backend portolan project rebuild-concepts <project-id>
 The command prints `kept=… filtered=… ungrounded=… text_phrases=…`. Reload the map to see the
 new clusters and labels. `portolan project list` prints the project ids, and the id also
 appears in the browser URL.
+
+Concepts are linked inside abstracts. Frequent ordinary words can slip through, so a small model
+can judge which terms are worth linking:
+
+```bash
+docker compose exec backend portolan project classify-concepts <project-id>
+```
+
+This needs `OPENROUTER_API_KEY`. It only judges concepts that have no verdict yet, and `--all`
+judges every concept again. A term the model rejects stays a concept on the map and in the work's
+concept list; it just isn't linked in abstracts any more. Until a term is judged, it stays linked.

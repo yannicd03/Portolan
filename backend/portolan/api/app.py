@@ -26,6 +26,7 @@ from ..settings import Settings
 from .chat import build_chat_router
 from .insights import build_insights_router
 from .models import (
+    AuthorWorksResponse,
     ConceptWorksResponse,
     HealthResponse,
     LocateResponse,
@@ -366,6 +367,19 @@ def create_app(
         with lock:
             _project_or_404(graph_instance, project_id)
             return graph_instance.search_works(project_id, q, limit=limit)
+
+    @app.get(
+        "/api/projects/{project_id}/authors/{author_id:path}",
+        response_model=AuthorWorksResponse,
+    )
+    def project_author(project_id: str, author_id: str, request: Request) -> AuthorWorksResponse:
+        graph_instance, lock, _ = _state(request)
+        with lock:
+            _project_or_404(graph_instance, project_id)
+            works = graph_instance.works_by_author(author_id, project_id)
+        if not works:
+            raise HTTPException(status_code=404, detail="author not found in this project")
+        return AuthorWorksResponse(work_ids=[work.id for work in works])
 
     @app.get(
         "/api/projects/{project_id}/concepts/{concept_id:path}",

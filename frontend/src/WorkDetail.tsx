@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { segmentAbstract } from './abstractTerms'
 import type {
+  Author,
   Concept,
   FrontierWork,
   GapHypothesis,
@@ -32,6 +33,10 @@ interface WorkDetailProps {
   /** Project works per concept, loaded on demand for the concept cards. */
   conceptWorks?: ReadonlyMap<string, ConceptWorksEntry>
   onLoadConceptWorks?: (conceptId: string) => void
+  /** The author whose works are focused on the map, if any. */
+  focusedAuthorId?: string | null
+  /** Focus an author's works on the map, or clear the focus with null. */
+  onFocusAuthor?: (author: Author | null) => void
 }
 
 export type ConceptWorksEntry =
@@ -195,12 +200,18 @@ export function WorkDetail({
   onFocusConcept,
   conceptWorks,
   onLoadConceptWorks,
+  focusedAuthorId = null,
+  onFocusAuthor,
 }: WorkDetailProps) {
   const work = detail.work
   const concepts = useMemo(() => detail.concepts.map(({ concept }) => concept), [detail.concepts])
   const conceptsById = useMemo(() => new Map(concepts.map((concept) => [concept.id, concept])), [concepts])
   const abstractSegments = useMemo(
-    () => (work.abstract ? segmentAbstract(work.abstract, concepts) : []),
+    () => (
+      work.abstract
+        ? segmentAbstract(work.abstract, concepts.filter((concept) => concept.linkable !== false))
+        : []
+    ),
     [concepts, work.abstract],
   )
   const toggleConcept = (concept: Concept) => {
@@ -315,9 +326,16 @@ export function WorkDetail({
           <h3>Authors</h3>
           <div className="work-detail__chips">
             {detail.authors.map(({ author }) => (
-              <span className="work-detail__chip" key={author.id}>
+              <button
+                className="work-detail__chip work-detail__concept-chip"
+                type="button"
+                key={author.id}
+                aria-pressed={focusedAuthorId === author.id}
+                title={`Show ${author.name}'s works on the map`}
+                onClick={() => onFocusAuthor?.(focusedAuthorId === author.id ? null : author)}
+              >
                 {author.name}
-              </span>
+              </button>
             ))}
           </div>
         </section>

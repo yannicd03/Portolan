@@ -74,6 +74,7 @@ Compose passes the whole `.env` file to the backend. The variables that matter:
 | `OPENROUTER_BASE_URL` | optional | OpenAI-compatible endpoint (default `https://openrouter.ai/api/v1`). |
 | `ANTHROPIC_BASE_URL` | optional | Alternative Anthropic API endpoint, e.g. a proxy (default: the Anthropic API). |
 | `KIT_BASE_URL` | optional | Alternative KIT endpoint (default `https://ki-toolbox.scc.kit.edu/api/v1`). |
+| `PORTOLAN_CONCEPT_MODEL` | optional | OpenRouter model for `classify-concepts` (default `deepseek/deepseek-v4-flash`). |
 | `PORTOLAN_CHAT_MAX_TOOL_CALLS` | optional | Tool-call budget per Ask turn (default 40). |
 | `PORTOLAN_MAX_CONCURRENT_RUNS` | optional | Research runs executed in parallel across projects (default 1; one active run per project). |
 | `PORTOLAN_SEED_GOLDEN` | optional | Load the demo project into an empty database. |
@@ -124,6 +125,7 @@ In Docker, run it with `docker compose exec backend portolan ...`.
 | `portolan project list` | List projects as JSON. |
 | `portolan project delete PROJECT_ID` | Delete a project. |
 | `portolan project rebuild-concepts PROJECT_ID` | Re-derive a project's concepts with the grounded pipeline. Prints `kept= filtered= ungrounded= text_phrases=`. Use this on projects harvested before ADR-0008. |
+| `portolan project classify-concepts PROJECT_ID [--all]` | Judge with a small model which concepts abstracts should link (needs `OPENROUTER_API_KEY`). `--all` judges every concept again. |
 | `portolan research PROJECT_ID [--seed ID]... [--query TEXT] [--max-works 100] [--depth 2] [--no-pdfs] [--max-pdfs 50]` | Run the research pipeline synchronously and print the report. The run is not added to the UI's run history. |
 | `portolan documents backfill-outlines [--rebuild]` | Build outline sidecars for stored PDFs that do not have one yet. |
 

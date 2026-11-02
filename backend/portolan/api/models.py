@@ -107,6 +107,12 @@ class ConceptWorksResponse(ApiModel):
     work_ids: list[str]
 
 
+class AuthorWorksResponse(ApiModel):
+    """The ids of the project's works by one author."""
+
+    work_ids: list[str]
+
+
 class WorkResponse(ApiModel):
     work: WorkNode
     cites: list[WorkSummary]
@@ -187,6 +193,7 @@ __all__ = [
     "AnalysisCluster",
     "AnalysisWork",
     "AuthorMembership",
+    "AuthorWorksResponse",
     "ConceptMembership",
     "ConceptWorksResponse",
     "GraphView",

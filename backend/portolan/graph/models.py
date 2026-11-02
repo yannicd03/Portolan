@@ -64,6 +64,8 @@ class ConceptNode(GraphModel):
     id: str
     label: str
     aliases: list[str] = Field(default_factory=list)
+    # Whether abstracts should link this term: None until the term has been judged.
+    linkable: bool | None = None
 
 
 _DISCOVERY_METHODS = frozenset({"seed", "search", "backward", "forward", "manual"})

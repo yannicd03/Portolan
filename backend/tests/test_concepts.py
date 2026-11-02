@@ -10,6 +10,7 @@ import pytest
 from portolan.concepts.filter import filter_concepts
 from portolan.concepts.grounding import is_grounded
 from portolan.concepts.keyphrases import extract_keyphrases, strip_boilerplate, strip_links
+from portolan.concepts.linkable import BATCH_SIZE, classify_project_concepts
 from portolan.concepts.merge import (
     DEFAULT_STOP_TERMS,
     ConceptCluster,
@@ -18,6 +19,9 @@ from portolan.concepts.merge import (
     merge_keywords_with_report,
 )
 from portolan.concepts.normalize import acronym_of, normalize_keyword, slugify
+from portolan.graph.memory import InMemoryResearchGraph
+from portolan.graph.models import ConceptNode, Inclusion, WorkNode
+from portolan.settings import Settings
 
 
 @pytest.mark.parametrize(
@@ -880,3 +884,92 @@ def test_keyphrases_keep_three_word_phrases_with_varied_continuations() -> None:
     ]
 
     assert "mixture of expert" in _terms(works)
+
+
+# ---- linkable concepts (YAN-721) ----
+
+
+def _linkable_graph(labels: Sequence[str]) -> tuple[InMemoryResearchGraph, str]:
+    graph = InMemoryResearchGraph()
+    project = graph.create_project("Linkable", None)
+    work = graph.upsert_work(WorkNode(title="Paper", year=2024))
+    assert work.id is not None
+    graph.include_work(
+        Inclusion(project_id=project.id, work_id=work.id, discovered_via="search", depth=0)
+    )
+    for label in labels:
+        graph.upsert_concept(ConceptNode(id=label, label=label))
+    graph.set_concepts(work.id, [(label, 1.0) for label in labels])
+    return graph, project.id
+
+
+def _linkable(graph: InMemoryResearchGraph, project_id: str) -> dict[str, bool | None]:
+    return {concept.id: concept.linkable for concept in graph.project_concepts(project_id)}
+
+
+def test_classify_stores_a_verdict_for_every_concept() -> None:
+    graph, project_id = _linkable_graph(["accurate", "contrastive learning", "rag"])
+
+    report = classify_project_concepts(
+        graph, project_id, Settings(store="memory"), judge=lambda labels: [2, 3]
+    )
+
+    assert _linkable(graph, project_id) == {
+        "accurate": False,
+        "contrastive learning": True,
+        "rag": True,
+    }
+    assert (report.judged, report.linkable, report.not_linkable) == (3, 2, 1)
+
+
+def test_classify_only_pays_for_new_concepts_unless_asked() -> None:
+    graph, project_id = _linkable_graph(["accurate", "rag"])
+    graph.set_concept_linkable({"accurate": False})
+    calls: list[list[str]] = []
+
+    def judge(labels: Sequence[str]) -> list[int]:
+        calls.append(list(labels))
+        return [1]
+
+    report = classify_project_concepts(graph, project_id, Settings(store="memory"), judge=judge)
+    assert calls == [["rag"]]
+    assert report.skipped == 1
+
+    classify_project_concepts(graph, project_id, Settings(store="memory"), judge=judge, redo=True)
+    assert calls[-1] == ["accurate", "rag"]
+
+
+def test_classify_failed_batch_stays_unjudged_and_later_batches_still_run() -> None:
+    labels = [f"term {index:03d}" for index in range(BATCH_SIZE + 2)]
+    graph, project_id = _linkable_graph(labels)
+
+    def judge(batch: Sequence[str]) -> list[int]:
+        if len(batch) == BATCH_SIZE:
+            raise RuntimeError("model unavailable")
+        return [1, 2]
+
+    report = classify_project_concepts(graph, project_id, Settings(store="memory"), judge=judge)
+
+    verdicts = _linkable(graph, project_id)
+    assert report.failed == BATCH_SIZE
+    assert report.linkable == 2
+    assert sum(value is None for value in verdicts.values()) == BATCH_SIZE
+
+
+def test_rebuilding_a_concept_keeps_its_verdict() -> None:
+    graph, project_id = _linkable_graph(["accurate"])
+    graph.set_concept_linkable({"accurate": False})
+
+    graph.upsert_concept(ConceptNode(id="accurate", label="Accurate", aliases=["accuracy"]))
+
+    assert _linkable(graph, project_id) == {"accurate": False}
+
+
+def test_classify_ignores_out_of_range_positions() -> None:
+    graph, project_id = _linkable_graph(["rag"])
+
+    classify_project_concepts(
+        graph, project_id, Settings(store="memory"), judge=lambda labels: [1, 99]
+    )
+
+    assert _linkable(graph, project_id) == {"rag": True}

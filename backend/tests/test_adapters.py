@@ -896,3 +896,31 @@ def test_cached_response_without_fetch_time_yields_none(tmp_path: Path) -> None:
     response = client.get("fixture", "https://fixture.test/x", params={})
 
     assert base_module.response_fetched_at(response) is None
+
+
+def test_rate_limiters_on_the_real_clock_share_one_schedule_per_source() -> None:
+    # S2's 1 req/s limit is per key, so separate adapter instances (a run, insights,
+    # a chat tool) must queue behind each other rather than each keeping its own slot.
+    source = "shared-schedule-test-source"
+    slept: list[float] = []
+    first = base_module.RateLimiter({source: 30.0}, sleep=slept.append)
+    second = base_module.RateLimiter({source: 30.0}, sleep=slept.append)
+
+    first.wait(source)
+    second.wait(source)
+
+    assert len(slept) == 1
+    assert 29.0 < slept[0] <= 30.0
+
+
+def test_rate_limiters_with_injected_clocks_keep_private_schedules() -> None:
+    source = "private-schedule-test-source"
+    slept: list[float] = []
+    first = base_module.RateLimiter({source: 30.0}, clock=lambda: 0.0, sleep=slept.append)
+    second = base_module.RateLimiter({source: 30.0}, clock=lambda: 0.0, sleep=slept.append)
+
+    first.wait(source)
+    second.wait(source)
+    first.wait(source)
+
+    assert slept == [30.0]
